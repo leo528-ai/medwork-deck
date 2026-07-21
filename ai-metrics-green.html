@@ -922,7 +922,7 @@
       <div class="dbox good"><h5>指南即代码 · Guideline-to-Code</h5><div style="font-size:1.05vw;color:var(--ink);line-height:1.45;">把 NCCN / CSCO 等临床指南编译成<b>可执行决策代码</b>：诊疗建议 = 代码运行结果，天然可回溯、可像<b>单元测试</b>一样校验。</div></div>
       <div class="dbox good"><h5>代码化推理的三重收益</h5><ul><li><b>可验证</b>：推理即代码，对错有真值</li><li><b>可审计</b>：每步可回放，满足复核</li><li><b>不退化</b>：通用不降，医疗增强</li></ul></div>
     </div>
-    <div class="concl"><b>Skill 内化</b>：以可验证格式奖励做 RL，把<b>数千字规则内化为极简提示</b>，专科能力稳定复现、可迁移；<b>Agentic 服务化</b>：临床路径驱动 + 多 Agent 协作，规范调用百余种专业工具。</div>
+    <div class="concl">小尺寸统一模型 ＋ 代码化推理，即可<b>医疗卓越而通用不降</b>；再以 <b>Skill 内化</b>把专科规则沉淀为极简提示、<b>Agentic 服务化</b>规范调用专业工具——形成可复用、可协作的临床能力底座。</div>
     <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>49</span></div>
   </section>
 
@@ -1006,6 +1006,40 @@
     </div>
     <div class="concl"><b>执行即取证</b>：每一步都是真实工具调用，全流程可重放、可校验、可审计——动作要么跑通、要么报错，无法编造。</div>
     <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>54</span></div>
+  </section>
+
+  <!-- W10b MedCode 效果 · 能力与业务验证 -->
+  <section class="slide" id="s45j2">
+    <div class="kicker">MedCode 效果 · 能力与业务</div>
+    <div class="htitle">一套合版模型，通用不降、医疗领先</div>
+    <div class="rule"></div>
+    <div class="lead">代码范式 ＋ 多专家蒸馏训练 <b>MedCode 合版模型</b>——通用能力不下降的前提下医疗专业能力显著提升，用<b>统一模型</b>替代各业务 / 专病单独的全尺寸模型。</div>
+    <div class="duo" style="margin-top:.5vw;">
+      <div class="dbox good"><h5>模型能力提升</h5><div style="font-size:1.0vw;color:var(--ink);line-height:1.42;">针对传统 <b>CoT 易幻觉</b>，首创「<b>指南即代码</b>」＋模拟医生操作链，替代事后回溯思维链；用代码执行的<b>确定性</b>大幅降低医疗幻觉，专病与影像评测<b>明显提升</b>。</div></div>
+      <div class="dbox good"><h5>业务效果验证</h5><div style="font-size:1.0vw;color:var(--ink);line-height:1.42;">已具备<b>大为 / 知医 / 专病营养 / 精心</b>等核心业务能力，综合评测<b>达 GPT SOTA 同级</b>；已完成知医、大为病情收集、A2HTML、大为多模态、全托管诊断、精心、营养的<b>全量切换</b>（仅余少量 AB 观察桶），形成统一模型底座。</div></div>
+      <div class="dbox good"><h5>模型路线选择</h5><div style="font-size:1.0vw;color:var(--ink);line-height:1.42;">目标：效果<b>不低于 GPT 最新 SOTA</b>、<b>小尺寸</b>、低成本、<b>可端侧部署</b>；低幻觉低成本可下沉到<b>盒子级设备</b>，原生支持 <b>3D 医学影像</b>等多模态；依托医院真实连续病历＋高质量 <b>Rubric 标注</b>建立高质量迭代。</div></div>
+    </div>
+    <div class="concl">一套 MedCode 合版模型——<b>通用不降、医疗领先、成本更低、可端侧、可持续迭代</b>，替代多套专家 / 全尺寸模型。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>55</span></div>
+  </section>
+
+  <!-- W10c MedCode 效果 · 专病临床评测 -->
+  <section class="slide" id="s45j3">
+    <div class="kicker">MedCode 效果 · 专病临床评测</div>
+    <div class="htitle">从营养、问诊到肿瘤分期与影像的临床落地</div>
+    <div class="rule"></div>
+    <div class="lead">已上线场景<b>达 GPT SOTA 同级</b>；迭代中场景以「<b>替换为 MedCode、持平 / 超越 GPT</b>」为目标。</div>
+    <table class="dtable" style="margin-top:.4vw;font-size:.92vw;">
+      <tr><th style="width:20%;">病种 / 场景</th><th style="width:12%;">状态</th><th>MedCode 相对表现（vs 头部模型）</th></tr>
+      <tr><td class="em">临床营养</td><td>通过</td><td>院内处方无问题、已上线并规模化扩科</td></tr>
+      <tr><td class="em">精心</td><td>通过</td><td>北六专家评测，MedCode <b>略优于 GPT-5.5</b></td></tr>
+      <tr><td class="em">大为</td><td>全量</td><td>问诊 / 精心意图<b>优于基线与领域模型</b>；好评率<b>持平基线</b>、转化率<b>领先 GPT</b></td></tr>
+      <tr><td class="em">呼吸专科</td><td>迭代中</td><td>20 种常见病临床评测集；在线真实问诊 MedCode <b>持平 Gemini-Pro、优于 GPT-5.5</b>；已在广医一呼吸科门诊落地（以替换专家模型、持平 GPT-5.5 为目标）</td></tr>
+      <tr><td class="em">肺癌 · TNM 分期</td><td>迭代中</td><td>与 <b>GPT-5.5 基本持平</b></td></tr>
+      <tr><td class="em">消化道肿瘤<br>（食管 / 胃 / 结肠）</td><td>迭代中</td><td>基于北肿真实病例，用 MedCode <b>抽取肿瘤指南</b>逐步覆盖；食管癌 TNM <b>接近 GPT-5.5</b>、早筛精准率 / 召回率俱高</td></tr>
+      <tr><td class="em">3D 影像</td><td>迭代中</td><td>平扫 CT，MedCode <b>模拟医生操作流显著优于 GPT-5.5</b></td></tr>
+    </table>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>56</span></div>
   </section>
 
   <!-- W11 MedWork Agent OS -->
