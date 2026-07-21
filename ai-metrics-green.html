@@ -810,66 +810,224 @@
     <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>44</span></div>
   </section>
 
-  <!-- 44L 落地概览 -->
-  <section class="slide" id="s44L">
-    <div class="kicker">从方法论到落地</div>
-    <div class="htitle">这套方法，在京东健康长成了三件套</div>
+  <!-- 44T 训练核心认知 -->
+  <section class="slide" id="s44T">
+    <div class="kicker">如何训练 AI 模型 · 核心认知</div>
+    <div class="htitle">最难的不是「训进去」，而是「发现要训什么」且不破坏原有能力</div>
     <div class="rule"></div>
-    <div class="lead">「刻尺子 → 教模型 → 用户验收」加上五大轻杠杆，不是空谈——它落成一条可信交付链，回答医疗 AI 规模化的三问：<b>怎么衡量好不好、怎么让推理可信、怎么规模化交付</b>。</div>
-    <div class="cards" style="margin-top:.4vw;">
-      <div class="card"><div class="n" style="font-size:1.55vw;">JoyAI-MedCode</div><div class="t" style="color:var(--green-d);font-weight:700;font-size:1.05vw;">可验证推理</div><div class="t">代码化推理 × 多专家蒸馏；把「代码化」这条窄缝做深，HealthBench 达 SOTA。</div></div>
-      <div class="card"><div class="n" style="font-size:1.55vw;">medwiki</div><div class="t" style="color:var(--green-d);font-weight:700;font-size:1.05vw;">确定性循证知识</div><div class="t">llmwiki + agentic search，用「活的知识层」替代概率检索 RAG。</div></div>
-      <div class="card"><div class="n" style="font-size:1.55vw;">MedWork</div><div class="t" style="color:var(--green-d);font-weight:700;font-size:1.05vw;">开放交付</div><div class="t">医生的 AI 工作空间（Agent OS），把 Harness / Skill / 记忆落成随手可用的工作台。</div></div>
+    <div class="lead">今天的基座模型，是别人用<b>难以想象的钱、算力与数据</b>训出来的——它是一个极其微妙的平衡，<b>动一下，原有能力可能直接崩掉</b>。</div>
+    <div class="duo" style="margin-top:.5vw;">
+      <div class="dbox bad"><h5>常见误区 · 把海量原始数据「一股脑喂进去」</h5><ul><li>几十万条线上对话 / 病例<b>直接扔进训练</b>，负面作用往往更大</li><li>全是<b>噪音</b>：没人能保证一条病例一定是对的</li><li>未针对结果<b>逐项标注</b> = 引入大量错误信号</li><li>轻则无效，重则<b>破坏基座原有能力</b>，得不偿失</li></ul></div>
+      <div class="dbox good"><h5>正确姿势 · 先诊断缺陷，再精修</h5><ul><li>重点是<b>发现「哪些能力有缺陷」</b>，而非盲目加数据</li><li>只喂<b>针对结果逐项标注、精心校验</b>过的数据</li><li>小步、可验证地训练，<b>守住原有能力不退化</b></li><li>用「代码化 / 可验证」做训练信号——<b>对错有真值</b></li></ul></div>
     </div>
-    <div class="concl">下一阶段的竞争，不是<b>谁的模型最大</b>，而是<b>谁能把 AI 可靠、可信、可规模化地交付</b>。</div>
+    <div class="concl">训练的核心是「<b>发现 + 精修</b>」：在不破坏微妙平衡的前提下，用逐项标注、可验证的数据补齐特定缺陷，而不是用噪音数据做<b>大水漫灌</b>。</div>
     <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>44</span></div>
   </section>
 
-  <!-- 44C JoyAI-MedCode -->
-  <section class="slide" id="s44C">
-    <div class="kicker">落地 · 可验证推理</div>
-    <div class="htitle">JoyAI-MedCode：从「自然语言推理」到「代码可验证推理」</div>
+  <!-- W1 命题 -->
+  <section class="slide" id="s45a">
+    <div class="kicker">WAIC 2026 · 京东健康</div>
+    <div class="htitle">命题：医疗 AI 走向「规模化可信交付」</div>
+    <div class="rule"></div>
+    <div class="lead">单点 demo 容易；真正把医疗 AI 交付到<b>亿级用户</b>手里，要回答三个问题。</div>
+    <div class="steps" style="margin-top:.5vw;">
+      <div class="step"><span class="sn">1</span><h5>怎么衡量「好不好」</h5><div class="sd">没有可信评测，就没有审批、支付与信任的依据。→ <b>评测</b></div></div>
+      <div class="step"><span class="sn">2</span><h5>怎么让推理「可信」</h5><div class="sd">医疗要求可解释、可审计，而非一段说得通的话。→ <b>可验证推理 · MedCode</b></div></div>
+      <div class="step"><span class="sn">3</span><h5>怎么「规模化」交付</h5><div class="sd">把模型稳定、经济地送到每位医生手里。→ <b>开放交付 · MedWork</b></div></div>
+    </div>
+    <div class="concl">下一阶段的竞争不再是「<b>谁的模型最大</b>」，而是「<b>谁能把 AI 可靠、可信、可规模化地交付</b>」。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>45</span></div>
+  </section>
+
+  <!-- W2 评测尺子 -->
+  <section class="slide" id="s45b">
+    <div class="kicker">基石一 · 评测</div>
+    <div class="htitle">评测：建立一把被行业公认的尺子</div>
+    <div class="rule"></div>
+    <div class="lead">我们把评测基准、方法学与精标数据<b>向行业开放</b>。</div>
+    <div class="duo" style="margin-top:.4vw;">
+      <div class="dbox good"><h5>MedEviBench · 循证评测榜单</h5><ul><li><b>京东健康 × 上海 AI 实验室</b>联合发布</li><li>检索驱动的临床循证全流程评估，覆盖<b>证据溯源 · 安全质控 · 逻辑表达</b></li></ul></div>
+      <div class="dbox good"><h5>MedRealMM · 多模态真实场景评测集</h5><ul><li>千级规模、经审查的真实临床多模态 case</li><li>首次实证<b>图像信息</b>对问诊评测显著影响（图 vs 纯文本分差 20–30 分）</li></ul></div>
+    </div>
+    <div class="duo" style="margin-top:.4vw;">
+      <div class="dbox good"><h5>Med3DVQA · 3D 影像问答评测集</h5><ul><li>基于<b>真实放射报告</b>构建，已上线 <b>MedBench</b> 公开榜单</li><li>补齐三维影像评测空白，可复现、可横向对比</li></ul></div>
+      <div class="dbox good"><h5>MedBench v5.0 · WAIC 现场发布</h5><ul><li>与<b>上海 AI 实验室</b>联合共建</li><li>多模态问诊、3D 影像进<b>全模态主榜</b>，循证评测集进 special track</li></ul></div>
+    </div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>46</span></div>
+  </section>
+
+  <!-- W3 Med3DVQA -->
+  <section class="slide" id="s45c">
+    <div class="kicker">评测 · Med3DVQA</div>
+    <div class="htitle">面向「完整放射学检查」的全开源三维影像评测集</div>
+    <div class="rule"></div>
+    <div class="lead">覆盖平扫/增强 CT 与平扫/增强 MRI，<b>保留期相、序列与纵向随访的关联</b>——首个面向完整放射学检查的全开源三维评测集。</div>
+    <div class="duo" style="margin-top:.4vw;">
+      <div class="dbox good"><h5>规模与覆盖</h5><ul><li>来自 <b>2 家医院</b>、<b>2 万余例</b>完整 CT/MRI 检查</li><li><b>1.7 万余名</b>患者 · <b>10 万余次</b>三维扫描</li><li>约 <b>50 万条</b>影像报告问答</li><li><b>1628 种</b>疾病 · <b>2598 个</b>器官区域</li></ul></div>
+      <div class="dbox good"><h5>与传统评测集不同</h5><ul><li>不止单张 2D、单个 3D 影像体</li><li><b>保留</b>期相、序列与纵向随访的关联</li><li>评估对<b>完整 CT/MRI 检查</b>的理解与推理</li></ul></div>
+    </div>
+    <div class="dbox good" style="margin-top:.4vw;"><h5>七类 VQA 任务 · 系统评估理解与推理</h5><div style="font-size:1.05vw;color:var(--ink);line-height:1.5;">检测存在性 · 解剖定位 · 特征描述 · 定量分析 · 关系综合推理 · 多影像体/多序列/多模态 · 时序纵向比较</div></div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>47</span></div>
+  </section>
+
+  <!-- W4 关键发现 -->
+  <section class="slide" id="s45d">
+    <div class="kicker">评测 · Med3DVQA 关键发现</div>
+    <div class="htitle">模型尚未真正「读懂」医学影像</div>
+    <div class="rule"></div>
+    <div class="lead">在完整放射学检查上系统评测后，现有医学多模态大模型暴露<b>四类共性短板</b>。</div>
+    <div class="duo" style="margin-top:.4vw;">
+      <div class="dbox bad"><h5>泛化与联合推理弱</h5><ul><li>对<b>未见影像模态、解剖区域</b>泛化差</li><li><b>跨多个三维影像体</b>的联合推理不足</li><li><b>纵向检查</b>的时序推理仍有明显缺口</li></ul></div>
+      <div class="dbox bad"><h5>提示格式过拟合</h5><ul><li>对提示词/选项格式<b>高度敏感</b></li><li>四选一正常，选项增至五个即<b>大幅下降甚至失效</b>——过拟合固定模板</li></ul></div>
+    </div>
+    <div class="duo" style="margin-top:.4vw;">
+      <div class="dbox bad"><h5>证据幻觉</h5><ul><li>生成<b>表述流畅、看似合理</b>却缺乏影像证据支持的答案</li><li>易与影像内容不一致；也难判断问题能否由当前影像回答</li></ul></div>
+      <div class="dbox bad"><h5>模态不匹配仍硬答</h5><ul><li>仅给 CT、却问只有特定 <b>MRI 序列</b>才能判断的信号特征时，模型仍直接作答</li><li>不能识别模态不匹配或指出证据不足</li></ul></div>
+    </div>
+    <div class="concl">部分模型尚未形成「<b>理解影像内容 → 判断证据是否充分 → 可靠推理</b>」的能力。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>48</span></div>
+  </section>
+
+  <!-- W5 MedCode -->
+  <section class="slide" id="s45e">
+    <div class="kicker">基石二 · 可验证推理</div>
+    <div class="htitle">MedCode：从「自然语言推理」到「代码可验证推理」</div>
     <div class="rule"></div>
     <div class="lead">v2.0 核心：把<b>多科室专家能力蒸馏进统一基座</b>，中小模型配合代码化推理在 <b>HealthBench 达 SOTA（Total 69.3 / Hard 50.6）</b>，超越各专家模型。</div>
-    <table class="dtable" style="margin-top:.5vw;">
+    <table class="dtable" style="margin-top:.4vw;">
       <tr><th>v1 · 结果级奖励</th><th>v2 · 过程级奖励</th></tr>
       <tr><td>过程不可审计</td><td class="em">每步可执行、可回溯</td></tr>
       <tr><td>通用任务退化</td><td class="em">通用不降 · 医疗卓越</td></tr>
     </table>
-    <div class="duo" style="margin-top:.6vw;">
-      <div class="dbox good"><h5>指南即代码 · Guideline-to-Code</h5><div class="sub">把 NCCN / CSCO 等临床指南编译成<b>可执行决策代码</b>：诊疗建议 = 代码运行结果，天然可回溯、可像<b>单元测试</b>一样校验。</div></div>
+    <div class="duo" style="margin-top:.5vw;">
+      <div class="dbox good"><h5>指南即代码 · Guideline-to-Code</h5><div style="font-size:1.05vw;color:var(--ink);line-height:1.45;">把 NCCN / CSCO 等临床指南编译成<b>可执行决策代码</b>：诊疗建议 = 代码运行结果，天然可回溯、可像<b>单元测试</b>一样校验。</div></div>
       <div class="dbox good"><h5>代码化推理的三重收益</h5><ul><li><b>可验证</b>：推理即代码，对错有真值</li><li><b>可审计</b>：每步可回放，满足复核</li><li><b>不退化</b>：通用不降，医疗增强</li></ul></div>
     </div>
-    <div class="concl">Skill 内化：以可验证格式奖励做 RL，把<b>数千字规则内化为极简提示</b>——专科能力稳定复现、可迁移（正是方法论「代码化 / Skill」两页的落地）。</div>
-    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>44</span></div>
+    <div class="concl"><b>Skill 内化</b>：以可验证格式奖励做 RL，把<b>数千字规则内化为极简提示</b>，专科能力稳定复现、可迁移；<b>Agentic 服务化</b>：临床路径驱动 + 多 Agent 协作，规范调用百余种专业工具。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>49</span></div>
   </section>
 
-  <!-- 44W medwiki -->
-  <section class="slide" id="s44W">
-    <div class="kicker">落地 · 确定性知识</div>
+  <!-- W6 指南即代码实例 -->
+  <section class="slide" id="s45f">
+    <div class="kicker">可验证推理 · 指南即代码</div>
+    <div class="htitle">实例：NCCN 非小细胞肺癌 TNM 分期决策</div>
+    <div class="rule"></div>
+    <div class="lead">把 NCCN 肺癌指南编译成<b>可执行决策函数</b>——分期是入参，指南分支是 if，检查/治疗是动作，章节号可回溯。</div>
+    <div class="duo" style="margin-top:.4vw;">
+      <div class="dbox good" style="flex:1.35;"><pre style="margin:0;font-family:'SF Mono','Menlo','Consolas',monospace;font-size:.82vw;line-height:1.5;color:#0a3a26;white-space:pre;overflow:hidden;">def entry_NSCL_1_0(*, pathologic_diagnosis=None,
+        clinical_stage_group=None, t_stage=None,
+        n_stage=None, tumor_location=None):
+    r = EntryResult(entry_id="NSCL-1#0")
+    if norm(pathologic_diagnosis) == "nsclc":
+        r.actions.append(Action("examination",
+            "CT chest/abdomen w/ contrast"))
+        r.see.append(SeeRef("NSCL-A"))   # trace
+        if (clinical_stage_group=="ia" and
+            t_stage=="t1" and n_stage=="n0"):
+            r.next.append("NSCL-2")      # Stage IA
+    return r</pre></div>
+      <div class="dbox good"><h5>代码 = 指南结构</h5><ul><li>入参：T/N/M 分期、病理</li><li><b>if/elif</b>：指南分支</li><li><b>Action</b>：检查/治疗</li><li><b>SeeRef</b>：回溯章节</li><li>缺参标 <b>missing</b>，不猜</li></ul></div>
+    </div>
+    <div class="concl">诊疗建议 = <b>代码运行结果</b>；缺参不猜，指南更新即<b>改代码</b>——可像单元测试一样回归校验。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>50</span></div>
+  </section>
+
+  <!-- W7 medwiki -->
+  <section class="slide" id="s45g">
+    <div class="kicker">可验证推理 · 确定性知识</div>
     <div class="htitle">用「确定」的 medwiki 替代「不确定」的 RAG</div>
     <div class="rule"></div>
-    <div class="lead">循证问答的可信，<b>不能建立在「概率检索」之上</b>——这是方法论「知识层 / LLM Wiki」那页在医疗场景的正式形态。</div>
-    <div class="duo" style="margin-top:.6vw;">
+    <div class="lead">循证问答的可信，<b>不能建立在「概率检索」之上</b>。</div>
+    <div class="duo" style="margin-top:.5vw;">
       <div class="dbox bad"><h5>RAG · 不确定，难复现</h5><ul><li>检索是<b>概率匹配</b>：切块 / embedding / topK 一变，命中即变</li><li>拼接上下文再生成，答案<b>漂移、不可复现</b></li><li>来源难追溯，易产生「<b>看似有据</b>」的幻觉</li></ul></div>
-      <div class="dbox good"><h5>medwiki · 确定，可回放</h5><ul><li>基于 <b>llmwiki</b>（结构化循证知识库）+ <b>agentic search</b>（沿引用逐跳检索）</li><li>条目、证据等级、引用<b>可寻址</b>，沿<b>确定路径</b>检索</li><li>可复现、可回放、可溯源；更新 = 改条目，<b>有版本、可回归</b>——像代码一样管理</li></ul></div>
+      <div class="dbox good"><h5>medwiki · 确定，可回放</h5><ul><li>基于 <b>llmwiki</b>（结构化循证知识库）+ <b>agentic search</b>（沿引用逐跳检索）</li><li>条目、证据等级、引用<b>可寻址</b>，沿<b>确定路径</b>检索</li><li>可复现、可回放、可溯源；更新 = 改条目，<b>有版本、可回归</b></li></ul></div>
     </div>
     <div class="concl">确定性来自<b>结构化知识与可寻址引用</b>，而非一次概率检索——与「指南即代码」同源。</div>
-    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>44</span></div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>51</span></div>
   </section>
 
-  <!-- 44M MedWork -->
-  <section class="slide" id="s44M">
-    <div class="kicker">落地 · 开放交付</div>
+  <!-- W8 操作流轨迹 -->
+  <section class="slide" id="s45h">
+    <div class="kicker">可验证推理 · 忠实性</div>
+    <div class="htitle">监督「操作流轨迹」，而非「思维链叙事」</div>
+    <div class="rule"></div>
+    <div class="lead">忠实性来自「<b>执行</b>」而非「<b>解释</b>」。</div>
+    <div class="duo" style="margin-top:.5vw;">
+      <div class="dbox bad"><h5>思维链轨迹（CoT）· 可以骗人</h5><ul><li>本质是<b>事后叙事</b>——先有结论，再补一段顺理成章的话</li><li>能写得<b>通顺却错</b>：征象、测量值被「讲圆」</li><li>纯文字<b>无法执行</b>，真假<b>无从判定</b></li></ul></div>
+      <div class="dbox good"><h5>操作流轨迹（execution trace）· 骗不了人</h5><ul><li>每一步是<b>真实工具调用</b>：加载序列、选 ROI、测量、比对</li><li>可<b>重放、可校验、可审计</b>——每步都有真值对照</li><li>动作要么跑通、要么报错——<b>无法编造</b></li></ul></div>
+    </div>
+    <div class="concl">我们监督的是<b>模拟医生真实操作流</b>的 ReAct 轨迹（Observe → Act → Verify），而非一段事后编出来的推理。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>52</span></div>
+  </section>
+
+  <!-- W9 3D 原生体积 -->
+  <section class="slide" id="s45i">
+    <div class="kicker">可验证推理 · 3D 医学影像</div>
+    <div class="htitle">把影像当「原生体积」理解</div>
+    <div class="rule"></div>
+    <div class="lead">不做多张 2D 切片的拼接，而是把 CT/MRI 当作<b>原生三维体积</b>来建模。</div>
+    <div class="duo" style="margin-top:.5vw;">
+      <div class="dbox good"><h5>MedCode 3D 能力 · 原生 3D 体积理解</h5><ul><li><b>三模态 MRoPE</b>：体积 / 视频 / 图像独立编码</li><li><b>Spacing-aware</b>：注入体素间距，感知毫米尺度</li><li><b>Z 轴 Token 压缩</b>：长序列高效表征</li><li>尺寸规格：<b>Dense 27B / MoE 35B</b></li></ul></div>
+      <div class="dbox good"><h5>3D 影像理解能力（实测）</h5><ul><li>4 公开集 VQA 平均 <b>74.03%</b>（CT Rate / Deep Tumor / AMOS / 3D Rad）</li><li>超越<b>国内主流 2D / 3D</b> 多模态模型</li><li>自建平扫 CT（20 扫描 / 508 题）Chain-of-Operator <b>73.43%</b></li><li>较顶尖通用大模型<b>领先 20+ pp</b></li></ul></div>
+    </div>
+    <div class="concl">原生体积理解是 3D Chain-of-Operator 阅片的基础——<b>先看懂三维结构，才能做可验证的逐步核查</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>53</span></div>
+  </section>
+
+  <!-- W10 Chain-of-Operator -->
+  <section class="slide" id="s45j">
+    <div class="kicker">可验证推理 · 3D Chain-of-Operator</div>
+    <div class="htitle">模拟医师阅片，执行即取证</div>
+    <div class="rule"></div>
+    <div class="lead">把「看片子」拆成可执行、可回放的<b>三阶段操作流</b>，从粗到细逐步定位。</div>
+    <div class="steps" style="margin-top:.5vw;">
+      <div class="step"><span class="sn">1</span><h5>全局导航</h5><div class="sd">轴位切片拼图＋帧号标注，用最少 token 建立空间认知。</div></div>
+      <div class="step"><span class="sn">2</span><h5>目标精读</h5><div class="sd">可疑帧按指定窗位渲染 512px 高清详查。</div></div>
+      <div class="step"><span class="sn">3</span><h5>自由核验</h5><div class="sd">三平面重建 / 器官分割 / ROI 放大 / 距离测量，定性又定量。</div></div>
+    </div>
+    <div class="concl"><b>执行即取证</b>：每一步都是真实工具调用，全流程可重放、可校验、可审计——动作要么跑通、要么报错，无法编造。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>54</span></div>
+  </section>
+
+  <!-- W11 MedWork Agent OS -->
+  <section class="slide" id="s45k">
+    <div class="kicker">基石三 · 开放交付</div>
     <div class="htitle">MedWork：医生的 AI 工作空间（Agent OS）</div>
     <div class="rule"></div>
     <div class="lead">面向医生的 AI 工作台，定位「<b>医疗领域的 Codex</b>」。&nbsp;&nbsp;<b>medwork.jd.com</b></div>
-    <div class="duo" style="margin-top:.6vw;">
-      <div class="dbox good"><h5>基于 Rust 的用户级 Agent OS · 既私有又可协作</h5><div class="sub">内存占用仅<b>数十 MB</b>、<b>数百毫秒</b>内即可拉起——<b>SandBox / Agent / Daemon</b> 全部基于 Rust。每位用户拥有一个既私有又可共享协作的智能工作空间，可操控 Agent 安全地<b>写代码 · 调系统命令 · 访问外部系统 · 读写任务资产</b>。</div></div>
+    <div class="duo" style="margin-top:.5vw;">
+      <div class="dbox good"><h5>基于 Rust 的用户级 Agent OS · 既私有又可协作</h5><div style="font-size:1.05vw;color:var(--ink);line-height:1.45;">内存占用仅<b>数十 MB</b>、<b>数百毫秒</b>内即可拉起——<b>SandBox / Agent / Daemon</b> 全部基于 Rust。每位用户拥有既私有又可共享协作的智能工作空间，可操控 Agent 安全地<b>写代码 · 调系统命令 · 访问外部系统 · 读写任务资产</b>。</div></div>
       <div class="dbox good"><h5>高频场景</h5><ul><li><b>论文写作</b>（检索 → 循证 → 分析 → 代码 → PDF）</li><li><b>AI-MDT 会诊</b>：多专家智能集群并行</li><li>医学循证 · 临床诊断 · 病例分析 · <b>AI2HTML 成稿</b></li></ul></div>
     </div>
-    <div class="concl">把方法论里的 <b>Harness 升级 · Skill 化 · 记忆系统</b>，落成医生随手可用、可私有可协作的工作台——从医生端到用户端一体化交付。</div>
-    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>44</span></div>
+    <div class="concl">从医生端到用户端一体化交付——把 <b>Harness / Skill / 记忆</b>落成医生随手可用、可私有可协作的工作台。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>55</span></div>
+  </section>
+
+  <!-- W12 产品矩阵 -->
+  <section class="slide" id="s45l">
+    <div class="kicker">开放交付 · 产品矩阵</div>
+    <div class="htitle">AI 产品矩阵：从医生端到用户端，一体化交付</div>
+    <div class="rule"></div>
+    <div class="duo" style="margin-top:.5vw;">
+      <div class="dbox good"><h5>知医 · 面向医生的循证 AI</h5><ul><li>medsight.jd.com</li><li><b>4000 万+</b> 文献 · <b>4 万+</b> 指南 · <b>2 万+</b> 说明书</li></ul></div>
+      <div class="dbox good"><h5>健康角色 · 小康 · 专家智能体</h5><ul><li><b>AI 京医·营养师</b>：面向健康角色</li><li><b>小康 · 2C</b>：AI2HTML 生成的健康应用（明星身材对标，<b>3 天 300 万人报名减重</b>）</li><li><b>专家智能体 · 机构</b>：医生主页</li></ul></div>
+    </div>
+    <div class="concl">一套底座、多端交付：<b>医生端循证 · 机构端专家智能体 · 用户端健康角色</b>，构成从 2H 到 2C 的完整产品矩阵。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>56</span></div>
+  </section>
+
+  <!-- W13 专病共建 -->
+  <section class="slide" id="s45m">
+    <div class="kicker">2H · 专病共建</div>
+    <div class="htitle">与顶级医院共建专病大模型：联合攻关，回归临床</div>
+    <div class="rule"></div>
+    <div class="lead">面向医院（2H）——与顶级医院<b>联合共建专病大模型</b>，共同申请国家重大科研任务，在回顾与前瞻队列中持续迭代。</div>
+    <div class="duo" style="margin-top:.5vw;">
+      <div class="dbox good"><h5>合作专病矩阵</h5><ul><li><b>广医一</b>：呼吸专科</li><li><b>北肿 · 友谊</b>：消化（肿瘤 / 内镜）</li><li><b>孙逸仙</b>：前列腺癌</li><li><b>温附一</b>：临床营养</li></ul></div>
+      <div class="dbox good"><h5>共建模式 · 从科研到临床闭环</h5><ul><li>双方<b>联合共建</b>专病大模型</li><li>联合申请<b>国家重大科研任务</b></li><li>在<b>回顾 + 前瞻队列</b>中不断迭代模型能力</li><li>最终<b>辅助医生、帮助患者</b>——回归临床价值</li></ul></div>
+    </div>
+    <div class="concl">顶级医院提供临床场景与队列，京东健康提供大模型与 Agent 底座——专病能力在真实临床中<b>沉淀、验证、迭代</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>57</span></div>
   </section>
 
   <!-- 45 谢谢 -->
