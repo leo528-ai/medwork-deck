@@ -18,7 +18,7 @@
   #deck{position:fixed; inset:0;}
   .slide{position:absolute; inset:0; display:none; flex-direction:column; padding:4.6vh 5.2vw 6vh; background:#fff; opacity:0; transition:opacity .25s ease; overflow:hidden;}
   .slide.active{display:flex; opacity:1;}
-  .slide:not(#s1):not(#s45):not(#s2)::after{content:""; position:absolute; top:-9vw; right:-9vw; width:28vw; height:28vw; border-radius:50%; background:radial-gradient(circle, rgba(18,160,107,.09), transparent 68%); pointer-events:none; z-index:0;}
+  .slide:not(#s1):not(#s45):not(#s45x):not(#s2)::after{content:""; position:absolute; top:-9vw; right:-9vw; width:28vw; height:28vw; border-radius:50%; background:radial-gradient(circle, rgba(18,160,107,.09), transparent 68%); pointer-events:none; z-index:0;}
   .slide>*{position:relative; z-index:1;}
   .kicker{display:inline-flex; align-items:center; gap:.6vw; font-size:1.35vw; color:var(--green-d); font-weight:700; letter-spacing:.01em;}
   .kicker::before{content:""; width:.55vw; height:2vw; background:linear-gradient(180deg,var(--leaf),var(--green-d)); border-radius:3px;}
@@ -107,6 +107,11 @@
   #s45 .sm{font-size:1.8vw; margin-top:1.4vw; opacity:.95;}
   #s45 .who{font-size:1.4vw; margin-top:2.6vw; background:rgba(255,255,255,.15); padding:.7vw 2vw; border-radius:999px;}
   #s45 .creds{font-size:1.05vw; opacity:.85; margin-top:1.2vw; line-height:1.6; max-width:64vw;}
+  /* chapter divider */
+  #s45x{background:radial-gradient(120% 120% at 15% 10%, #14b877 0%, #0f9d63 42%, #0a7a4c 80%, #075a38 100%); color:#fff; align-items:center; justify-content:center; text-align:center;}
+  #s45x .badge{background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.4); font-size:1.35vw;}
+  #s45x .stmt{color:#fff;}
+  #s45x .stmt.sm{color:rgba(255,255,255,.92);}
   .hint{position:fixed; bottom:2vh; left:50%; transform:translateX(-50%); font-size:.95vw; color:rgba(255,255,255,.5); z-index:40;}
   .slide .hint{color:var(--line);}
 </style>
@@ -127,6 +132,21 @@
       <div class="meta">胡浩源　·　京东健康 AI &amp; 医疗大模型负责人</div>
       <div class="cred">原蚂蚁金服 AI &amp; 金融大模型负责人 · 菜鸟供应链 AI 负责人 · SIGKDD 高级领域主席 · INFORMS Edelman Award 获得者</div>
     </div>
+  </section>
+
+  <!-- 1b 目录 -->
+  <section class="slide" id="s1b">
+    <div class="kicker">今天分享 · 一条主线串三部分</div>
+    <div class="htitle">先把「尺子」做对，再谈优化与交付</div>
+    <div class="rule"></div>
+    <div class="lead">同一根主线——<b>用户效用的度量</b>——贯穿产品优化、模型训练与规模化交付。</div>
+    <div class="steps" style="margin-top:.8vw;">
+      <div class="step"><span class="sn">1</span><h5>如何优化 AI 产品</h5><div class="sd">刻尺子 → 教模型 → 用户验收：度量 / RM / Rubric、召回与生成、后验校准与全链路闭环。</div></div>
+      <div class="step"><span class="sn">2</span><h5>如何训练 AI 模型</h5><div class="sd">发现 + 精修：模仿家族、蒸馏 / OPD、离线与在线偏好优化、Agentic RL 与训练之外的轻杠杆。</div></div>
+      <div class="step"><span class="sn">3</span><h5>WAIC 2026 · 京东健康发布</h5><div class="sd">规模化可信交付三基石：评测、可验证推理 MedCode、开放交付 MedWork。</div></div>
+    </div>
+    <div class="concl">全篇只回答一件事：<b>把用户那把尺子做对，优化与交付才有方向</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>02</span></div>
   </section>
 
   <!-- 2 一句话主张 -->
@@ -448,35 +468,25 @@
     <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>21</span></div>
   </section>
 
-  <!-- 22 OPD 时间线 -->
+  <!-- 22 OPD 时间线 + 要点（合并） -->
   <section class="slide" id="s22">
-    <div class="kicker">OPD 全景时间线（2023 → 2026）</div>
-    <div class="htitle">从奠基到系统化</div>
+    <div class="kicker">OPD：时间线 · 最该记的几点 · 入门路线</div>
+    <div class="htitle">从奠基到系统化（2023 → 2026）</div>
     <div class="rule"></div>
-    <table class="dtable" style="margin-top:.4vw;">
-      <tr><th>阶段</th><th>关键进展</th><th>代表工作</th></tr>
-      <tr><td class="em">2023 · 范式奠基</td><td>立起 on-policy 蒸馏范式</td><td>GKD、MiniLLM</td></tr>
-      <tr><td class="em">2024 · 目标函数进化</td><td>打磨 KL 选法（forward/reverse/skewed）怎么选才不发散</td><td>DistiLLM</td></tr>
-      <tr><td class="em">2025 · 工业化配方</td><td>Qwen3 第一次写成正式配方（8B，1/10 GPU 小时）</td><td>Qwen3 报告、AlignDistil</td></tr>
-      <tr><td class="em">2026H1 · 角色扩展</td><td>多物模型整合 / 自蒸馏 / 多模态 / prefix-only 降到几十分之一</td><td>MoPD、Video-OPD、OPCD</td></tr>
-      <tr><td class="em">2026H1 · 理论+系统</td><td>成败两条件；后验监督衰减、可信 region、跨 tokenizer、异步容旧</td><td>Rethinking / Lightning OPD</td></tr>
-    </table>
-    <div class="concl">成败两条件（Rethinking OPD）：<b>① 师生思维模式要兼容；② 教师必须真带来学生没见过的新能力</b>。</div>
-    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>22</span></div>
-  </section>
-
-  <!-- 23 OPD 要点 -->
-  <section class="slide" id="s23">
-    <div class="kicker">OPD 最该记的几点 + 入门路线</div>
-    <div class="rule"></div>
-    <div class="duo" style="margin-top:.4vw;">
+    <div class="flowline" style="margin-top:.2vw;">
+      <span class="fchip">2023 奠基<br><span style="font-size:.8vw;color:var(--gray);">GKD · MiniLLM</span></span><span class="farrow">→</span>
+      <span class="fchip">2024 目标函数<br><span style="font-size:.8vw;color:var(--gray);">DistiLLM · KL 选法</span></span><span class="farrow">→</span>
+      <span class="fchip">2025 工业化<br><span style="font-size:.8vw;color:var(--gray);">Qwen3 · 8B · 1/10 GPU</span></span><span class="farrow">→</span>
+      <span class="fchip hl">2026 扩展+理论<br><span style="font-size:.8vw;color:#d8ffef;">自蒸馏 / 多模态 · Rethinking / Lightning</span></span>
+    </div>
+    <div class="duo" style="margin-top:.5vw;">
       <div class="dbox good"><h5>六个要点速览</h5><ul>
         <li>定位：监督比 outcome reward 稠密、比 SFT 更近真实状态</li>
         <li>工业拐点：8B 同起点，胜直接 RL、GPU 约 1/10</li>
         <li>成败两条件：思维兼容 + 教师带来新能力</li>
         <li>选择性监督：前 30% token 含近全部有效信号，只学前缀 FLOP 降到 1/2~1/47</li>
-        <li>不必白盒：拿不到 teacher logits 也能蒸（GAD→ROPD→OmniOPD）</li>
-        <li>可扩自蒸馏 / 多模态：无需大教师也成，扩到 vision/video/agent</li>
+        <li>不必白盒：拿不到 teacher logits 也能蒸</li>
+        <li>可扩自蒸馏 / 多模态：扩到 vision / video / agent</li>
       </ul></div>
       <div class="dbox good"><h5>入门路线</h5><ul>
         <li>GKD + MiniLLM 建直觉</li>
@@ -485,8 +495,8 @@
         <li>两篇综述收口（分场景框架 + 开放问题）</li>
       </ul></div>
     </div>
-    <div class="src">开放问题：学生偏离教师后，哪些后段监督仍有行动价值。来源：On-Policy 蒸馏训练全景综述（Vincent · AIGC），含 38 篇 arxiv，本地取 OPD-综述.md。</div>
-    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>23</span></div>
+    <div class="src">成败两条件（Rethinking OPD）：① 师生思维模式兼容；② 教师真带来新能力。来源：OPD 全景综述（Vincent · AIGC），含 38 篇 arxiv，本地 OPD-综述.md。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>22</span></div>
   </section>
 
   <!-- 24 离线偏好优化 -->
@@ -797,9 +807,9 @@
     <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>43</span></div>
   </section>
 
-  <!-- 44 总结 -->
+  <!-- 44 产品优化篇小结 -->
   <section class="slide" id="s44">
-    <div class="kicker">总结</div>
+    <div class="kicker">产品优化篇 · 小结（下接：如何训练模型 → WAIC 发布）</div>
     <div class="htitle">关键手段，与新人最容易踩的红线</div>
     <div class="rule"></div>
     <div class="duo" style="margin-top:.4vw;">
@@ -822,6 +832,15 @@
     </div>
     <div class="concl">训练的核心是「<b>发现 + 精修</b>」：在不破坏微妙平衡的前提下，用逐项标注、可验证的数据补齐特定缺陷，而不是用噪音数据做<b>大水漫灌</b>。</div>
     <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>44</span></div>
+  </section>
+
+  <!-- W0 章节分隔 -->
+  <section class="slide" id="s45x">
+    <div class="center">
+      <div class="badge" style="margin:0 auto;">第三部分 · WAIC 2026</div>
+      <div class="stmt">医疗 AI 走向<br>「规模化可信交付」</div>
+      <div class="stmt sm">京东健康 WAIC 2026 发布 · 三块基石<br>评测 · 可验证推理 MedCode · 开放交付 MedWork</div>
+    </div>
   </section>
 
   <!-- W1 命题 -->
