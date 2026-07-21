@@ -3,40 +3,320 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MedWork 培训材料</title>
+<title>MedWork 智能平台 · 培训材料</title>
 <style>
+  :root{
+    --green:#0f9d63; --green-d:#0a7a4c; --green-dd:#075a38;
+    --leaf:#12a06b; --mint:#e8f6ef; --mint2:#d6efe2;
+    --ink:#1f2b26; --gray:#5b6b64; --line:#cfe6da; --gold:#c9a24b;
+  }
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{height:100%;}
-  body{font-family:"京东朗正体","JDLANGZHENGTI","PingFang SC","Microsoft YaHei",sans-serif;
-       background:#04150e;color:#eafff5;overflow:hidden;}
-  #deck{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
-  .slide{position:absolute;inset:0;display:none;align-items:center;justify-content:center;}
-  .slide.active{display:flex;}
-  .slide img{max-width:100vw;max-height:100vh;width:auto;height:auto;object-fit:contain;
-             box-shadow:0 1vw 4vw rgba(0,0,0,.35);}
-  #prog{position:fixed;left:0;top:0;height:3px;background:linear-gradient(90deg,#14b877,#0a7a4c);width:0;transition:width .25s;z-index:10;}
-  .hint{position:fixed;right:2vw;bottom:1.4vh;font-size:1.3vh;color:#7fd7ac;opacity:.7;z-index:10;}
-  .pageno{position:fixed;left:2vw;bottom:1.4vh;font-size:1.4vh;color:#7fd7ac;opacity:.85;z-index:10;letter-spacing:.05em;}
+  body{
+    font-family:"京东朗正体","JDLANGZHENGTI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:#04150e; color:var(--ink); overflow:hidden;
+  }
+  #deck{position:fixed; inset:0;}
+  .slide{
+    position:absolute; inset:0; display:none;
+    flex-direction:column; padding:5.2vh 6vw 6vh;
+    background:#fff; opacity:0; transition:opacity .25s ease;
+  }
+  .slide.active{display:flex; opacity:1;}
+  .kicker{display:inline-flex; align-items:center; gap:10px; font-size:1.5vw; color:var(--green-d); font-weight:700; letter-spacing:.02em;}
+  .kicker::before{content:""; width:.5vw; height:2.2vw; background:var(--leaf); border-radius:2px;}
+  .htitle{font-size:3vw; font-weight:800; color:var(--ink); margin:.6vw 0 .2vw; line-height:1.15;}
+  .rule{height:3px; width:100%; background:linear-gradient(90deg,var(--leaf),transparent); margin:.4vw 0 1.3vw;}
+  .body{flex:1; display:flex; gap:2.4vw; min-height:0;}
+  .col{flex:1; min-width:0; display:flex; flex-direction:column; gap:1vw;}
+  ul{list-style:none; display:flex; flex-direction:column; gap:.85vw;}
+  li{position:relative; padding-left:1.8vw; font-size:1.5vw; line-height:1.45; color:var(--ink);}
+  li::before{content:""; position:absolute; left:.4vw; top:.65vw; width:.7vw; height:.7vw; background:var(--leaf); border-radius:50%;}
+  .sub{font-size:1.3vw; color:var(--gray); line-height:1.55;}
+  b,strong{color:var(--green-dd);}
+  .grow{display:flex; align-items:center; justify-content:center; min-height:0;}
+  img.shot{max-width:100%; max-height:100%; border-radius:12px; box-shadow:0 8px 30px rgba(7,90,56,.18); border:1px solid var(--line); object-fit:contain;}
+  .foot{position:absolute; left:6vw; right:6vw; bottom:2.2vh; display:flex; justify-content:space-between; align-items:center; font-size:1.1vw; color:var(--gray);}
+  .foot .brand{color:var(--green-d); font-weight:700;}
+  .progress{position:fixed; top:0; left:0; height:5px; background:var(--leaf); z-index:50; transition:width .25s;}
+  .cards{display:flex; gap:1.4vw; flex-wrap:wrap;}
+  .card{flex:1; min-width:12vw; background:var(--mint); border:1px solid var(--line); border-left:5px solid var(--leaf); border-radius:10px; padding:1.2vw 1.4vw;}
+  .card .n{font-size:2.4vw; font-weight:800; color:var(--green-d); line-height:1;}
+  .card .t{font-size:1.25vw; color:var(--gray); margin-top:.4vw;}
+  .tag{display:inline-block; background:var(--mint2); color:var(--green-dd); border-radius:999px; padding:.35vw 1vw; font-size:1.2vw; font-weight:600; margin:.25vw;}
+  .badge{display:inline-flex; align-items:center; gap:.5vw; background:linear-gradient(135deg,var(--leaf),var(--green-d)); color:#fff; padding:.6vw 1.3vw; border-radius:999px; font-size:1.5vw; font-weight:700; box-shadow:0 4px 14px rgba(15,157,99,.35);}
+  .fblock{background:var(--mint); border-radius:12px; padding:1.2vw 1.5vw; border:1px solid var(--line);}
+  .flabel{font-size:1.3vw; font-weight:800; color:var(--green-d); margin-bottom:.45vw;}
+  .pano{display:grid; grid-template-columns:repeat(4,1fr); gap:1.3vw; flex:1;}
+  .pano .box{background:var(--mint); border:1px solid var(--line); border-radius:12px; padding:1.2vw 1.3vw; display:flex; flex-direction:column;}
+  .pano .box h4{font-size:1.5vw; color:var(--green-dd); margin-bottom:.6vw; display:flex; align-items:center; gap:.5vw;}
+  .pano .box .it{font-size:1.1vw; color:var(--ink); line-height:1.7;}
+  /* cover */
+  #s1{padding:0; background:linear-gradient(120deg,#0a7a4c 0%,#0f9d63 55%,#14b877 100%); color:#fff; justify-content:center; overflow:hidden;}
+  #s1 .wrap{position:relative; z-index:2; padding:0 8vw;}
+  #s1 .logo{font-size:6vw; font-weight:800; letter-spacing:.02em; text-shadow:0 4px 24px rgba(0,0,0,.25);}
+  #s1 .plat{font-size:3vw; font-weight:700; margin-top:.4vw; opacity:.96;}
+  #s1 .line{width:26vw; height:4px; background:rgba(255,255,255,.7); margin:2.2vw 0 1.6vw; border-radius:2px;}
+  #s1 .desc{font-size:1.9vw; opacity:.95;}
+  #s1 .meta{margin-top:4vw; font-size:1.4vw; opacity:.85;}
+  /* qr slide */
+  .qrwrap{display:flex; align-items:center; gap:4vw; flex:1; justify-content:center;}
+  .qrwrap img{width:20vw; height:20vw; border-radius:16px; background:#fff; padding:1vw; box-shadow:0 10px 40px rgba(7,90,56,.25); object-fit:contain;}
+  .qrwrap .big{font-size:2.6vw; font-weight:800; color:var(--green-dd);}
+  .qrwrap .u{font-size:1.7vw; color:var(--green-d); margin-top:1vw; font-weight:700;}
+  .qrwrap .u2{font-size:1.35vw; color:var(--gray); margin-top:2vw;}
+  .hint{position:fixed; bottom:2.2vh; left:50%; transform:translateX(-50%); font-size:1vw; color:rgba(255,255,255,.5); z-index:40;}
+  .slide .hint{color:var(--line);}
 </style>
 </head>
 <body>
-<div id="prog"></div>
+<div class="progress" id="prog"></div>
 <div id="deck">
-  <section class="slide"><img src="img/slide-01.png" alt="第 1 页"></section>
-  <section class="slide"><img src="img/slide-02.png" alt="第 2 页"></section>
-  <section class="slide"><img src="img/slide-03.png" alt="第 3 页"></section>
-  <section class="slide"><img src="img/slide-04.png" alt="第 4 页"></section>
-  <section class="slide"><img src="img/slide-05.png" alt="第 5 页"></section>
-  <section class="slide"><img src="img/slide-06.png" alt="第 6 页"></section>
-  <section class="slide"><img src="img/slide-07.png" alt="第 7 页"></section>
-  <section class="slide"><img src="img/slide-08.png" alt="第 8 页"></section>
-  <section class="slide"><img src="img/slide-09.png" alt="第 9 页"></section>
-  <section class="slide"><img src="img/slide-10.png" alt="第 10 页"></section>
-  <section class="slide"><img src="img/slide-11.png" alt="第 11 页"></section>
-  <section class="slide"><img src="img/slide-12.png" alt="第 12 页"></section>
+
+  <!-- 1 封面 -->
+  <section class="slide" id="s1">
+    <div class="wrap">
+      <div class="logo">MedWork</div>
+      <div class="plat">智能平台</div>
+      <div class="line"></div>
+      <div class="desc">医疗人员的个人智能工作台 · 产品介绍</div>
+      <div class="meta">京东健康　·　2026</div>
+    </div>
+  </section>
+
+  <!-- 2 是什么 -->
+  <section class="slide" id="s2">
+    <div class="kicker">MedWork 是什么</div>
+    <div class="htitle">医疗版 Codex —— 医疗人员的个人工作台</div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col" style="flex:.9;">
+        <ul>
+          <li>面向医疗人员的<b>个人智能工作台</b>，覆盖 <b>PC 端 · 手机端 · 桌面端</b></li>
+          <li>可完成<b>复杂医疗任务</b>，而非单轮问答</li>
+          <li><b>可私有化 · 可商业化</b>部署</li>
+        </ul>
+        <div style="margin-top:1.2vw;"><span class="badge">医疗版的 Codex / Openclaw</span></div>
+      </div>
+      <div class="col grow"><img class="shot" src="img/s2_1.png" alt="MedWork 概览"></div>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台</span><span>02</span></div>
+  </section>
+
+  <!-- 3 底层能力 -->
+  <section class="slide" id="s3">
+    <div class="kicker">底层能力</div>
+    <div class="htitle">权威知识底座 × 顶级医院专病共建</div>
+    <div class="rule"></div>
+    <div class="cards">
+      <div class="card"><div class="n">4000w+</div><div class="t">医学文献</div></div>
+      <div class="card"><div class="n">4w+</div><div class="t">权威指南</div></div>
+      <div class="card"><div class="n">2w+</div><div class="t">药品说明书</div></div>
+      <div class="card"><div class="n">50+</div><div class="t">临床 / 科研常见医学任务</div></div>
+    </div>
+    <div style="margin:1.4vw 0 .6vw; font-size:1.4vw; font-weight:700; color:var(--green-d);">专病共建矩阵</div>
+    <div class="body" style="flex:0 0 auto;">
+      <ul style="flex-direction:row; flex-wrap:wrap; gap:.6vw 2.4vw;">
+        <li>临床营养 · 温附一 / 国家营养实验室</li>
+        <li>呼吸专病 · 广州呼吸研究院</li>
+        <li>消化道肿瘤 · 北京大学肿瘤医院</li>
+        <li>泌尿肿瘤 · 中山大学孙逸仙医院</li>
+        <li>心理专科 · 北京安定医院</li>
+        <li>乳腺肿瘤 · 江苏省人民医院</li>
+      </ul>
+    </div>
+    <div style="margin-top:1vw; display:flex; gap:1vw; align-items:center;">
+      <span class="tag">更多合作进行中…</span>
+      <span class="badge">MedBench 文本 &amp; 多模态榜单 Top1</span>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台</span><span>03</span></div>
+  </section>
+
+  <!-- 4 产品结构 -->
+  <section class="slide" id="s4">
+    <div class="kicker">MedWork 的产品结构</div>
+    <div class="htitle">四层结构：入口 · 交互 · 能力 · 空间</div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col" style="flex:.85;">
+        <ul>
+          <li><b>首页</b>：统一入口与任务推荐</li>
+          <li><b>主对话</b>：医生与平台进行自然语言交互</li>
+          <li><b>SkillHub</b>：承载循证、病历处理、MDT、科研等具体医疗能力</li>
+          <li><b>工作空间</b>：每个用户拥有独立的工作空间</li>
+        </ul>
+      </div>
+      <div class="col grow"><img class="shot" src="img/s4_1.png" alt="产品结构"></div>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台</span><span>04</span></div>
+  </section>
+
+  <!-- 5 医学问答 -->
+  <section class="slide" id="s5">
+    <div class="kicker">医疗能力 · 医学问答</div>
+    <div class="htitle">疾病 / 用药 / 检查 / 指南解读的智能问答</div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col" style="flex:.95;">
+        <div class="fblock">
+          <div class="flabel">功能介绍</div>
+          <div class="sub">提供疾病、症状、用药、检查、指南解读等医学问题的智能问答服务，提升医学信息获取效率。</div>
+        </div>
+        <div class="fblock">
+          <div class="flabel">功能要点</div>
+          <div class="sub"><b>输入</b>：文本、图片等常见患者状态信息（可接受图片类）<br><b>输出</b>：结构化医学回答 —— 核心结论、解释说明、风险提示、参考依据、下一步建议</div>
+        </div>
+        <div class="fblock">
+          <div class="flabel">应用场景</div>
+          <div class="sub">常规基础单轮问答，最基础的能力。</div>
+        </div>
+      </div>
+      <div class="col grow"><img class="shot" src="img/s5_1.png" alt="医学问答"></div>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台</span><span>05</span></div>
+  </section>
+
+  <!-- 6 循证检索 -->
+  <section class="slide" id="s6">
+    <div class="kicker">医疗能力 · 循证检索</div>
+    <div class="htitle">从指南 / 共识 / 说明书 / 文献快速取证</div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col" style="flex:.95;">
+        <div class="fblock">
+          <div class="flabel">功能介绍</div>
+          <div class="sub">面向临床决策，从指南、共识、药品说明书、医学文献等来源快速检索证据，并对<b>证据等级、适用人群、推荐强度</b>归纳总结。</div>
+        </div>
+        <div class="fblock">
+          <div class="flabel">功能要点</div>
+          <div class="sub"><b>输入</b>：临床问题或 PICO 问题<br><b>输出</b>：检索结果摘要、核心证据结论、推荐意见、证据来源</div>
+        </div>
+        <div class="fblock">
+          <div class="flabel">应用场景</div>
+          <div class="sub">文献检索、诊断等对循证来源有较高要求的场景。</div>
+        </div>
+      </div>
+      <div class="col grow" style="flex-direction:column; gap:1vw;">
+        <img class="shot" src="img/s6_1.png" alt="循证检索1" style="max-height:48%;">
+        <img class="shot" src="img/s6_2.png" alt="循证检索2" style="max-height:48%;">
+      </div>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台</span><span>06</span></div>
+  </section>
+
+  <!-- 7 MDT -->
+  <section class="slide" id="s7">
+    <div class="kicker">医疗能力 · AI-MDT</div>
+    <div class="htitle">多学科 AI 智能体自动会诊</div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col">
+        <div class="fblock">
+          <div class="flabel">功能介绍</div>
+          <div class="sub">AI 自动分析病情，发起<b>多学科 AI 智能体</b>讨论并总结，生成最终会诊建议。</div>
+        </div>
+        <ul style="margin-top:.6vw;">
+          <li><b>输入</b>：病历资料（基本病情、影像 / 病理结论、检验结果、既往治疗经过等）</li>
+          <li><b>输出</b>：标准化病例摘要、待讨论关键问题、分学科建议、会诊结论草案</li>
+          <li>支持<b>会前准备 · 会中记录 · 会后沉淀</b>，形成可复用 MDT 模板</li>
+          <li>应用：院内会诊前 AI 提供第二建议（<b>广附一落地中</b>）</li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台</span><span>07</span></div>
+  </section>
+
+  <!-- 8 病历书写 -->
+  <section class="slide" id="s8">
+    <div class="kicker">医疗能力 · 病历书写</div>
+    <div class="htitle">自然对话音频 → 结构化病情 + 辅诊建议</div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col" style="flex:.9;">
+        <div class="fblock">
+          <div class="flabel">功能介绍</div>
+          <div class="sub">通过医患自然对话音频整理病情资料，并出具初步诊疗建议。</div>
+        </div>
+        <ul style="margin-top:.4vw;">
+          <li><b>输入</b>：诊室录制的医患自然对话（音频记录）</li>
+          <li><b>输出</b>：患者病情结构化数据 + AI 基础诊疗建议</li>
+          <li>场景：门诊实时病情整理＆辅诊（<b>广附一落地中</b>）、互联网问诊实时 / 事后整理</li>
+        </ul>
+      </div>
+      <div class="col grow" style="flex-direction:column; gap:1vw;">
+        <img class="shot" src="img/s8_1.png" alt="病历书写1" style="max-height:48%;">
+        <img class="shot" src="img/s8_2.png" alt="病历书写2" style="max-height:48%;">
+      </div>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台</span><span>08</span></div>
+  </section>
+
+  <!-- 9 论文写作 -->
+  <section class="slide" id="s9">
+    <div class="kicker">科研能力 · 论文写作</div>
+    <div class="htitle">选题 → 综述 → 设计 → 数据 → 成稿一站式</div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col">
+        <div class="fblock">
+          <div class="flabel">功能介绍</div>
+          <div class="sub">提供医学论文选题、文献综述、研究设计、数据解读、论文写作的一站式服务，提升科研效率。</div>
+        </div>
+        <ul style="margin-top:.5vw;">
+          <li><b>输入</b>：研究方向、疾病领域、关键词、研究数据、投稿目标期刊</li>
+          <li><b>输出</b>：论文 PDF 及过程数据</li>
+          <li>场景：有数据的科研数据分析与论文写作</li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台</span><span>09</span></div>
+  </section>
+
+  <!-- 10 全景 -->
+  <section class="slide" id="s10">
+    <div class="kicker">更多功能全景</div>
+    <div class="htitle">院内服务 · 一站式科研闭环</div>
+    <div class="rule"></div>
+    <div class="pano">
+      <div class="box">
+        <h4>📋 医疗服务</h4>
+        <div class="it">循证检索<br>AI-MDT<br>病历文书<br>临床辅助决策<br>院后处置与风险识别<br>用药助手 · 营养治疗<br>影像解读 · 临床计算器<br>相似病历检索 · 诊断分析</div>
+      </div>
+      <div class="box">
+        <h4>📚 科研服务</h4>
+        <div class="it">领域跟踪<br>选题研究方案<br>数据清洗<br>统计分析<br>图表制作<br>论文撰写 · 综述撰写<br>模拟审稿 · 审稿回复<br>真实世界研究</div>
+      </div>
+      <div class="box">
+        <h4>🎯 数据服务</h4>
+        <div class="it">病历数据提取<br>病历汇总<br>科研数据提取</div>
+      </div>
+      <div class="box">
+        <h4>🛠️ 办公场景</h4>
+        <div class="it">PPT 制作<br>汇报材料<br>Excel 表格处理</div>
+      </div>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台</span><span>10</span></div>
+  </section>
+
+  <!-- 11 欢迎使用 -->
+  <section class="slide" id="s11">
+    <div class="kicker">欢迎使用</div>
+    <div class="htitle">立即体验 MedWork</div>
+    <div class="rule"></div>
+    <div class="qrwrap">
+      <div>
+        <div class="big">PC 访问</div>
+        <div class="u">medwork.jd.com</div>
+        <div class="u2">手机扫一扫 →<br>体验产品</div>
+      </div>
+      <img src="img/s11_1.png" alt="二维码">
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台</span><span>11</span></div>
+  </section>
+
 </div>
-<div class="pageno"><span id="pn">01</span> / 12</div>
 <div class="hint">← → / 空格 翻页　·　F 全屏</div>
+
 <script>
   const slides=[...document.querySelectorAll('.slide')];
   let i=0;
@@ -44,7 +324,6 @@
     i=Math.max(0,Math.min(slides.length-1,n));
     slides.forEach((s,k)=>s.classList.toggle('active',k===i));
     document.getElementById('prog').style.width=((i+1)/slides.length*100)+'%';
-    document.getElementById('pn').textContent=String(i+1).padStart(2,'0');
   }
   function next(){show(i+1);} function prev(){show(i-1);}
   document.addEventListener('keydown',e=>{
@@ -54,7 +333,10 @@
     else if(e.key==='End')show(slides.length-1);
     else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
   });
-  document.addEventListener('click',e=>{if(e.clientX<window.innerWidth*0.25)prev();else next();});
+  document.addEventListener('click',e=>{
+    if(e.target.closest('a'))return;
+    if(e.clientX<window.innerWidth*0.25)prev();else next();
+  });
   show(0);
 </script>
 </body>
