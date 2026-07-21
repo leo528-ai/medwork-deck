@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>如何优化 AI 产品 & 如何训练 AI 模型</title>
+<style>
+  :root{
+    --green:#0f9d63; --green-d:#0a7a4c; --green-dd:#075a38;
+    --leaf:#12a06b; --mint:#e8f6ef; --mint2:#d6efe2;
+    --ink:#1f2b26; --gray:#5b6b64; --line:#cfe6da;
+    --amber:#e08a1e; --amber-bg:#fdf3e2;
+    --red:#e0463c; --red-bg:#fceceb;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{font-family:"京东朗正体","JDLANGZHENGTI","PingFang SC","Microsoft YaHei",sans-serif; background:#04150e; color:var(--ink); overflow:hidden;}
+  #deck{position:fixed; inset:0;}
+  .slide{position:absolute; inset:0; display:none; flex-direction:column; padding:4.6vh 5.2vw 6vh; background:#fff; opacity:0; transition:opacity .25s ease; overflow:hidden;}
+  .slide.active{display:flex; opacity:1;}
+  .slide:not(#s1):not(#s45):not(#s2)::after{content:""; position:absolute; top:-9vw; right:-9vw; width:28vw; height:28vw; border-radius:50%; background:radial-gradient(circle, rgba(18,160,107,.09), transparent 68%); pointer-events:none; z-index:0;}
+  .slide>*{position:relative; z-index:1;}
+  .kicker{display:inline-flex; align-items:center; gap:.6vw; font-size:1.35vw; color:var(--green-d); font-weight:700; letter-spacing:.01em;}
+  .kicker::before{content:""; width:.55vw; height:2vw; background:linear-gradient(180deg,var(--leaf),var(--green-d)); border-radius:3px;}
+  .htitle{font-size:2.6vw; font-weight:800; color:var(--ink); margin:.5vw 0 .2vw; line-height:1.15; letter-spacing:-.01em;}
+  .rule{height:3px; width:100%; background:linear-gradient(90deg,var(--leaf) 0%,var(--leaf) 18%,var(--line) 18%,transparent 60%); margin:.3vw 0 1.1vw;}
+  /* content stage: vertically centered so no dead space */
+  .stage{flex:1; display:flex; flex-direction:column; justify-content:center; min-height:0; gap:.9vw;}
+  .lead{font-size:1.4vw; color:var(--ink); line-height:1.5;}
+  .lead b,b,strong{color:var(--green-dd);}
+  .sub{font-size:1.25vw; color:var(--gray); line-height:1.5;}
+  .concl{font-size:1.3vw; font-weight:700; color:var(--green-d); text-align:left; line-height:1.45; background:linear-gradient(90deg,var(--mint),#f4fcf8 85%); border-left:6px solid var(--leaf); border-radius:0 12px 12px 0; padding:.95vw 1.5vw; margin-top:.5vw; box-shadow:0 4px 16px rgba(7,90,56,.07); display:flex; align-items:center; gap:.7vw;}
+  .concl::before{content:"结论"; flex:none; font-size:.9vw; font-weight:800; color:#fff; background:var(--green-d); padding:.28vw .7vw; border-radius:999px; letter-spacing:.05em;}
+  .concl b{color:var(--green-dd);}
+  .src{font-size:.82vw; color:var(--gray); margin-top:.5vw;}
+  .foot{position:absolute; left:5.2vw; right:5.2vw; bottom:2vh; display:flex; justify-content:space-between; align-items:center; font-size:1vw; color:var(--gray);}
+  .foot .brand{color:var(--green-d); font-weight:700;}
+  .progress{position:fixed; top:0; left:0; height:5px; background:var(--leaf); z-index:50; transition:width .25s;}
+  /* duo comparison boxes */
+  .duo{display:flex; gap:1.3vw; margin:.4vw 0;}
+  .dbox{flex:1; border-radius:14px; padding:1.1vw 1.4vw; border:1px solid var(--line); box-shadow:0 6px 20px rgba(7,90,56,.07); position:relative; overflow:hidden;}
+  .dbox::before{content:""; position:absolute; top:0; left:0; width:100%; height:4px;}
+  .dbox h5{font-size:1.3vw; font-weight:800; margin-bottom:.5vw;}
+  .dbox.good{background:linear-gradient(180deg,#eef9f3,var(--mint));} .dbox.good h5{color:var(--green-d);} .dbox.good::before{background:linear-gradient(90deg,var(--leaf),var(--green-d));}
+  .dbox.bad{background:linear-gradient(180deg,#fef8ec,var(--amber-bg)); border-color:#f0d19a;} .dbox.bad h5{color:var(--amber);} .dbox.bad::before{background:linear-gradient(90deg,#f0b24a,var(--amber));}
+  .dbox ul{list-style:none; display:flex; flex-direction:column; gap:.35vw;}
+  .dbox li{position:relative; padding-left:1.1vw; font-size:1.05vw; line-height:1.4; color:var(--ink);}
+  .dbox li::before{content:""; position:absolute; left:.2vw; top:.6vw; width:.5vw; height:.5vw; border-radius:50%; background:var(--leaf);}
+  .dbox.bad li::before{background:var(--amber);}
+  /* steps */
+  .steps{display:flex; gap:1.1vw; margin:.5vw 0;}
+  .step{flex:1; background:linear-gradient(180deg,#eef9f3,var(--mint)); border:1px solid var(--line); border-top:4px solid var(--leaf); border-radius:14px; padding:1.1vw 1.3vw; box-shadow:0 6px 20px rgba(7,90,56,.07);}
+  .step .sn{display:inline-flex; width:1.9vw; height:1.9vw; border-radius:50%; background:linear-gradient(135deg,var(--leaf),var(--green-d)); color:#fff; font-weight:800; align-items:center; justify-content:center; font-size:1.05vw; box-shadow:0 3px 10px rgba(15,157,99,.3);}
+  .step h5{font-size:1.22vw; color:var(--green-dd); margin:.45vw 0;}
+  .step .sd{font-size:1vw; color:var(--gray); line-height:1.45;}
+  /* table */
+  .dtable{width:100%; border-collapse:separate; border-spacing:0; font-size:.96vw; border-radius:12px; overflow:hidden; box-shadow:0 6px 22px rgba(7,90,56,.09);}
+  .dtable th{background:linear-gradient(135deg,var(--green-d),var(--green-dd)); color:#fff; padding:.62vw .8vw; text-align:left; font-weight:700; line-height:1.3;}
+  .dtable td{border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:.56vw .8vw; color:var(--ink); vertical-align:top; line-height:1.42;}
+  .dtable td:first-child{border-left:1px solid var(--line);}
+  .dtable tr:nth-child(even) td{background:var(--mint);}
+  .dtable tr:last-child td{border-bottom:1px solid var(--line);}
+  .dtable .em{color:var(--green-dd); font-weight:700;}
+  /* flow chips */
+  .flowline{display:flex; align-items:center; gap:.5vw; flex-wrap:wrap; margin:.5vw 0;}
+  .fchip{background:linear-gradient(180deg,#eef9f3,var(--mint)); border:1px solid var(--line); border-radius:10px; padding:.6vw 1vw; font-size:1.05vw; font-weight:700; color:var(--green-dd); box-shadow:0 3px 10px rgba(7,90,56,.06);}
+  .fchip.hl{background:linear-gradient(135deg,var(--leaf),var(--green-d)); color:#fff; border:none; box-shadow:0 4px 14px rgba(15,157,99,.3);}
+  .farrow{color:var(--leaf); font-weight:800; font-size:1.2vw;}
+  /* rubric levels */
+  .lv{display:flex; gap:.6vw; align-items:flex-start; font-size:1.08vw; margin:.35vw 0; line-height:1.4;}
+  .dot{width:.8vw; height:.8vw; border-radius:50%; margin-top:.35vw; flex:none;}
+  .dot.g{background:var(--leaf);} .dot.y{background:var(--amber);} .dot.r{background:var(--red);} .dot.u{background:#9aa8a0;}
+  /* big statement */
+  .stmt{font-size:2.3vw; font-weight:800; color:var(--green-dd); text-align:center; line-height:1.4;}
+  .stmt.sm{font-size:1.6vw; color:var(--gray); font-weight:700; margin-top:1.2vw;}
+  .stmt .r{color:var(--red);}
+  .center{flex:1; display:flex; flex-direction:column; justify-content:center; gap:1vw;}
+  /* cards */
+  .cards{display:flex; gap:1.2vw; flex-wrap:wrap;}
+  .card{flex:1; min-width:11vw; background:var(--mint); border:1px solid var(--line); border-left:5px solid var(--leaf); border-radius:10px; padding:1vw 1.2vw;}
+  .card .n{font-size:1.7vw; font-weight:800; color:var(--green-d); line-height:1.1;}
+  .card .t{font-size:1.05vw; color:var(--gray); margin-top:.4vw; line-height:1.4;}
+  .badge{display:inline-flex; align-items:center; gap:.5vw; background:linear-gradient(135deg,var(--leaf),var(--green-d)); color:#fff; padding:.5vw 1.2vw; border-radius:999px; font-size:1.3vw; font-weight:700;}
+  ul.plain{list-style:none; display:flex; flex-direction:column; gap:.6vw;}
+  ul.plain li{position:relative; padding-left:1.6vw; font-size:1.3vw; line-height:1.45; color:var(--ink);}
+  ul.plain li::before{content:""; position:absolute; left:.35vw; top:.62vw; width:.65vw; height:.65vw; background:var(--leaf); border-radius:50%;}
+  .body{flex:1; display:flex; gap:2vw; min-height:0;}
+  .col{flex:1; min-width:0; display:flex; flex-direction:column; gap:.9vw;}
+  /* cover */
+  #s1{padding:0; background:radial-gradient(120% 120% at 15% 10%, #14b877 0%, #0f9d63 40%, #0a7a4c 78%, #075a38 100%); color:#fff; justify-content:center; overflow:hidden;}
+  #s1 .leaf{position:absolute; inset:0; background:url("assets/image1.png") left center/cover no-repeat; opacity:.32; mix-blend-mode:screen;}
+  #s1::before{content:""; position:absolute; top:-20vw; right:-14vw; width:52vw; height:52vw; border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,.16), transparent 62%);}
+  #s1::after{content:""; position:absolute; left:0; top:0; bottom:0; width:1.1vw; background:linear-gradient(180deg,#d8ffef,rgba(255,255,255,.4));}
+  #s1 .wrap{position:relative; z-index:2; padding:0 8vw;}
+  #s1 .k{display:inline-block; font-size:1.2vw; font-weight:700; letter-spacing:.06em; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.32); padding:.5vw 1.3vw; border-radius:999px; backdrop-filter:blur(2px);}
+  #s1 .logo{font-size:4.2vw; font-weight:800; margin:1.1vw 0 .3vw; text-shadow:0 6px 30px rgba(0,0,0,.28); letter-spacing:-.01em; white-space:nowrap;}
+  #s1 .plat{font-size:2vw; font-weight:700; opacity:.97;}
+  #s1 .ruler{width:32vw; height:2.4vw; margin:2vw 0 1.6vw; position:relative; background:repeating-linear-gradient(90deg, rgba(255,255,255,.9) 0 2px, transparent 2px 3.05vw); border-bottom:3px solid rgba(255,255,255,.9);}
+  #s1 .ruler span{position:absolute; left:0; bottom:-2.4vw; font-size:.95vw; opacity:.8; letter-spacing:.1em;}
+  #s1 .desc{font-size:1.5vw; opacity:.95; margin-top:2.2vw;}
+  #s1 .meta{margin-top:3.2vw; font-size:1.35vw; opacity:.95; display:inline-flex; align-items:center; gap:.8vw; font-weight:700;}
+  #s1 .meta::before{content:""; width:2.4vw; height:2px; background:rgba(255,255,255,.7);}
+  #s1 .cred{font-size:1.02vw; opacity:.8; margin-top:.7vw; line-height:1.55; max-width:66vw;}
+  /* closing */
+  #s45{background:linear-gradient(120deg,#075a38,#0f9d63); color:#fff; align-items:center; justify-content:center; text-align:center;}
+  #s45 .big{font-size:4.2vw; font-weight:800;}
+  #s45 .sm{font-size:1.8vw; margin-top:1.4vw; opacity:.95;}
+  #s45 .who{font-size:1.4vw; margin-top:2.6vw; background:rgba(255,255,255,.15); padding:.7vw 2vw; border-radius:999px;}
+  #s45 .creds{font-size:1.05vw; opacity:.85; margin-top:1.2vw; line-height:1.6; max-width:64vw;}
+  .hint{position:fixed; bottom:2vh; left:50%; transform:translateX(-50%); font-size:.95vw; color:rgba(255,255,255,.5); z-index:40;}
+  .slide .hint{color:var(--line);}
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+<div id="deck">
+
+  <!-- 1 Cover -->
+  <section class="slide" id="s1">
+    <div class="leaf"></div>
+    <div class="wrap">
+      <div class="k">京东健康 · AI 产品优化 · 模型训练方法论</div>
+      <div class="logo">如何优化 AI 产品 &amp; 如何训练 AI 模型</div>
+      <div class="plat">从「度量」到全链路优化：先把尺子做对，再谈优化</div>
+      <div class="ruler"><span>0　　5　　10　　15　　20　　25　　30</span></div>
+      <div class="desc">度量驱动的方法论为主线　·　例子贯穿 电商 / 医疗 / 通用搜</div>
+      <div class="meta">胡浩源　·　京东健康 AI &amp; 医疗大模型负责人</div>
+      <div class="cred">原蚂蚁金服 AI &amp; 金融大模型负责人 · 菜鸟供应链 AI 负责人 · SIGKDD 高级领域主席 · INFORMS Edelman Award 获得者</div>
+    </div>
+  </section>
+
+  <!-- 2 一句话主张 -->
+  <section class="slide" id="s2">
+    <div class="kicker">一句话主张</div>
+    <div class="rule"></div>
+    <div class="center">
+      <div class="stmt">模型怎么调、链路怎么改，方法千千万，<br>但重要的是先把「<span class="r">尺子</span>」做对。</div>
+      <div class="stmt sm">用户效用度量，是地图也是方向盘——<br>度量错了，优化越使劲，跑得越偏。</div>
+    </div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>02</span></div>
+  </section>
+
+  <!-- 3 最简单的 case -->
+  <section class="slide" id="s3">
+    <div class="kicker">从一个最简单的 case 说起</div>
+    <div class="htitle">用户心里在打分</div>
+    <div class="rule"></div>
+    <div class="lead">一个人在搜索框敲下：<b>"预算 3000 想给爸妈换手机，要屏幕大、续航久、好上手，选哪款？"</b></div>
+    <div class="duo" style="margin-top:.8vw;">
+      <div class="dbox good"><h5>他要的不是参数表</h5><div class="sub">而是和我处境一样的人（给老人买、图省心）真实买过什么、踩过哪些坑——借真实成交和评价，做自己的购买决策。</div></div>
+      <div class="dbox good"><h5>系统一两秒内做三件事</h5><div class="sub">召回真实成交 / 评价 / 导购笔记 → LLM 组织成贴合处境的推荐 → 呈现；他在心里默默打分，再用脚投票（下单 / 加购 / 退货）。</div></div>
+    </div>
+    <div class="concl">那个"分"我们看不见、没法直接优化——<b>只能用一个模型去近似它，这就是 Reward Model</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>03</span></div>
+  </section>
+
+  <!-- 4 三个核心问题 -->
+  <section class="slide" id="s4">
+    <div class="kicker">于是"优化 AI 产品"拆成三个核心问题</div>
+    <div class="rule"></div>
+    <div class="lead"><b>RM</b> 是我们对"用户那把尺子"的近似，它就是模型做 RL 时的优化导向。</div>
+    <div class="steps" style="margin-top:.8vw;">
+      <div class="step"><span class="sn">1</span><h5>尺子怎么刻</h5><div class="sd">人类对内容的效用 / 质量如何度量？维度、档位、怎么合成一个分。</div></div>
+      <div class="step"><span class="sn">2</span><h5>怎么教给模型</h5><div class="sd">模型如何拟合这把尺子（RM）？让计算机能替我们打出这个分。</div></div>
+      <div class="step"><span class="sn">3</span><h5>尺子对不对</h5><div class="sd">线上真实用户认不认？后验行为与 AB 回头校准这把尺子。</div></div>
+    </div>
+    <div class="concl">全篇就围绕这三件事：<b>刻尺子 → 教模型 → 用户验收</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>04</span></div>
+  </section>
+
+  <!-- 5 关键词全景 -->
+  <section class="slide" id="s5">
+    <div class="kicker">关键词全景</div>
+    <div class="htitle">服务链路（线上）× 优化链路（离线）</div>
+    <div class="rule"></div>
+    <div class="lead">一条 query 从左到右流过的每个在线节点，背后都对应一组离线手段。</div>
+    <div class="flowline" style="margin-top:1vw;">
+      <span class="fchip">提问</span><span class="farrow">→</span>
+      <span class="fchip">召回 / Search</span><span class="farrow">→</span>
+      <span class="fchip">LLM 生成</span><span class="farrow">→</span>
+      <span class="fchip">答案呈现</span><span class="farrow">→</span>
+      <span class="fchip">后验行为</span>
+    </div>
+    <table class="dtable" style="margin-top:1vw;">
+      <tr><th>召回 / Search</th><th>LLM 生成</th><th>答案呈现</th><th>后验行为</th></tr>
+      <tr><td>笔记源 / index<br>rerank / 软广过滤</td><td>RM 训练 / Rubric<br>prompt / SFT / RLHF</td><td>呈现 / 摘要<br>结构化策略</td><td>GroundTruth<br>Online AB / 校准</td></tr>
+    </table>
+    <div class="concl">服务链路决定用户此刻拿到的结果，优化链路决定<b>每个节点的天花板</b>；闭环 = 后验指标回头校准。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>05</span></div>
+  </section>
+
+  <!-- 6 两种链路形态 -->
+  <section class="slide" id="s6">
+    <div class="kicker">两种链路形态</div>
+    <div class="htitle">从「检索式」到「Agentic 循环式」</div>
+    <div class="rule"></div>
+    <div class="lead">同一个问题，链路从一次召回、线性走完，进化到<b>多轮调工具、自己判断够没够</b>。</div>
+    <div style="margin-top:1vw;">
+      <div class="sub" style="font-weight:700;color:var(--gray);">经典检索式</div>
+      <div class="flowline"><span class="fchip">提问</span><span class="farrow">→</span><span class="fchip">召回 / 检索</span><span class="farrow">→</span><span class="fchip">LLM 生成</span><span class="farrow">→</span><span class="fchip">答案呈现</span></div>
+    </div>
+    <div style="margin-top:.6vw;">
+      <div class="sub" style="font-weight:700;color:var(--green-d);">Agentic 循环式</div>
+      <div class="flowline"><span class="fchip hl">意图理解+规划</span><span class="farrow">→</span><span class="fchip hl">工具调用</span><span class="farrow">→</span><span class="fchip hl">观察结果</span><span class="farrow">→</span><span class="fchip hl">反思：够了？对了？</span><span class="farrow">↺</span><span class="fchip hl">验证 → 产出</span></div>
+    </div>
+    <div class="concl"><b>Reward Model</b> 也随之升级：从只给最终答案打分（结果奖励），到<b>每一轮都判断该不该继续（过程奖励）</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>06</span></div>
+  </section>
+
+  <!-- 7 通用五维度 -->
+  <section class="slide" id="s7">
+    <div class="kicker">效果度量是地图和方向盘（一）</div>
+    <div class="htitle">通用五维度</div>
+    <div class="rule"></div>
+    <div class="lead">人类怎么判断一个答案好不好——先有这五条，再谈场景化。</div>
+    <table class="dtable" style="margin-top:.8vw;">
+      <tr><th>维度</th><th>通俗讲</th><th>电商 badcase</th><th>医疗 badcase</th></tr>
+      <tr><td class="em">满足需求</td><td>有没有解决用户真正想问的</td><td>问"平价防晒"列一堆贵价大牌</td><td>问"能不能停药"只甩说明书、不给判断</td></tr>
+      <tr><td class="em">相关性</td><td>符不符合、有没有跑题过度延展</td><td>答问不符</td><td>问感冒用药答成疾病百科大全</td></tr>
+      <tr><td class="em">真实有据</td><td>符合事实、不过时、不编不缺</td><td>推荐已停产 / 改了配方的商品</td><td>给过期指南、剂量 / 单位写错</td></tr>
+      <tr><td class="em">信任感</td><td>用户信不信、推理连不连贯</td><td>一堆"网红同款""软广"</td><td>该建议就医却偏离、编造把握</td></tr>
+      <tr><td class="em">阅读体验</td><td>萝卜坑多不多、结构清不清晰</td><td>流水账，得自己扒出推荐</td><td>免责声明满屏，真正建议被淹没</td></tr>
+    </table>
+    <div class="concl">通用维度只是起点——真正的难点在<b>场景化、怎么刻画、怎么 merge</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>07</span></div>
+  </section>
+
+  <!-- 8 场景化 -->
+  <section class="slide" id="s8">
+    <div class="kicker">效果度量（二）· 场景化</div>
+    <div class="htitle">用户预期决定尺子怎么刻</div>
+    <div class="rule"></div>
+    <div class="lead">同一个答案，换个场景好坏完全不同——因为<b>用户的预期不一样</b>。</div>
+    <table class="dtable" style="margin-top:.8vw;">
+      <tr><th>场景</th><th>用户要的</th><th>独有维度</th><th>一票否决</th></tr>
+      <tr><td class="em">电商特购搜</td><td>买到适合自己的对的东西</td><td>适配（肤质 / 档位）</td><td>虚假评价、错价错参、推无货</td></tr>
+      <tr><td class="em">医疗问诊搜</td><td>安全的处置 + 该不该就医</td><td>安全性（红旗 abstain）</td><td>误导用药、漏红旗、超范围下结论</td></tr>
+      <tr><td class="em">通用知识搜</td><td>一个客观正确的事实</td><td>权威、无幻觉</td><td>编造把握、事实错误</td></tr>
+      <tr><td class="em">内容种草搜</td><td>灵感 + 同处境人的真实体验</td><td>真人真感、非软广</td><td>软广、摆拍造假</td></tr>
+    </table>
+    <div class="concl">没有"通用最优"，只有<b>场景最优</b>——脑中先有最优答案，才能做出超预期。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>08</span></div>
+  </section>
+
+  <!-- 9 四种方法 -->
+  <section class="slide" id="s9">
+    <div class="kicker">效果度量（三）· 怎么刻画一个维度</div>
+    <div class="htitle">四种方法</div>
+    <div class="rule"></div>
+    <div class="lead">关键看它有多<b>可稳定验证</b>，从易到难分四类。</div>
+    <table class="dtable" style="margin-top:.8vw;">
+      <tr><th>类型（易 → 难）</th><th>怎么打分</th><th>电商例子</th><th>医疗例子</th></tr>
+      <tr><td class="em">有明确答案</td><td>直接判定，量一下就知道</td><td>商品是否在售、价格数对不对</td><td>剂量 / 单位对不对、显禁忌清单</td></tr>
+      <tr><td class="em">线性对比</td><td>定滑 0–4 档，照标打分</td><td>商品成熟度</td><td>显示权威度（指南 / 共识）</td></tr>
+      <tr><td class="em">Rubric</td><td>拆多条 criteria，逐条判定</td><td>这类评分最不漂移</td><td>有没有超适用范围</td></tr>
+      <tr><td class="em">GSB</td><td>好 / 平 / 差两两对比，只比相对</td><td>哪版更让我想下单</td><td>哪版更让患者放心 / 敢遵医嘱</td></tr>
+    </table>
+    <div class="concl">度量定义不一定要走重流程：<b>一个有判断力的 PM + 一段 prompt</b>，就能产出 v0。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>09</span></div>
+  </section>
+
+  <!-- 10 Rubric -->
+  <section class="slide" id="s10">
+    <div class="kicker">Rubric 是什么</div>
+    <div class="htitle">维度 × 档位，不是一个抽象分</div>
+    <div class="rule"></div>
+    <div class="lead">把评判拆成<b>多条 criteria</b>，每条配一个明确判定档，而非拍一个抽象分。</div>
+    <div class="duo" style="margin-top:.8vw;">
+      <div class="dbox good"><h5>① 维度 = 该看哪几条（商品推荐）</h5>
+        <ul><li>是否按处境（肤质 / 机型 / 预算 / 尺码）匹配</li><li>是否基于真实销量 / 评价，而非刷单 / 软广</li><li>有没有避坑 / 适用边界（缺货、版本差异）</li><li>看完能直接下单，还是"自己再看看"</li></ul>
+      </div>
+      <div class="dbox good"><h5>② 档位 = 每条怎么判</h5>
+        <div class="lv"><span class="dot g"></span><b>Green：</b>完全符合，可采纳</div>
+        <div class="lv"><span class="dot y"></span><b>Yellow：</b>方向对，细节有瑕疵</div>
+        <div class="lv"><span class="dot r"></span><b>Red：</b>错误或有害，必须拦截</div>
+        <div class="lv"><span class="dot u"></span><b>Underconstrained：</b>信息不足，应主动说"不确定"</div>
+      </div>
+    </div>
+    <div class="sub" style="margin-top:.5vw;">换到医疗：criteria = 是否核对剂量 / 禁忌、有无漏红旗、是否提示就医、信息不足是否 abstain；档位同样 Green / Yellow / Red / Underconstrained。</div>
+    <div class="concl">维度 × 档位拼出<b>失败的坐标</b>：错在哪条、错到哪一档。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>10</span></div>
+  </section>
+
+  <!-- 11 GSB -->
+  <section class="slide" id="s11">
+    <div class="kicker">GSB 是没办法的办法</div>
+    <div class="htitle">能拆成 Rubric 的，尽量别停在 GSB</div>
+    <div class="rule"></div>
+    <div class="lead">GSB（好 / 平 / 差两两对比）只给整体偏好，<b>不告诉你好在哪、错在哪</b>——是最后才用的兜底。</div>
+    <div class="duo" style="margin-top:.8vw;">
+      <div class="dbox bad"><h5>为什么会卡在 GSB</h5>
+        <ul><li>大概率不是事情不可拆，是缺这个领域的专家</li><li>例："美"——只会说这个好看那个不好看</li><li>没人能说清标准，就只能两两对比</li></ul>
+      </div>
+      <div class="dbox good"><h5>有专家，再主观也能拆成 Rubric</h5>
+        <ul><li>真实专家总能给出 criteria：「美」美在哪</li><li>如：白底干净 / 45°斜角构图 / 留白比例…</li><li>每条再配 Green / Yellow / Red 档位</li></ul>
+      </div>
+    </div>
+    <div class="concl">想尽办法把 GSB 往 Rubric 转，是评测体系最重要的事之一——<b>GSB 只该是临时兜底，不是终点</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>11</span></div>
+  </section>
+
+  <!-- 12 多维 merge -->
+  <section class="slide" id="s12">
+    <div class="kicker">效果度量（四）· 多维 merge</div>
+    <div class="htitle">别用加权平均</div>
+    <div class="rule"></div>
+    <div class="lead">一条错误的建议，再流畅、结构再好，总分也<b>不该高</b>。</div>
+    <div class="steps" style="margin-top:.8vw;">
+      <div class="step"><span class="sn">1</span><h5>硬约束（一票否决）</h5><div class="sd">电商：刷单虚假好评、错价错参、推无货、停售品；医疗：误导用药、漏红旗、超范围下结论——分数直接压下去。</div></div>
+      <div class="step"><span class="sn">2</span><h5>场景调权</h5><div class="sd">电商抬真实评价 / 适配 / 性价比；医疗抬安全性 / 循证 / 就医提示；按品类 / 科室再微调权重。</div></div>
+      <div class="step"><span class="sn">3</span><h5>叠主观分</h5><div class="sd">丰富度、结构、表达、简洁——锦上添花，但永远在硬约束之后。</div></div>
+    </div>
+    <div class="concl">线性加权是最差的选择：<b>它会让"漂亮的错误"捞到高分</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>12</span></div>
+  </section>
+
+  <!-- 13 Failure Code -->
+  <section class="slide" id="s13">
+    <div class="kicker">Failure Code</div>
+    <div class="htitle">把"用户的不满"结构化</div>
+    <div class="rule"></div>
+    <div class="lead"><b>电商：</b>问"预算 3000 给爸妈换手机"却推一水儿"网红爆款"、还都是年轻人在用 → 软广未识别 + 人群未匹配。<br><b>医疗：</b>问"孩子发烧能吃这个药吗"没核对年龄 / 剂量 / 禁忌就给肯定答复 → 剂量未校验 + 该 abstain 未 abstain。</div>
+    <div class="duo" style="margin-top:.6vw;">
+      <div class="dbox bad"><h5>Code 是"现象"，不是"根因"</h5><div class="sub">"软广"的根因可能在召回（捞进商单）、prompt（没要求排广告）、或 RM（没有软广维度）——要再往下归因。</div></div>
+      <div class="dbox good"><h5>Code 的三个用处</h5><ul><li>组织评测集：用户眼里的问题解没解</li><li>组织训练集：专做对抗样本</li><li>做效果掉了：指标掉了哪个 Code 在作怪</li></ul></div>
+    </div>
+    <div class="concl">好 Code：<b>可观察、判定一致、与效果直接相关、能拿来训 RM</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>13</span></div>
+  </section>
+
+  <!-- 14 召回 -->
+  <section class="slide" id="s14">
+    <div class="kicker">召回 / Search</div>
+    <div class="htitle">答案的"原材料"，是效果的天花板</div>
+    <div class="rule"></div>
+    <div class="lead">典型 garbage in, garbage out——<b>召回上来的就不对，后面再强也救不回</b>。</div>
+    <div class="duo" style="margin-top:.8vw;">
+      <div class="dbox bad"><h5>失败模式</h5><ul><li>电商：召回刷单软广、人群不匹配、过期促销</li><li>医疗：召回过期指南、非权威网帖、个例当通则</li><li>只召一边倒好评，漏掉避坑帖 / 禁忌</li></ul></div>
+      <div class="dbox good"><h5>理想态 &amp; 离线手段</h5><ul><li>电商：真实 · 对人群 · 不过期 · 覆盖全</li><li>医疗：优先现行指南 / 共识 / 权威库</li><li>rerank 把最该被信任的排前面</li></ul></div>
+    </div>
+    <div class="concl">召<b>真实成交 / 真实评价 / 优质导购笔记</b>，而非刷单软文、无货链接、过期促销。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>14</span></div>
+  </section>
+
+  <!-- 15 LLM 生成 -->
+  <section class="slide" id="s15">
+    <div class="kicker">LLM 生成</div>
+    <div class="htitle">把多篇经验拧成决策建议，锚点是 Reward Model</div>
+    <div class="rule"></div>
+    <div class="duo" style="margin-top:.4vw;">
+      <div class="dbox good"><h5>这一步在干什么</h5><div class="sub">大模型拿用户问题 + 召回笔记，综合成一段贴合处境的建议——<b>谁适合、坑在哪、怎么选</b>。这是用户唯一直接看到的东西。</div></div>
+      <div class="dbox good"><h5>RM = 整个优化的"方向盘"</h5><div class="sub">RM 在很大程度上就是模型做 RL 时的 label：它给什么样的答案打高分，模型就往哪个方向长。</div></div>
+    </div>
+    <div class="concl">同样一批笔记，可以"帮你把决定做完"，也可以是<b>"正确的废话"</b>——一大半压在这一步。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>15</span></div>
+  </section>
+
+  <!-- 16 RM 训练数据 -->
+  <section class="slide" id="s16">
+    <div class="kicker">RM 训练数据</div>
+    <div class="htitle">把效果度量翻译成模型能学的样本</div>
+    <div class="rule"></div>
+    <table class="dtable" style="margin-top:.4vw;">
+      <tr><th>类型</th><th>怎么来</th><th>价值 &amp; 注意</th></tr>
+      <tr><td class="em">人工标注</td><td>高价值 case / 典型 badcase / AB diff / 仲裁</td><td>质不一定多，但必须干净</td></tr>
+      <tr><td class="em">Pairwise 偏好</td><td>A vs B 谁好 + 为什么</td><td>相对序比绝对分给力；多喂 hard negative</td></tr>
+      <tr><td class="em">大模型合成</td><td>M 模型多生成 N 条，再挑最好的</td><td>今天最重要的来源，但有系统性偏差</td></tr>
+      <tr><td class="em">Code 专项</td><td>某类 badcase 攒成专项集（如"软广未识别"）</td><td>让模型学会识别典型错误</td></tr>
+    </table>
+    <div class="concl">合成的坑：LLM 当裁判时偏爱长、偏爱结构化、对事实错误不敏感——<b>软广写得比真帖还"专业"，绝不能自产自销，必须独立校验</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>16</span></div>
+  </section>
+
+  <!-- 17 SFT→蒸馏→DPO→RL -->
+  <section class="slide" id="s17">
+    <div class="kicker">怎么把模型推向这把尺子</div>
+    <div class="htitle">SFT → 蒸馏 → DPO → RL</div>
+    <div class="rule"></div>
+    <div class="lead">一条主线：从模仿标准答案，到模仿强教师，到对齐"为什么 A 比 B 好"，再到自己探索更优。</div>
+    <table class="dtable" style="margin-top:.6vw;">
+      <tr><th>方式</th><th>怎么调</th><th>优点</th><th>缺点 / 坑</th></tr>
+      <tr><td class="em">SFT 监督微调</td><td>模仿标准答案</td><td>简单、快、好落地</td><td>易背题、过时会带偏、不会自我探索</td></tr>
+      <tr><td class="em">蒸馏</td><td>师徒 Best-of-N，学优质输出</td><td>高效学好行为</td><td>天花板 ≈ 教师</td></tr>
+      <tr><td class="em">DPO 直接偏好优化</td><td>用 pairwise（A:B）优化，隐式 RM</td><td>工程简单、稳、省一个 RM</td><td>需两两、OOD 泛化差、偏爱长</td></tr>
+      <tr><td class="em">RL（RLHF/PPO/GRPO）</td><td>用 RM 做 reward，在线探索代替背题</td><td>探索、对齐、追配多探</td><td>贵、不稳、reward hacking</td></tr>
+    </table>
+    <div class="sub" style="margin-top:.5vw;">训练还有什么：RLAIF（AI 反馈替代人标）、过程奖励 PRM（给推理每一步打分）、KTO / ORPO（偏好优化变体）、课程学习 / hard example 重采样。</div>
+    <div class="src">来源：DPO arXiv:2305.18290 · 蒸馏 Hinton arXiv:1503.02531 · SFT vs RL 泛化 arXiv:2501.17161 · Reward hacking arXiv:2402.09345</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>17</span></div>
+  </section>
+
+  <!-- 18 训练管线 -->
+  <section class="slide" id="s18">
+    <div class="kicker">训练管线</div>
+    <div class="htitle">先分清基模「有没有」，再决定怎么训</div>
+    <div class="rule"></div>
+    <div class="lead">别一上来就训。先问：这个能力<b>基模到底有没有</b>——答案决定用哪种训练方式。</div>
+    <div class="steps" style="margin-top:.8vw;">
+      <div class="step"><span class="sn">1</span><h5>过滤已具备</h5><div class="sd">基模已经会的别花训练预算重看——先测出来，从训练集里踢掉。</div></div>
+      <div class="step"><span class="sn">2</span><h5>高采样探边界</h5><div class="sd">对剩下的大量采样（pass@k / Best-of-N）：能到就到 → 只是激发 / 稳定差；怎么都不到 → 真不具备。</div></div>
+      <div class="step"><span class="sn">3</span><h5>分而治之</h5><div class="sd">激发 / 稳定问题 → RL 直接拉齐；真不具备 → SFT 冷启动注入种子，再交给 RL。</div></div>
+    </div>
+    <div class="concl">SFT 只用于 cold start：<b>除冷启动外不做 SFT</b>——SFT 偏记忆、会侵蚀基模已有泛化，提升与稳定都交给 RL。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>18</span></div>
+  </section>
+
+  <!-- 19 模仿家族 -->
+  <section class="slide" id="s19">
+    <div class="kicker">模仿家族</div>
+    <div class="htitle">SFT · 蒸馏 · LoRA —— 原理、关键参数、怎么调</div>
+    <div class="rule"></div>
+    <div class="lead">都是模仿已有答案的范式：快、稳、可控，但天花板 ≈ 被模仿对象，主要用来<b>冷启动</b>。</div>
+    <table class="dtable" style="margin-top:.6vw;">
+      <tr><th>方式</th><th>原理（一句话）</th><th>最重要参数 · 经验值</th><th>调大 / 调小的影响</th></tr>
+      <tr><td class="em">SFT 监督微调</td><td>直接模仿高质量答案</td><td>LR 1e-5~2e-5，轮数 1~3</td><td>LR 高遗忘 / 漂移；轮数多记忆、否泛化</td></tr>
+      <tr><td class="em">蒸馏</td><td>学教师的输出（序列级 KD / 软标签）</td><td>温度 T，教师质量</td><td>T 高学更近的分布；天花板 ≈ 教师</td></tr>
+      <tr><td class="em">LoRA 低秩微调</td><td>冻结主干，只训低秩增量 ΔW≈BA</td><td>秩 r=8~64，α≈2r，LR 1e-4~3e-4</td><td>r 大 → 更多任务但易过拟合；α/r 控更新幅度</td></tr>
+    </table>
+    <div class="sub" style="margin-top:.5vw;">QLoRA = 4-bit 量化基座 + LoRA，单卡可训；LoRA 适配器可热插拔做多任务，但极复杂能力仍需全参训练。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>19</span></div>
+  </section>
+
+  <!-- 20 硬蒸馏 -->
+  <section class="slide" id="s20">
+    <div class="kicker">硬蒸馏</div>
+    <div class="htitle">一步拿到顶级能力，代价是打崩原生推理——不推荐裸用</div>
+    <div class="rule"></div>
+    <div class="lead">把 SOTA 老师模型（或多模型投票）的"推理 → 结果"整段拽出来，直接 SFT 进基模。</div>
+    <div class="duo" style="margin-top:.5vw;">
+      <div class="dbox good"><h5>好处</h5><ul><li>一步到位：瞬间接近老师的顶级能力</li><li>工程极简、见效最快</li></ul></div>
+      <div class="dbox bad"><h5>坏处（为什么不推荐裸用）</h5><ul><li>强灌老师 token，基模原生推理被打崩</li><li>学到"形"丢了"神"，OOD 一塌</li><li>后续 RL 也难救</li></ul></div>
+    </div>
+    <div class="sub" style="margin-top:.5vw;"><b>怎么既拿能力又保住推理？</b>三条伤害更小的路径：① 少量 SFT 做 cold start + RL 激发（RL 本质是把 pass@k 拉成 pass@1）；② 自补 CoT：让待训基模用自己的推理方式补链，而非老师的；③ 两者结合：cold start 起步 → 自采样 + 自补 CoT → RL 精修，全程少灌老师原始 token。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>20</span></div>
+  </section>
+
+  <!-- 21 OPD -->
+  <section class="slide" id="s21">
+    <div class="kicker">On-Policy 蒸馏（OPD）</div>
+    <div class="htitle">卡在 SFT 和 RL 中间的第三条路</div>
+    <div class="rule"></div>
+    <div class="lead">让学生先按自己策略生成轨迹，教师在学生<b>真实会到达的状态</b>上给稠密反馈——纠正的正好是它自己真犯错的地方。</div>
+    <div class="duo" style="margin-top:.5vw;">
+      <div class="dbox good"><h5>定位：模仿与 RL 的中间层</h5><ul><li>比 SFT 更贴近推理时真实分布（学自己的轨迹）</li><li>比 RL 的稀疏 outcome reward 给得更稠密（逐 token 反馈）</li></ul></div>
+      <div class="dbox good"><h5>正好补上「硬蒸馏崩推理」</h5><ul><li>硬蒸馏：在教师理想路径上学 → 打崩原生推理</li><li>OPD：在学生自己轨迹上学 → 保住推理方式</li><li>即上页「保留推理」的正式范式</li></ul></div>
+    </div>
+    <div class="concl">工业拐点（Qwen3）：同样从 8B checkpoint 出发，OPD 在数学 / 代码上<b>优于直接 RL，且 GPU 小时约只要 1/10</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>21</span></div>
+  </section>
+
+  <!-- 22 OPD 时间线 -->
+  <section class="slide" id="s22">
+    <div class="kicker">OPD 全景时间线（2023 → 2026）</div>
+    <div class="htitle">从奠基到系统化</div>
+    <div class="rule"></div>
+    <table class="dtable" style="margin-top:.4vw;">
+      <tr><th>阶段</th><th>关键进展</th><th>代表工作</th></tr>
+      <tr><td class="em">2023 · 范式奠基</td><td>立起 on-policy 蒸馏范式</td><td>GKD、MiniLLM</td></tr>
+      <tr><td class="em">2024 · 目标函数进化</td><td>打磨 KL 选法（forward/reverse/skewed）怎么选才不发散</td><td>DistiLLM</td></tr>
+      <tr><td class="em">2025 · 工业化配方</td><td>Qwen3 第一次写成正式配方（8B，1/10 GPU 小时）</td><td>Qwen3 报告、AlignDistil</td></tr>
+      <tr><td class="em">2026H1 · 角色扩展</td><td>多物模型整合 / 自蒸馏 / 多模态 / prefix-only 降到几十分之一</td><td>MoPD、Video-OPD、OPCD</td></tr>
+      <tr><td class="em">2026H1 · 理论+系统</td><td>成败两条件；后验监督衰减、可信 region、跨 tokenizer、异步容旧</td><td>Rethinking / Lightning OPD</td></tr>
+    </table>
+    <div class="concl">成败两条件（Rethinking OPD）：<b>① 师生思维模式要兼容；② 教师必须真带来学生没见过的新能力</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>22</span></div>
+  </section>
+
+  <!-- 23 OPD 要点 -->
+  <section class="slide" id="s23">
+    <div class="kicker">OPD 最该记的几点 + 入门路线</div>
+    <div class="rule"></div>
+    <div class="duo" style="margin-top:.4vw;">
+      <div class="dbox good"><h5>六个要点速览</h5><ul>
+        <li>定位：监督比 outcome reward 稠密、比 SFT 更近真实状态</li>
+        <li>工业拐点：8B 同起点，胜直接 RL、GPU 约 1/10</li>
+        <li>成败两条件：思维兼容 + 教师带来新能力</li>
+        <li>选择性监督：前 30% token 含近全部有效信号，只学前缀 FLOP 降到 1/2~1/47</li>
+        <li>不必白盒：拿不到 teacher logits 也能蒸（GAD→ROPD→OmniOPD）</li>
+        <li>可扩自蒸馏 / 多模态：无需大教师也成，扩到 vision/video/agent</li>
+      </ul></div>
+      <div class="dbox good"><h5>入门路线</h5><ul>
+        <li>GKD + MiniLLM 建直觉</li>
+        <li>Qwen3 看真实流水线的位置</li>
+        <li>Rethinking + Lightning OPD：连「为什么有效」与「怎么降本」</li>
+        <li>两篇综述收口（分场景框架 + 开放问题）</li>
+      </ul></div>
+    </div>
+    <div class="src">开放问题：学生偏离教师后，哪些后段监督仍有行动价值。来源：On-Policy 蒸馏训练全景综述（Vincent · AIGC），含 38 篇 arxiv，本地取 OPD-综述.md。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>23</span></div>
+  </section>
+
+  <!-- 24 离线偏好优化 -->
+  <section class="slide" id="s24">
+    <div class="kicker">离线偏好优化（off-policy）</div>
+    <div class="htitle">拿现成偏好数据，稳而省</div>
+    <div class="rule"></div>
+    <div class="lead">不在线采样，直接拿固定的 A&gt;B 偏好对优化——工程最简单、最稳，适合<b>冷启动后快速对齐</b>。</div>
+    <table class="dtable" style="margin-top:.5vw;">
+      <tr><th>方法</th><th>一句话</th><th>关键参数 · 经验值</th><th>影响</th></tr>
+      <tr><td class="em">DPO</td><td>用 A&gt;B 对直接优化，隐式 RM</td><td>β=0.1（0.01~0.5）；LR 5e-7~1e-6</td><td>β 小 → 偏离参考远、易退化；大 → 几乎不学</td></tr>
+      <tr><td class="em">IPO</td><td>平方损失替 logsigmoid，缓过拟</td><td>β</td><td>缓 DPO 对偏好对的过拟合</td></tr>
+      <tr><td class="em">KTO</td><td>用单条好 / 坏（点考），无需成对</td><td>λ（偏离项权重）</td><td>数据易获得（不必配对）</td></tr>
+      <tr><td class="em">ORPO</td><td>无需参考模型，SFT + 赔率比一步到位</td><td>λ（偏好项权重）</td><td>省一个参考模型；λ 调偏好强度</td></tr>
+      <tr><td class="em">SimPO</td><td>无参考模型、长度归一奖励</td><td>β, γ（margin）</td><td>省参考模型；γ 控正负样本间隔</td></tr>
+    </table>
+    <div class="concl">共性：<b>省、稳、好部署</b>；但只学得到数据里见过的，OOD 泛化弱、不会探索。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>24</span></div>
+  </section>
+
+  <!-- 25 在线 RL -->
+  <section class="slide" id="s25">
+    <div class="kicker">在线 RL（on-policy）</div>
+    <div class="htitle">自己采样、自己迭代，泛化最强也最贵</div>
+    <div class="rule"></div>
+    <div class="lead">用 RM 当奖励，模型自己生成、自己评分、自己改——<b>能探索出数据外的更优解，但贵且不稳</b>。</div>
+    <table class="dtable" style="margin-top:.5vw;">
+      <tr><th>方法</th><th>一句话</th><th>关键参数 · 经验值</th><th>影响</th></tr>
+      <tr><td class="em">PPO</td><td>actor + critic，裁剪式更新</td><td>clip ε≈0.2；KL 系数；GAE λ≈0.95</td><td>ε 大 → 不稳；KL 小 → reward hacking；大 → 学不动</td></tr>
+      <tr><td class="em">GRPO</td><td>砍掉 critic，组内相对优秀</td><td>组大小 G=8~64；KL β</td><td>省一个价值网络、天然稳</td></tr>
+      <tr><td class="em">RLOO</td><td>REINFORCE + 留一基线</td><td>样本数 k；学习率</td><td>简单省显存，小 k 波动</td></tr>
+      <tr><td class="em">REINFORCE++</td><td>REINFORCE + PPO 技巧（KL / 归一 / 裁剪）</td><td>KL 系数；优势归一化</td><td>比 GRPO 更稳，稳定一致</td></tr>
+    </table>
+    <div class="concl">共性：探索强、泛化强；但在线采样贵、易不稳、会 reward hacking——<b>KL 是安全带</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>25</span></div>
+  </section>
+
+  <!-- 26 GRPO -->
+  <section class="slide" id="s26">
+    <div class="kicker">GRPO</div>
+    <div class="htitle">用「一组答案互相比」当基线——便宜、稳、为推理而生</div>
+    <div class="rule"></div>
+    <div class="lead">为什么这么火：省掉和策略一样大的价值网络，显存腰斩；<b>可验证奖励 + GRPO = DeepSeek-R1 的推理配方</b>。</div>
+    <div class="steps" style="margin-top:.6vw;">
+      <div class="step"><span class="sn">1</span><h5>原理</h5><div class="sd">同一道题采一组 G 个答案，用组内奖励均值当基线：Â_i =（r_i − mean(r)）/ std(r)；省掉 PPO 的 critic。</div></div>
+      <div class="step"><span class="sn">2</span><h5>关键参数</h5><div class="sd">组大小 G=8~64；KL 系数 β 是安全带；clip ε；采样温度。</div></div>
+      <div class="step"><span class="sn">3</span><h5>最佳实践</h5><div class="sd">组内归一化奖励；奖励可验证（数学 / 代码）最看；G 大 → 稳但贵。</div></div>
+    </div>
+    <div class="concl">一句话：把"绝对打分"换成<b>"组内相对名次"</b>，省一个网络、天然稳，特别吃可验证奖励。</div>
+    <div class="src">来源：GRPO / DeepSeekMath arXiv:2402.03300 · DeepSeek-R1 arXiv:2501.12948</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>26</span></div>
+  </section>
+
+  <!-- 27 怎么选 -->
+  <section class="slide" id="s27">
+    <div class="kicker">怎么选 + 三个最该拧的旋钮</div>
+    <div class="rule"></div>
+    <div class="lead">一条决策线：<b>冷启动 → 离线对齐 → 在线精修</b>；难点永远在离参考多远、探索多少、学多快。</div>
+    <div class="duo" style="margin-top:.6vw;">
+      <div class="dbox good"><h5>off-policy · 离线</h5><ul><li>数据固定，不在线采样</li><li>省、稳、易部署</li><li>短板：OOD 弱、不探索</li><li>用在：冷启动后快速对齐</li></ul></div>
+      <div class="dbox bad"><h5>on-policy · 在线</h5><ul><li>自采样，RM 当奖励</li><li>探索强、泛化强</li><li>短板：贵、不稳、会 hack</li><li>用在：要超越数据的精修</li></ul></div>
+    </div>
+    <div class="concl">三个旋钮：<b>① KL/β（离参考多远）② 探索量（组大小 / 采样数）③ 学习率</b>——先动 KL，再动探索，最后调 LR。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>27</span></div>
+  </section>
+
+  <!-- 28 Agentic RL -->
+  <section class="slide" id="s28">
+    <div class="kicker">Agentic RL</div>
+    <div class="htitle">把 RL 从「单轮回答」搬到「多步行动的轨迹」</div>
+    <div class="rule"></div>
+    <div class="lead">单轮 RL 优化这次答得好不好；Agentic RL 优化在能动手的环境里，一整条「观察 → 思考 → 调工具 → 再决策」的轨迹能不能<b>把事做成</b>。</div>
+    <div class="duo" style="margin-top:.5vw;">
+      <div class="dbox good"><h5>和单轮 RL 差在哪</h5><ul><li>优化对象：单条 response → 多轮 episode</li><li>奖励：即时回答 → 任务好坏（稀疏、超延）</li><li>难点：长程 credit assignment（哪步致成 / 坏）</li><li>配置：cold start（先 SFT 学工具格式）+ GRPO/PPO</li></ul></div>
+      <div class="dbox good"><h5>奖励从哪来（两类）</h5><ul><li>可验证奖励 RLVR：code / math / 检索有奖对齐</li><li>Rubric / PRM 过程分：医疗问诊等无唯一答案，拾中间步打分</li><li>即「打过程分」在 agent 场景的形态</li></ul></div>
+    </div>
+    <div class="flowline"><span class="fchip hl">观察</span><span class="farrow">→</span><span class="fchip hl">思考</span><span class="farrow">→</span><span class="fchip hl">调工具</span><span class="farrow">→</span><span class="fchip hl">环境反馈</span><span class="farrow">→</span><span class="fchip hl">任务结果</span></div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>28</span></div>
+  </section>
+
+  <!-- 29 PE -->
+  <section class="slide" id="s29">
+    <div class="kicker">训练之外的轻杠杆（一）· PE 优化</div>
+    <div class="htitle">不动权重，最快换行为</div>
+    <div class="rule"></div>
+    <div class="lead">同一个模型，只改提示词就能换行为——<b>零训练、分钟级上线、随时回滚</b>。</div>
+    <div class="steps" style="margin-top:.6vw;">
+      <div class="step"><span class="sn">1</span><h5>改什么</h5><div class="sd">System prompt：把 Rubric 维度写成硬指令；Few-shot：喂 badcase 的正确做法；输出格式：先结论后依据。</div></div>
+      <div class="step"><span class="sn">2</span><h5>例子</h5><div class="sd">电商：先判软广，刷单评价不作推荐依据。医疗（Medprompt）：动态 few-shot + 自生成 CoT + 选项乱序集成，把通用模型在 MedQA 推到 90%。</div></div>
+      <div class="step"><span class="sn">3</span><h5>边界 / 坑</h5><div class="sd">prompt 越长越贵、越不稳；知识没沉进权重，模型没真变强；易过拟合，要与 RM 对齐。</div></div>
+    </div>
+    <div class="concl">PE 是最验证"尺子怎么打"的手段：<b>先用 prompt 试方向，再决定要不要训进模型</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>29</span></div>
+  </section>
+
+  <!-- 30 PE 收口 -->
+  <section class="slide" id="s30">
+    <div class="kicker">PE 激发出来的能力怎么收口</div>
+    <div class="htitle">优先 RL/OPD，别默认 SFT</div>
+    <div class="rule"></div>
+    <div class="lead">PE 能稳定激发 = 能力基模里本来就有（latent）。那是"让触发更可靠"的问题，不是「装能力」——<b>用 SFT 烙印就容易训死</b>。</div>
+    <div class="steps" style="margin-top:.5vw;">
+      <div class="step"><span class="sn">1</span><h5>先问：要进权重吗</h5><div class="sd">是流程 / 格式 / 工具 → 做成 Skill / 工具，别训；行为活在权重外，零训死、可热插拔。</div></div>
+      <div class="step"><span class="sn">2</span><h5>放大已有能力：激发类</h5><div class="sd">RL（GRPO/PPO+rubric）：优化奖励不克隆 token，保泛化；OPD：学自己轨迹；自蒸馏：留对的喂回，全程留自分布。</div></div>
+      <div class="step"><span class="sn">3</span><h5>真要 SFT：别训死</h5><div class="sd">只当 cold start，随后 RL/OPD 捞泛化；LoRA：冻主干、不覆盖；混 replay、LR 低、轮数 1~2。</div></div>
+    </div>
+    <div class="concl">收口：PE 试出来了 → 走<b>激发（RL/OPD/小开关）</b>，不走烙印（SFT）；SFT 只留给基模确实不会、RL 又一直做不对的硬骨头。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>30</span></div>
+  </section>
+
+  <!-- 31 Skill -->
+  <section class="slide" id="s31">
+    <div class="kicker">训练之外的轻杠杆（二）· Skill 优化</div>
+    <div class="htitle">把专家流程打成能力包</div>
+    <div class="rule"></div>
+    <div class="lead">比 PE 更进一步：把"某类任务该怎么一步步做"打包成<b>可复用、可版本管理、按需加载</b>的模块。</div>
+    <div class="duo" style="margin-top:.6vw;">
+      <div class="dbox bad"><h5>PE · 单条指令的临时改写</h5><ul><li>改一句 prompt，解一类小问题</li><li>难沉淀、难复用、难组合</li><li>复杂多步流程一塞就乱</li></ul></div>
+      <div class="dbox good"><h5>Skill · 结构化的能力单元</h5><ul><li>SOP + 工具 + 模板打成一包</li><li>渐进式加载，用到才进上下文</li><li>是 Agent 在循环里随手就调的能力</li></ul></div>
+    </div>
+    <div class="concl">医疗（MedAgents / AMIE）：多专家会诊 / 多步问诊——分诊 → 鉴别诊断 → 管理推理；电商"导购选品 skill"：处境抽取 + 真实评价召回 + 适配打分 + 避坑清单。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>31</span></div>
+  </section>
+
+  <!-- 32 Harness 升级一 -->
+  <section class="slide" id="s32">
+    <div class="kicker">Harness 升级（一）</div>
+    <div class="htitle">从「写死的 workflow」到「模型自主调 skill」</div>
+    <div class="rule"></div>
+    <div class="lead">Harness = 智能体的运行骨架。升级的本质：把流程控制权<b>从开发者写死的编排，交回给模型自己决策</b>。</div>
+    <div class="duo" style="margin-top:.6vw;">
+      <div class="dbox bad"><h5>旧 · Workflow 编排</h5><ul><li>把任务拆成固定有向图 A→B→C 写死</li><li>每步调哪个工具、什么顺序，代码里钉死</li><li>模型只在格子里填空，不决定走向</li><li>加一种情况 = 改图、加分支、回归测试</li></ul></div>
+      <div class="dbox good"><h5>新 · Skill 化 Harness</h5><ul><li>能力打成一个个 skill 包（SOP + 工具 + 模板）</li><li>Harness 只给一圈 think-act-observe 循环</li><li>模型自己判断调哪个 skill、调几次、何时停</li><li>加能力 = 丢一个新 skill 进去，不动主干</li></ul></div>
+    </div>
+    <div class="concl">一句话：workflow 是"编导演"，<b>skill 化 harness 是"给演员剧本库，让他自己演"</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>32</span></div>
+  </section>
+
+  <!-- 33 Harness 升级二 -->
+  <section class="slide" id="s33">
+    <div class="kicker">Harness 升级（二）· 优劣势权衡</div>
+    <div class="htitle">升级到底换来什么</div>
+    <div class="rule"></div>
+    <div class="lead">不是 workflow 一无是处——它可控、可预测；但业务一复杂，写死的编排就<b>脆、不泛化、组合爆炸</b>。</div>
+    <div class="duo" style="margin-top:.5vw;">
+      <div class="dbox bad"><h5>Workflow 优劣</h5><ul><li>＋路径确定、好调试、好兜底、行为可审计</li><li>－每个新场景都要重写一遍</li><li>－分支越加越乱，改一处动全身</li><li>－撞上没到的情况直接抓瞎</li></ul></div>
+      <div class="dbox good"><h5>Skill 化 Harness 优劣</h5><ul><li>＋能力可组合，新场景已有 skill 拼</li><li>＋随基模变强自然涨，不重复主干</li><li>＋渐进加载，省上下文</li><li>－吃基模能力，弱模型乱调；路径不定，兜底更难</li></ul></div>
+    </div>
+    <div class="concl">升级换来的：<b>① 加能力 = 加 skill，边际成本趋零；② 主干稳定、能力解耦；③ 把决策权交给越来越强的模型，吃基模红利</b>。落地：高风险 / 强合规环节仍保留 workflow 护栏，两者混用。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>33</span></div>
+  </section>
+
+  <!-- 34 知识层 -->
+  <section class="slide" id="s34">
+    <div class="kicker">训练之外的轻杠杆（三）· 知识层</div>
+    <div class="htitle">给 Agent 一个「活的 wiki」</div>
+    <div class="rule"></div>
+    <div class="lead">不训练、不改 prompt——把知识沉成 markdown 文件库，让 Agent <b>自己读、自己改、自己连</b>。</div>
+    <div class="duo" style="margin-top:.6vw;">
+      <div class="dbox bad"><h5>RAG · 查询时拼</h5><ul><li>每次从原始文档切片召回</li><li>反复读同样的事实</li><li>无沉淀、易出错、费 token</li></ul></div>
+      <div class="dbox good"><h5>LLM Wiki · 预先合成</h5><ul><li>概念 = 1 个 md 文件，互相链接成图</li><li>Agent 读 / 改 / 连成"活的记忆"</li><li>合成提前做，省 token、更准</li></ul></div>
+    </div>
+    <div class="concl">Google 把它标准化为 <b>OKF（Open Knowledge Format，2026-06）</b>：md 目录 + YAML frontmatter（唯一必填 type，余 title/description/resource/tags/timestamp）+ index.md / log.md。</div>
+    <div class="src">同类思路：Karpathy「LLM Wiki」gist · Obsidian vault · AGENTS.md / CLAUDE.md 约定文件。来源：Google Cloud, Introducing the Open Knowledge Format, 2026-06-13。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>34</span></div>
+  </section>
+
+  <!-- 35 记忆系统 -->
+  <section class="slide" id="s35">
+    <div class="kicker">训练之外的轻杠杆（四）· 记忆系统优化</div>
+    <div class="htitle">让 Agent 自己沉淀最佳 Tool 与 Skill</div>
+    <div class="rule"></div>
+    <div class="lead">知识层是「把事实写进 agent」；记忆系统再进一步——把「<b>哪个工具好用、哪条 skill 真解决了问题</b>」记下来，下次直接复用。</div>
+    <div class="duo" style="margin-top:.5vw;">
+      <div class="dbox bad"><h5>静态知识层 · 记「事实」</h5><ul><li>写入的是概念 / 事实，人喂 agent 主读</li><li>不负责刻画哪个工具、走哪条路</li><li>Tool / Skill 库靠人工死攒，加一个改一次</li></ul></div>
+      <div class="dbox good"><h5>自演化记忆 · 记「过程」</h5><ul><li>记过程经验：成功轨迹、好用的 tool-call</li><li>从经验里蒸馏出可复用单元，自动进库</li><li>简单复用 promote 成 Skill，冗余 / 失败的 merge 或 prune</li></ul></div>
+    </div>
+    <div class="flowline"><span class="fchip hl">运行任务</span><span class="farrow">→</span><span class="fchip hl">观察成败</span><span class="farrow">→</span><span class="fchip hl">蒸馏 Tool·Skill</span><span class="farrow">→</span><span class="fchip hl">写入记忆</span><span class="farrow">→</span><span class="fchip hl">检索复用</span></div>
+    <div class="src">最佳 Tool / Skill 不是靠人预先写死的，是从成功轨迹里长出来的。来源：A-MEM（NeurIPS'25）/ Voyager（从成功轨迹自沉淀技能）/ Mem0。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>35</span></div>
+  </section>
+
+  <!-- 36 代码化 -->
+  <section class="slide" id="s36">
+    <div class="kicker">训练之外的轻杠杆（五）· 代码化</div>
+    <div class="htitle">能写测试的，就别写进 prompt</div>
+    <div class="rule"></div>
+    <div class="lead">PE / Skill / 知识层都在「不动权重」地塑造行为——但塞进去的很多东西，其实是<b>被错放成自然语言的代码</b>。</div>
+    <table class="dtable" style="margin-top:.5vw;">
+      <tr><th>prompt / skill 里的内容</th><th>判据（怎么认）</th><th>该沉到哪</th></tr>
+      <tr><td class="em">规则 / 阈值 / 格式 / 调度</td><td>有明确条件、判定性、判对错不需语义</td><td>代码 / 工具 / 校验器</td></tr>
+      <tr><td class="em">领域知识 / 事实 / few-shot 示例</td><td>是数据不是逻辑</td><td>知识层（md / OKF）</td></tr>
+      <tr><td class="em">意图理解 / 生成 / 语气 / 模糊判断 / 兜底</td><td>判对错需要语义</td><td>留给模型——这是护城河</td></tr>
+      <tr><td class="em">软措辞"建议 / 可考虑 / 个体化"</td><td>像规则，实为模糊</td><td>硬代码化会静默出错</td></tr>
+    </table>
+    <div class="concl">别拍脑袋报比例——逐块判定、测出真实数。推论：<b>可代码化的越多 = 模型不可替代的越窄，但越关键</b>；把算力烧在那条窄缝上。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>36</span></div>
+  </section>
+
+  <!-- 37 医疗范例 -->
+  <section class="slide" id="s37">
+    <div class="kicker">这些杠杆在论文里长什么样</div>
+    <div class="htitle">五个真实的医疗范例</div>
+    <div class="rule"></div>
+    <div class="lead">上面这套方法不是空谈——医疗大模型的公开工作里都能找到对应。</div>
+    <table class="dtable" style="margin-top:.5vw;">
+      <tr><th>优化杠杆</th><th>真实系统 · 论文</th><th>做了什么（一句话）</th></tr>
+      <tr><td class="em">PE 提示工程</td><td>Medprompt（MS, 2023）</td><td>动态 few-shot + 自生成 CoT + 选项乱序集成 → MedQA ~90%</td></tr>
+      <tr><td class="em">Skill / Agent</td><td>AMIE · MedAgents</td><td>多步问诊 / 多专家会诊：分诊 → 鉴别诊断 → 管理推理</td></tr>
+      <tr><td class="em">训练 pipeline</td><td>Med-PaLM · MultiMedQA</td><td>聚合 MedQA/MedMCQA/PubMedQA + 新建 HealthSearchQA</td></tr>
+      <tr><td class="em">Reward 偏好</td><td>Med-PaLM 2</td><td>医生成对偏好排序（9 个临床维度）→ MedQA 86.5%</td></tr>
+      <tr><td class="em">Rubric Reward</td><td>HealthBench（OpenAI, 2025）</td><td>262 名医生写 48,562 条 rubric，模型 grader 逐条判定、归一 [0,1]</td></tr>
+    </table>
+    <div class="src">来源：Medprompt arXiv:2311.16452 · AMIE arXiv:2401.05654 · MedAgents arXiv:2311.10537 · Med-PaLM Nature'23 / arXiv:2212.13138 · Med-PaLM 2 arXiv:2305.09617 · HealthBench arXiv:2505.08775</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>37</span></div>
+  </section>
+
+  <!-- 38 Reward Hacking -->
+  <section class="slide" id="s38">
+    <div class="kicker">Reward Hacking</div>
+    <div class="htitle">模型会"骗尺子"，所以要对抗样本</div>
+    <div class="rule"></div>
+    <div class="lead">长时间没法把 RM 调到理想态——<b>它很容易被 hack</b>。</div>
+    <table class="dtable" style="margin-top:.6vw;">
+      <tr><th>Hacking 姿势</th><th>表现</th></tr>
+      <tr><td class="em">答案堆长</td><td>用长度冒充丰富度</td></tr>
+      <tr><td class="em">堆结构</td><td>大量标题，信息密度其实很低</td></tr>
+      <tr><td class="em">堆引用</td><td>引用 / 截图不直接支撑结论（软广常用）</td></tr>
+      <tr><td class="em">过度免责声明</td><td>安全但难用</td></tr>
+      <tr><td class="em">空泛正确的废话</td><td>"因人而异、适合自己最重要"——正确但没用</td></tr>
+    </table>
+    <div class="concl">解药：<b>对抗样本 + 独立 GroundTruth + 线上 AB</b>，三道关一起兜。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>38</span></div>
+  </section>
+
+  <!-- 39 后验校准 -->
+  <section class="slide" id="s39">
+    <div class="kicker">后验校准</div>
+    <div class="htitle">用户用脚投票，但同一个动作有两义</div>
+    <div class="rule"></div>
+    <div class="duo" style="margin-top:.4vw;">
+      <div class="dbox bad"><h5>别只看后验：动机可能相反</h5><ul><li>长停留 = 戳中认真读 / 太乱在反复翻找</li><li>快划走 = 一眼解决 / 全是广告才划走</li><li>追问 = 被启发 / 答非所问再问一遍</li><li>点赞 = 真心认可 / 点赞抽奖</li></ul></div>
+      <div class="dbox good"><h5>优势多目标：三者对齐</h5><ul><li>人标 / Rubric 定方向 → 线上行为验证</li><li>先验（RM）与后验（行为）同时改善</li><li>危险信号：RM 离线一直涨、线上 AB 不涨——学到的是评测偏好，不是用户偏好</li></ul></div>
+    </div>
+    <div class="concl">线上 AB 必须<b>拆到细分人群 / 品类</b>才看得清，别掉进"全局指标"陷阱。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>39</span></div>
+  </section>
+
+  <!-- 40 GroundTruth -->
+  <section class="slide" id="s40">
+    <div class="kicker">GroundTruth 评测集</div>
+    <div class="htitle">尺子到底对不对的最后兜底</div>
+    <div class="rule"></div>
+    <div class="duo" style="margin-top:.4vw;">
+      <div class="dbox good"><h5>它要包含什么</h5><ul><li>用户真实场景 / 真实 query 分布</li><li>高质量人工数据</li><li>对抗样本（Code 样本）</li><li>足够多样性（用户视角天然偏头部）</li></ul></div>
+      <div class="dbox bad"><h5>两个误区</h5><ul><li>别拿评测集直接蒸馏 RM：会过拟合、对齐内部标准</li><li>别只看全局指标</li><li>正解：用评测集的<b>度量方案</b>去生成 RM，但不用评测集本身</li></ul></div>
+    </div>
+    <div class="concl">数据分工：<b>机器合成训练 → 人工抽检调参 → 人工高质量评测 → Online AB 最终校准</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>40</span></div>
+  </section>
+
+  <!-- 41 刷榜 -->
+  <section class="slide" id="s41">
+    <div class="kicker">刷榜</div>
+    <div class="htitle">分数想刷多高都行——区别在「拟合榜单」还是「把榜当能力基建」</div>
+    <div class="rule"></div>
+    <div class="lead">以现在的技术，单个榜理论上想刷多高都能刷，各家只是相对克制；<b>要同时刷很多榜，难度才陡增</b>。</div>
+    <div class="duo" style="margin-top:.6vw;">
+      <div class="dbox bad"><h5>纯刷：直接拟合榜单</h5><ul><li>拿榜直接拟合 / 套测试分布冲分</li><li>不高级、不道德、用处也不大</li><li>分数离开这个榜就不迁移</li></ul></div>
+      <div class="dbox good"><h5>正解：把榜当能力基建</h5><ul><li>把榜单背后的能力当成重要基础建设</li><li>用真训练能力的方式做：SFT / RL（同前几页）</li><li>分数提上去 = 内化成模型真本事</li></ul></div>
+    </div>
+    <div class="concl">同一个分数，两种来历：<b>拟合出来的一离榜就废，训出来的走到哪都带得走</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>41</span></div>
+  </section>
+
+  <!-- 42 正向六步 -->
+  <section class="slide" id="s42">
+    <div class="kicker">正向：从零定义一个场景的六步</div>
+    <div class="htitle">以电商导购搜为例</div>
+    <div class="rule"></div>
+    <div class="steps" style="margin-top:.4vw;">
+      <div class="step"><span class="sn">1</span><h5>场景预期</h5><div class="sd">抓处境标签（肤质 / 机型 / 预算 / 尺码 / 使用场景）</div></div>
+      <div class="step"><span class="sn">2</span><h5>度量定义</h5><div class="sd">复用通用维度 + 写场景 Rubric（刷单识别 / 适配档位）</div></div>
+      <div class="step"><span class="sn">3</span><h5>评测集</h5><div class="sd">贴合真实分布 + 高质量、能识破 reward hacking</div></div>
+    </div>
+    <div class="steps">
+      <div class="step"><span class="sn">4</span><h5>训练过程</h5><div class="sd">随机 session + badcase 专项 + 线上反馈，合成扩本</div></div>
+      <div class="step"><span class="sn">5</span><h5>训练 RM</h5><div class="sd">pairwise（真实评价 vs 刷单软文）+ rubric 打分</div></div>
+      <div class="step"><span class="sn">6</span><h5>后验校准</h5><div class="sd">RM 预测对 AB 了吗？补 hard example、修 Rubric</div></div>
+    </div>
+    <div class="concl">换到医疗问诊搜：处境 = 年龄 / 基础病 / 用药史；Rubric = 红旗 / 剂量 / 就医提示；评测集含高风险对抗样本；RM 偏好"<b>该 abstain 就 abstain</b>"。核心：脑中先有最优答案，才做得出超预期。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>42</span></div>
+  </section>
+
+  <!-- 43 反向闭环 -->
+  <section class="slide" id="s43">
+    <div class="kicker">反向：一个 badcase 驱动的全链路闭环</div>
+    <div class="rule"></div>
+    <div class="lead">同一个 Code，根因可能在不同节点——<b>要沿链路逐个排查</b>。</div>
+    <div class="flowline" style="margin-top:1vw;">
+      <span class="fchip">后验异常<br><span style="font-size:.85vw;color:var(--gray);">退货↑ / 加购↓ / 重推↑</span></span><span class="farrow">→</span>
+      <span class="fchip">映射受损维度<br><span style="font-size:.85vw;color:var(--gray);">真实性 + 适配匹配</span></span><span class="farrow">→</span>
+      <span class="fchip">定位节点<br><span style="font-size:.85vw;color:var(--gray);">召回 / 生成 / prompt / RM</span></span><span class="farrow">→</span>
+      <span class="fchip hl">针对节点改<br><span style="font-size:.85vw;color:#d8ffef;">过滤 / hard example / 加维度</span></span>
+    </div>
+    <div class="sub" style="margin-top:1vw;">复测：单报降了吗？RM 和用户一致吗？</div>
+    <div class="concl">改完一定要<b>回到后验复测</b>——对上了，才算真修好。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>43</span></div>
+  </section>
+
+  <!-- 44 总结 -->
+  <section class="slide" id="s44">
+    <div class="kicker">总结</div>
+    <div class="htitle">关键手段，与新人最容易踩的红线</div>
+    <div class="rule"></div>
+    <div class="duo" style="margin-top:.4vw;">
+      <div class="dbox good"><h5>四类关键优化手段</h5><ul><li>维度评估标准准不准（尺子刻歪）</li><li>维度在 RM 里的权重</li><li>Tool / 召回的原材料质量</li><li>训练集——构造 hard example</li></ul></div>
+      <div class="dbox bad"><h5>新人六条红线</h5><ul><li>先有度量定义，才优化逻辑</li><li>别用线性加权 merge</li><li>别让合成数据自产自销</li><li>别用评测集蒸馏 RM</li><li>别只看全局指标；警惕离线涨、线上不涨</li></ul></div>
+    </div>
+    <div class="concl">定义好尺子 → 教给模型 → 让用户验收 → 顺着 badcase 修每一节。<b>LLM is all you need！</b></div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>44</span></div>
+  </section>
+
+  <!-- 44L 落地概览 -->
+  <section class="slide" id="s44L">
+    <div class="kicker">从方法论到落地</div>
+    <div class="htitle">这套方法，在京东健康长成了三件套</div>
+    <div class="rule"></div>
+    <div class="lead">「刻尺子 → 教模型 → 用户验收」加上五大轻杠杆，不是空谈——它落成一条可信交付链，回答医疗 AI 规模化的三问：<b>怎么衡量好不好、怎么让推理可信、怎么规模化交付</b>。</div>
+    <div class="cards" style="margin-top:.4vw;">
+      <div class="card"><div class="n" style="font-size:1.55vw;">JoyAI-MedCode</div><div class="t" style="color:var(--green-d);font-weight:700;font-size:1.05vw;">可验证推理</div><div class="t">代码化推理 × 多专家蒸馏；把「代码化」这条窄缝做深，HealthBench 达 SOTA。</div></div>
+      <div class="card"><div class="n" style="font-size:1.55vw;">medwiki</div><div class="t" style="color:var(--green-d);font-weight:700;font-size:1.05vw;">确定性循证知识</div><div class="t">llmwiki + agentic search，用「活的知识层」替代概率检索 RAG。</div></div>
+      <div class="card"><div class="n" style="font-size:1.55vw;">MedWork</div><div class="t" style="color:var(--green-d);font-weight:700;font-size:1.05vw;">开放交付</div><div class="t">医生的 AI 工作空间（Agent OS），把 Harness / Skill / 记忆落成随手可用的工作台。</div></div>
+    </div>
+    <div class="concl">下一阶段的竞争，不是<b>谁的模型最大</b>，而是<b>谁能把 AI 可靠、可信、可规模化地交付</b>。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>44</span></div>
+  </section>
+
+  <!-- 44C JoyAI-MedCode -->
+  <section class="slide" id="s44C">
+    <div class="kicker">落地 · 可验证推理</div>
+    <div class="htitle">JoyAI-MedCode：从「自然语言推理」到「代码可验证推理」</div>
+    <div class="rule"></div>
+    <div class="lead">v2.0 核心：把<b>多科室专家能力蒸馏进统一基座</b>，中小模型配合代码化推理在 <b>HealthBench 达 SOTA（Total 69.3 / Hard 50.6）</b>，超越各专家模型。</div>
+    <table class="dtable" style="margin-top:.5vw;">
+      <tr><th>v1 · 结果级奖励</th><th>v2 · 过程级奖励</th></tr>
+      <tr><td>过程不可审计</td><td class="em">每步可执行、可回溯</td></tr>
+      <tr><td>通用任务退化</td><td class="em">通用不降 · 医疗卓越</td></tr>
+    </table>
+    <div class="duo" style="margin-top:.6vw;">
+      <div class="dbox good"><h5>指南即代码 · Guideline-to-Code</h5><div class="sub">把 NCCN / CSCO 等临床指南编译成<b>可执行决策代码</b>：诊疗建议 = 代码运行结果，天然可回溯、可像<b>单元测试</b>一样校验。</div></div>
+      <div class="dbox good"><h5>代码化推理的三重收益</h5><ul><li><b>可验证</b>：推理即代码，对错有真值</li><li><b>可审计</b>：每步可回放，满足复核</li><li><b>不退化</b>：通用不降，医疗增强</li></ul></div>
+    </div>
+    <div class="concl">Skill 内化：以可验证格式奖励做 RL，把<b>数千字规则内化为极简提示</b>——专科能力稳定复现、可迁移（正是方法论「代码化 / Skill」两页的落地）。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>44</span></div>
+  </section>
+
+  <!-- 44W medwiki -->
+  <section class="slide" id="s44W">
+    <div class="kicker">落地 · 确定性知识</div>
+    <div class="htitle">用「确定」的 medwiki 替代「不确定」的 RAG</div>
+    <div class="rule"></div>
+    <div class="lead">循证问答的可信，<b>不能建立在「概率检索」之上</b>——这是方法论「知识层 / LLM Wiki」那页在医疗场景的正式形态。</div>
+    <div class="duo" style="margin-top:.6vw;">
+      <div class="dbox bad"><h5>RAG · 不确定，难复现</h5><ul><li>检索是<b>概率匹配</b>：切块 / embedding / topK 一变，命中即变</li><li>拼接上下文再生成，答案<b>漂移、不可复现</b></li><li>来源难追溯，易产生「<b>看似有据</b>」的幻觉</li></ul></div>
+      <div class="dbox good"><h5>medwiki · 确定，可回放</h5><ul><li>基于 <b>llmwiki</b>（结构化循证知识库）+ <b>agentic search</b>（沿引用逐跳检索）</li><li>条目、证据等级、引用<b>可寻址</b>，沿<b>确定路径</b>检索</li><li>可复现、可回放、可溯源；更新 = 改条目，<b>有版本、可回归</b>——像代码一样管理</li></ul></div>
+    </div>
+    <div class="concl">确定性来自<b>结构化知识与可寻址引用</b>，而非一次概率检索——与「指南即代码」同源。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>44</span></div>
+  </section>
+
+  <!-- 44M MedWork -->
+  <section class="slide" id="s44M">
+    <div class="kicker">落地 · 开放交付</div>
+    <div class="htitle">MedWork：医生的 AI 工作空间（Agent OS）</div>
+    <div class="rule"></div>
+    <div class="lead">面向医生的 AI 工作台，定位「<b>医疗领域的 Codex</b>」。&nbsp;&nbsp;<b>medwork.jd.com</b></div>
+    <div class="duo" style="margin-top:.6vw;">
+      <div class="dbox good"><h5>基于 Rust 的用户级 Agent OS · 既私有又可协作</h5><div class="sub">内存占用仅<b>数十 MB</b>、<b>数百毫秒</b>内即可拉起——<b>SandBox / Agent / Daemon</b> 全部基于 Rust。每位用户拥有一个既私有又可共享协作的智能工作空间，可操控 Agent 安全地<b>写代码 · 调系统命令 · 访问外部系统 · 读写任务资产</b>。</div></div>
+      <div class="dbox good"><h5>高频场景</h5><ul><li><b>论文写作</b>（检索 → 循证 → 分析 → 代码 → PDF）</li><li><b>AI-MDT 会诊</b>：多专家智能集群并行</li><li>医学循证 · 临床诊断 · 病例分析 · <b>AI2HTML 成稿</b></li></ul></div>
+    </div>
+    <div class="concl">把方法论里的 <b>Harness 升级 · Skill 化 · 记忆系统</b>，落成医生随手可用、可私有可协作的工作台——从医生端到用户端一体化交付。</div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>44</span></div>
+  </section>
+
+  <!-- 45 谢谢 -->
+  <section class="slide" id="s45">
+    <div class="big">谢谢</div>
+    <div class="sm">如何优化 AI 产品 &amp; 如何训练 AI 模型 · 京东健康</div>
+    <div class="who">分享人 胡浩源　·　京东健康 AI &amp; 医疗大模型负责人</div>
+    <div class="creds">原蚂蚁金服 AI &amp; 金融大模型负责人 · 菜鸟供应链 AI 负责人 · SIGKDD 高级领域主席 · INFORMS Edelman Award 获得者</div>
+  </section>
+
+</div>
+<div class="hint">← → / 空格 翻页　·　F 全屏</div>
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  // wrap post-header content into a vertically-centered stage (kills dead space)
+  slides.forEach(s=>{
+    if(s.id==='s1'||s.id==='s45') return;
+    if(s.querySelector('.center')) return;
+    const rule=s.querySelector('.rule'); if(!rule) return;
+    const stage=document.createElement('div'); stage.className='stage';
+    let n=rule.nextElementSibling;
+    while(n){
+      const nx=n.nextElementSibling;
+      if(!n.classList.contains('foot')&&!n.classList.contains('hint')) stage.appendChild(n);
+      n=nx;
+    }
+    rule.after(stage);
+  });
+  slides.forEach((s,k)=>{const f=s.querySelector('.foot span:last-child'); if(f)f.textContent=String(k+1).padStart(2,'0');});
+  let i=0;
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    document.getElementById('prog').style.width=((i+1)/slides.length*100)+'%';
+  }
+  function next(){show(i+1);} function prev(){show(i-1);}
+  document.addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key)){e.preventDefault();next();}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();prev();}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(slides.length-1);
+    else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+  });
+  document.addEventListener('click',e=>{
+    if(e.target.closest('a'))return;
+    if(e.clientX<window.innerWidth*0.25)prev();else next();
+  });
+  show(0);
+</script>
+</body>
+</html>

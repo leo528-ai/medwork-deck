@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>medcode 医疗专病大模型 · 产品介绍</title>
+<style>
+  :root{
+    --green:#0f9d63; --green-d:#0a7a4c; --green-dd:#075a38;
+    --leaf:#12a06b; --mint:#e8f6ef; --mint2:#d6efe2;
+    --ink:#1f2b26; --gray:#5b6b64; --line:#cfe6da;
+    --gold:#c9a24b; --amber:#e08a1e; --amber-bg:#fdf3e2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:"京东朗正体","JDLANGZHENGTI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:#04150e; color:var(--ink);
+    overflow:hidden;
+  }
+  #deck{position:fixed; inset:0;}
+  .slide{
+    position:absolute; inset:0; display:none;
+    flex-direction:column; padding:5.2vh 6vw 6vh;
+    background:#fff; opacity:0; transition:opacity .25s ease;
+  }
+  .slide.active{display:flex; opacity:1;}
+  .kicker{display:inline-flex; align-items:center; gap:10px; font-size:1.5vw; color:var(--green-d); font-weight:700; letter-spacing:.02em;}
+  .kicker::before{content:""; width:.5vw; height:2.2vw; background:var(--leaf); border-radius:2px;}
+  .htitle{font-size:3vw; font-weight:800; color:var(--ink); margin:.6vw 0 .2vw; line-height:1.15;}
+  .rule{height:3px; width:100%; background:linear-gradient(90deg,var(--leaf),transparent); margin:.4vw 0 1.4vw;}
+  .body{flex:1; display:flex; gap:2.4vw; min-height:0;}
+  .col{flex:1; min-width:0; display:flex; flex-direction:column; gap:1vw;}
+  ul{list-style:none; display:flex; flex-direction:column; gap:.9vw;}
+  li{position:relative; padding-left:1.8vw; font-size:1.55vw; line-height:1.45; color:var(--ink);}
+  li::before{content:""; position:absolute; left:.4vw; top:.7vw; width:.7vw; height:.7vw; background:var(--leaf); border-radius:50%;}
+  .sub{font-size:1.35vw; color:var(--gray); line-height:1.5;}
+  b,strong{color:var(--green-dd);}
+  .grow{display:flex; align-items:center; justify-content:center; min-height:0;}
+  img.shot{max-width:100%; max-height:100%; border-radius:12px; box-shadow:0 8px 30px rgba(7,90,56,.18); border:1px solid var(--line); object-fit:contain;}
+  video.shot{max-width:100%; max-height:100%; border-radius:12px; box-shadow:0 8px 30px rgba(7,90,56,.22); background:#000;}
+  .foot{position:absolute; left:6vw; right:6vw; bottom:2.2vh; display:flex; justify-content:space-between; align-items:center; font-size:1.1vw; color:var(--gray);}
+  .foot .brand{color:var(--green-d); font-weight:700;}
+  .progress{position:fixed; top:0; left:0; height:5px; background:var(--leaf); z-index:50; transition:width .25s;}
+  /* cards */
+  .cards{display:flex; gap:1.4vw; flex-wrap:wrap;}
+  .card{flex:1; min-width:12vw; background:var(--mint); border:1px solid var(--line); border-left:5px solid var(--leaf); border-radius:10px; padding:1.2vw 1.4vw;}
+  .card .n{font-size:2vw; font-weight:800; color:var(--green-d); line-height:1.1;}
+  .card .t{font-size:1.2vw; color:var(--gray); margin-top:.5vw; line-height:1.4;}
+  .tag{display:inline-block; background:var(--mint2); color:var(--green-dd); border-radius:999px; padding:.35vw 1vw; font-size:1.2vw; font-weight:600; margin:.25vw;}
+  .badge{display:inline-flex; align-items:center; gap:.5vw; background:linear-gradient(135deg,var(--leaf),var(--green-d)); color:#fff; padding:.6vw 1.3vw; border-radius:999px; font-size:1.5vw; font-weight:700; box-shadow:0 4px 14px rgba(15,157,99,.35);}
+  /* status pill (在建中 / 规划中) */
+  .pill{display:inline-flex; align-items:center; gap:.4vw; background:var(--amber-bg); color:var(--amber); border:1px solid #f0d19a; padding:.35vw 1vw; border-radius:999px; font-size:1.2vw; font-weight:700; vertical-align:middle; margin-left:.8vw;}
+  .pill::before{content:""; width:.6vw; height:.6vw; border-radius:50%; background:var(--amber);}
+  /* partner grid */
+  .pgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:1vw;}
+  .pcell{background:#fff; border:1px solid var(--line); border-radius:10px; padding:.9vw 1.1vw;}
+  .pcell .d{font-size:1.5vw; font-weight:800; color:var(--green-dd);}
+  .pcell .h{font-size:1.15vw; color:var(--gray); margin-top:.25vw;}
+  /* status matrix */
+  .stgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:1vw; flex:1;}
+  .stcell{background:#fff; border:1px solid var(--line); border-radius:10px; padding:.8vw 1.1vw; display:flex; flex-direction:column; gap:.3vw; justify-content:center;}
+  .stcell .nm{font-size:1.35vw; font-weight:800; color:var(--green-dd);}
+  .stcell .hs{font-size:1vw; color:var(--gray); line-height:1.35;}
+  .stcell .stg{margin-top:.25vw; font-size:1vw; font-weight:700; display:inline-flex; align-items:center; gap:.4vw; align-self:flex-start; padding:.2vw .8vw; border-radius:999px;}
+  .stg::before{content:""; width:.5vw; height:.5vw; border-radius:50%;}
+  .stg.live{background:var(--mint2); color:var(--green-dd);}
+  .stg.live::before{background:var(--leaf);}
+  .stg.prog{background:var(--amber-bg); color:var(--amber);}
+  .stg.prog::before{background:var(--amber);}
+  /* feature block */
+  .fblock{background:var(--mint); border-radius:12px; padding:1.2vw 1.5vw; border:1px solid var(--line);}
+  .flabel{font-size:1.35vw; font-weight:800; color:var(--green-d); margin-bottom:.5vw;}
+  /* flow (三件套) */
+  .flow{display:flex; gap:1.2vw; align-items:stretch; margin-top:.4vw;}
+  .fnode{flex:1; background:var(--mint); border:1px solid var(--line); border-top:5px solid var(--leaf); border-radius:12px; padding:1.2vw 1.3vw;}
+  .fnode .ft{font-size:1.7vw; font-weight:800; color:var(--green-dd);}
+  .fnode .fd{font-size:1.15vw; color:var(--gray); margin-top:.5vw; line-height:1.5;}
+  .fplus{display:flex; align-items:center; font-size:2.4vw; color:var(--leaf); font-weight:800;}
+  /* bar chart */
+  .chart{display:flex; flex-direction:column; gap:1.1vw; margin-top:.5vw;}
+  .bar{display:flex; align-items:center; gap:1vw;}
+  .bar .lab{width:16vw; font-size:1.35vw; color:var(--ink); text-align:right; line-height:1.2;}
+  .bar .track{flex:1; background:var(--mint); border-radius:8px; height:3.2vw; position:relative; overflow:hidden;}
+  .bar .fill{height:100%; border-radius:8px; background:linear-gradient(90deg,var(--green-d),var(--leaf)); display:flex; align-items:center; justify-content:flex-end; padding-right:1vw; color:#fff; font-weight:800; font-size:1.5vw;}
+  .bar.base .fill{background:linear-gradient(90deg,#8aa79b,#a9bfb5);}
+  .bar.hi .fill{background:linear-gradient(90deg,#0a7a4c,#14b877);}
+  /* cover */
+  #s1{padding:0; background:linear-gradient(120deg,#0a7a4c 0%,#0f9d63 55%,#14b877 100%); color:#fff; justify-content:center; overflow:hidden;}
+  #s1 .leaf{position:absolute; inset:0; background:url("assets/image1.png") left center/cover no-repeat; opacity:.5; mix-blend-mode:screen;}
+  #s1 .wrap{position:relative; z-index:2; padding:0 8vw;}
+  #s1 .logo{font-size:6.5vw; font-weight:800; letter-spacing:.02em; text-shadow:0 4px 24px rgba(0,0,0,.25);}
+  #s1 .plat{font-size:3vw; font-weight:700; margin-top:.4vw; opacity:.96;}
+  #s1 .line{width:26vw; height:4px; background:rgba(255,255,255,.7); margin:2.2vw 0 1.6vw; border-radius:2px;}
+  #s1 .desc{font-size:1.9vw; opacity:.95;}
+  #s1 .meta{margin-top:4vw; font-size:1.4vw; opacity:.85;}
+  /* closing */
+  #s12{background:linear-gradient(120deg,#075a38,#0f9d63); color:#fff; align-items:center; justify-content:center; text-align:center;}
+  #s12 .big{font-size:4.6vw; font-weight:800;}
+  #s12 .sm{font-size:2vw; margin-top:1.4vw; opacity:.95;}
+  #s12 .url{font-size:1.8vw; margin-top:2.6vw; background:rgba(255,255,255,.15); padding:.8vw 2vw; border-radius:999px;}
+  /* qr slide */
+  .qrwrap{display:flex; align-items:center; gap:4vw; flex:1; justify-content:center;}
+  .qrwrap img{width:20vw; height:20vw; border-radius:16px; background:#fff; padding:1vw; box-shadow:0 10px 40px rgba(7,90,56,.25);}
+  .qrwrap .big{font-size:2.6vw; font-weight:800; color:var(--green-dd);}
+  .qrwrap .u{font-size:1.8vw; color:var(--green-d); margin-top:1vw; font-weight:700;}
+  .qrwrap .u2{font-size:1.4vw; color:var(--gray); margin-top:2vw;}
+  .hint{position:fixed; bottom:2.2vh; left:50%; transform:translateX(-50%); font-size:1vw; color:rgba(255,255,255,.5); z-index:40;}
+  .slide .hint{color:var(--line);}
+  .note{font-size:1.1vw; color:var(--gray); margin-top:1vw;}
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+<div id="deck">
+
+  <!-- 1 Cover -->
+  <section class="slide" id="s1">
+    <div class="leaf"></div>
+    <div class="wrap">
+      <div class="logo">medcode</div>
+      <div class="plat">医疗专病大模型</div>
+      <div class="line"></div>
+      <div class="desc">代码范式 · 循证可信 · 专科共建</div>
+      <div class="meta">面向医生与运营 · 产品介绍　|　京东健康 · 2026</div>
+    </div>
+  </section>
+
+  <!-- 2 痛点 -->
+  <section class="slide" id="s2">
+    <div class="kicker">为什么需要专病大模型</div>
+    <div class="htitle">通用大模型进临床，为什么不够？</div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col" style="flex:1.05;">
+        <ul>
+          <li>通用大模型"看起来合理"，但<b>临床细节（剂量、分期、禁忌）会被编造</b></li>
+          <li>决策藏在自然语言推理里，<b>不可审计、难以追责</b></li>
+          <li>缺乏<b>专科深度</b>与本地化的指南合规</li>
+        </ul>
+        <div class="fblock" style="margin-top:.6vw;">
+          <div class="flabel">临床真正需要的</div>
+          <div class="sub">可核验 · 可追溯 · 专科级的智能——每一条建议都能说清"依据是什么、什么时候不给建议"。</div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="cards" style="flex-direction:column;">
+          <div class="card"><div class="n">幻觉</div><div class="t">通用模型在临床决策上的最大风险</div></div>
+          <div class="card"><div class="n">黑箱</div><div class="t">自然语言推理路径不可审计</div></div>
+          <div class="card"><div class="n">浅层</div><div class="t">缺乏专病深度与指南合规</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span class="brand">medcode 医疗专病大模型</span><span>02</span></div>
+  </section>
+
+  <!-- 3 是什么 -->
+  <section class="slide" id="s3">
+    <div class="kicker">medcode 是什么</div>
+    <div class="htitle">代码范式的医疗专病大模型基座</div>
+    <div class="rule"></div>
+    <div class="col" style="gap:1vw;">
+      <ul>
+        <li>不是普通的自然语言医疗问答，而是把<b>临床决策用"代码"表达</b></li>
+        <li>决策路径<b>无自然语言生成</b> —— 幻觉被结构性消除</li>
+      </ul>
+      <div style="font-size:1.4vw; font-weight:700; color:var(--green-d); margin-top:.4vw;">三件套基座架构</div>
+      <div class="flow">
+        <div class="fnode"><div class="ft">代码大模型</div><div class="fd">基于代码范式预训练 / 微调，决策本身用代码表达，而非自然语言推理。</div></div>
+        <div class="fplus">+</div>
+        <div class="fnode"><div class="ft">医疗 toolkit</div><div class="fd">可调用的结构化工具集：剂量计算、分期判定、禁忌检查、规则查询。</div></div>
+        <div class="fplus">+</div>
+        <div class="fnode"><div class="ft">医疗 harness</div><div class="fd">执行 / 评估环境：规则 fire、abstain 逻辑、回归测试、临床真值对照。</div></div>
+      </div>
+      <div class="note">三件套<b>基于真实反馈共同迭代</b>——模型不再独自承担决策能力，构成可演进的医疗 agent 基座。</div>
+    </div>
+    <div class="foot"><span class="brand">medcode 医疗专病大模型</span><span>03</span></div>
+  </section>
+
+  <!-- 4 核心技术 -->
+  <section class="slide" id="s4">
+    <div class="kicker">核心技术</div>
+    <div class="htitle">把指南"编译"成可执行规则</div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col" style="flex:1.05;">
+        <ul>
+          <li>权威指南（如 NCCN 癌种） → <b>注册式 Python 规则</b></li>
+          <li>规则在<b>验真上下文</b>才 fire，否则 <b>abstain（不硬答）</b></li>
+          <li>封闭类型 <b>ClinicalAction</b>；LLM 退到结构化抽取（ETL），<b>不参与决策</b></li>
+          <li>指南合规<b>烧进权重</b>，不是 runtime RAG 兜底</li>
+        </ul>
+      </div>
+      <div class="col">
+        <div class="fblock">
+          <div class="flabel">一份规则，两个身份</div>
+          <div class="sub"><b>运行时</b>：临床安全护栏，保证决策合规、可审计。<br><b>训练时</b>：代码化规则回训模型 —— 形成<b>数据飞轮</b>，指南能力沉淀进模型本身。</div>
+        </div>
+        <div class="fblock" style="margin-top:1vw;">
+          <div class="flabel">为什么能消除幻觉</div>
+          <div class="sub">决策路径没有自由文本生成，只有"规则命中 / 弃权"两种结果，每一步都可回溯到具体规则与证据。</div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span class="brand">medcode 医疗专病大模型</span><span>04</span></div>
+  </section>
+
+  <!-- 4b 度量衡驱动迭代 -->
+  <section class="slide" id="s4b">
+    <div class="kicker">方法论 · 度量衡</div>
+    <div class="htitle">为什么 medcode 会越用越准</div>
+    <div class="rule"></div>
+    <div class="col" style="gap:1vw;">
+      <ul>
+        <li>先给"好不好"造一把<b>游标卡尺</b>——把主观评价变成可复算的量化标尺</li>
+        <li>有了标尺，才能持续<b>教模型</b>并<b>验收</b>，每一版都知道进步在哪、退步在哪</li>
+      </ul>
+      <div class="flow">
+        <div class="fnode"><div class="ft">① 校准</div><div class="fd">用 <b>Rubric</b>（维度 × 档位）取代拍脑袋打分，把临床好坏拆成可判定的标准。</div></div>
+        <div class="fplus">→</div>
+        <div class="fnode"><div class="ft">② 教模型</div><div class="fd">SFT / 蒸馏 / On-Policy Distillation / DPO / RL 逐级把专病能力灌进权重。</div></div>
+        <div class="fplus">→</div>
+        <div class="fnode"><div class="ft">③ 验收</div><div class="fd"><b>GSB</b> 对比 + <b>Failure Code</b> 归因，回归时精准定位"哪类 case 退步"。</div></div>
+      </div>
+      <div class="note">三件套 + 度量衡构成<b>数据飞轮</b>：真实临床反馈 → 打标 → 回训 → 再评测，指南与专病能力持续沉淀进模型本身。</div>
+    </div>
+    <div class="foot"><span class="brand">medcode 医疗专病大模型</span><span>05</span></div>
+  </section>
+
+  <!-- 5 效果数据 -->
+  <section class="slide" id="s5">
+    <div class="kicker">评测结果 · 内部评测</div>
+    <div class="htitle">循证肿瘤治疗方案匹配率</div>
+    <div class="rule"></div>
+    <div class="chart">
+      <div class="bar base"><div class="lab">CancerGUIDE<br><span style="font-size:1vw;color:var(--gray);">外部公开基线</span></div><div class="track"><div class="fill" style="width:36.4%;">36.4%</div></div></div>
+      <div class="bar"><div class="lab">medcode 迭代一</div><div class="track"><div class="fill" style="width:41.4%;">41.4%</div></div></div>
+      <div class="bar"><div class="lab">medcode 迭代二</div><div class="track"><div class="fill" style="width:46%;">46.0%</div></div></div>
+      <div class="bar hi"><div class="lab">JoySpace 大方案</div><div class="track"><div class="fill" style="width:76.2%;">76.2%</div></div></div>
+    </div>
+    <div class="note">上述为<b>内部评测</b>下的治疗方案匹配率，模型 / toolkit / harness 三件套持续迭代中；外部基线 CancerGUIDE 为公开发表结果，用于横向对照。</div>
+    <div class="foot"><span class="brand">medcode 医疗专病大模型</span><span>05</span></div>
+  </section>
+
+  <!-- 6 专病共建 -->
+  <section class="slide" id="s6">
+    <div class="kicker">专病共建矩阵</div>
+    <div class="htitle">与顶级医院逐专病共建</div>
+    <div class="rule"></div>
+    <div class="pgrid">
+      <div class="pcell"><div class="d">临床营养</div><div class="h">温附一 · 国家营养实验室</div></div>
+      <div class="pcell"><div class="d">呼吸专病</div><div class="h">广州呼吸研究院</div></div>
+      <div class="pcell"><div class="d">消化道肿瘤</div><div class="h">北京大学肿瘤医院</div></div>
+      <div class="pcell"><div class="d">泌尿肿瘤</div><div class="h">中山大学孙逸仙医院</div></div>
+      <div class="pcell"><div class="d">心理专科</div><div class="h">北京安定医院</div></div>
+      <div class="pcell"><div class="d">乳腺肿瘤</div><div class="h">江苏省人民医院</div></div>
+    </div>
+    <div style="margin-top:1.2vw; display:flex; gap:1vw; align-items:center; flex-wrap:wrap;">
+      <span class="tag">更多合作进行中…</span>
+      <span class="badge">MedBench 文本 &amp; 多模态榜单 Top1</span>
+    </div>
+    <div class="note">共建带来<b>专病数据 + 临床真值</b>——这是别人难以复制的护城河，也是三件套迭代的反馈来源。</div>
+    <div class="foot"><span class="brand">medcode 医疗专病大模型</span><span>06</span></div>
+  </section>
+
+  <!-- 6b 业务线建设全景 -->
+  <section class="slide" id="s6b">
+    <div class="kicker">业务线建设全景</div>
+    <div class="htitle">各专病条线：进度与病种覆盖</div>
+    <div class="rule"></div>
+    <div class="stgrid">
+      <div class="stcell"><div class="nm">肿瘤营养</div><div class="hs">温附一 · 覆盖 1 种，院内 7 科室试用</div><span class="stg live">试运行</span></div>
+      <div class="stcell"><div class="nm">精神心理</div><div class="hs">覆盖 11 种，自研模型完成内部评测</div><span class="stg live">已评测</span></div>
+      <div class="stcell"><div class="nm">消化道肿瘤</div><div class="hs">北肿 &amp; 温附一 · 3 种，1000 例评测集</div><span class="stg live">已评测</span></div>
+      <div class="stcell"><div class="nm">呼吸专科</div><div class="hs">广州呼研院 · 5 种，2.6 万患者数据</div><span class="stg prog">在建中</span></div>
+      <div class="stcell"><div class="nm">乳腺肿瘤</div><div class="hs">江苏省人民医院（殷咏梅团队）</div><span class="stg prog">推进中</span></div>
+      <div class="stcell"><div class="nm">泌尿 / 前列腺</div><div class="hs">中山孙逸仙 · 复旦</div><span class="stg prog">推进中</span></div>
+      <div class="stcell"><div class="nm">肺癌</div><div class="hs">影像 + 病理多模态方向</div><span class="stg prog">推进中</span></div>
+      <div class="stcell"><div class="nm">心血管</div><div class="hs">南科大（顾东风院士）· 4 种</div><span class="stg prog">推进中</span></div>
+      <div class="stcell"><div class="nm">消化内科</div><div class="hs">覆盖 2 种</div><span class="stg prog">推进中</span></div>
+    </div>
+    <div class="note">绿色为<b>已评测 / 试运行</b>能力，橙色为<b>在建 / 合作推进中</b>方向；病种数与数据量为各条线当前口径。</div>
+    <div class="foot"><span class="brand">medcode 医疗专病大模型</span><span>07</span></div>
+  </section>
+
+  <!-- 6c 关键能力表现 -->
+  <section class="slide" id="s6c">
+    <div class="kicker">关键能力表现 · 内部评测</div>
+    <div class="htitle">部分条线的量化结果</div>
+    <div class="rule"></div>
+    <div style="font-size:1.4vw; font-weight:700; color:var(--green-d); margin:.2vw 0 .2vw;">精神心理自研模型 vs GPT-5.0（内部评测得分）</div>
+    <div class="chart" style="gap:.7vw;">
+      <div class="bar base"><div class="lab">正高职称考试<br><span style="font-size:1vw;color:var(--gray);">GPT-5.0</span></div><div class="track"><div class="fill" style="width:71.49%;">71.49</div></div></div>
+      <div class="bar hi"><div class="lab">正高职称考试<br><span style="font-size:1vw;color:var(--gray);">medcode</span></div><div class="track"><div class="fill" style="width:91.86%;">91.86</div></div></div>
+      <div class="bar base"><div class="lab">问诊对话<br><span style="font-size:1vw;color:var(--gray);">GPT-5.0</span></div><div class="track"><div class="fill" style="width:61.22%;">61.22</div></div></div>
+      <div class="bar hi"><div class="lab">问诊对话<br><span style="font-size:1vw;color:var(--gray);">medcode</span></div><div class="track"><div class="fill" style="width:91.43%;">91.43</div></div></div>
+    </div>
+    <div class="cards" style="margin-top:1vw;">
+      <div class="card"><div class="n">91.1% / 93.8%</div><div class="t">食管癌筛查模型 精准率 / 召回率（2717 训 · 723 测 · 58 中心）</div></div>
+      <div class="card"><div class="n">13.5%</div><div class="t">肿瘤营养 院内处方采纳率（较上周 9.3% 提升）</div></div>
+      <div class="card"><div class="n">2222 题</div><div class="t">呼吸专科评测集（入院 / 住院 / 出院全流程）</div></div>
+    </div>
+    <div class="note">以上均为<b>内部评测 / 试运行</b>口径，与 GPT-5.0 的对比仅在自建评测集上进行，持续迭代中。</div>
+    <div class="foot"><span class="brand">medcode 医疗专病大模型</span><span>08</span></div>
+  </section>
+
+  <!-- 7 呼吸专科 (在建中) -->
+  <section class="slide" id="s7">
+    <div class="kicker">专科纵深 · 呼吸专科大模型</div>
+    <div class="htitle">多模态攻坚<span class="pill">在建中 · 2026 年底发布</span></div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col" style="flex:.95;">
+        <ul>
+          <li><b>院士大查房</b>（每周三上午）= 院内最高级别 MDT，年底进行<b>人机比对</b></li>
+          <li>独有模态：<b>肺功能</b>（图文+波形）、<b>呼吸介入</b>（图文+视频）、<b>睡眠呼吸</b>（波形）、<b>呼吸机</b>（波形）</li>
+          <li>输出：呼吸亚专科 20+ 及相关专科（血液 / 内分泌 / 心血管 / 神内等）专家意见，院士总结下一步方案</li>
+        </ul>
+        <div class="note">呼吸专科的模态远比其他科室丰富，多模态能力是核心攻坚点；本页为<b>在建 / 规划中</b>方向。</div>
+      </div>
+      <div class="col grow"><video class="shot" src="assets/media1.mp4" controls preload="metadata" poster="assets/image12.png"></video></div>
+    </div>
+    <div class="foot"><span class="brand">medcode 医疗专病大模型</span><span>07</span></div>
+  </section>
+
+  <!-- 8 面向医生 -->
+  <section class="slide" id="s8">
+    <div class="kicker">价值 · 面向医生</div>
+    <div class="htitle">医生用 medcode 能得到什么</div>
+    <div class="rule"></div>
+    <div class="cards">
+      <div class="card"><div class="n">循证取证</div><div class="t">指南 / 共识 / 说明书 / 文献一键取证，标注证据等级与推荐强度</div></div>
+      <div class="card"><div class="n">辅助决策</div><div class="t">方案建议可核验、可追溯，不编造临床细节</div></div>
+      <div class="card"><div class="n">专科深度</div><div class="t">与本专科顶级中心共建，贴合真实临床路径</div></div>
+      <div class="card"><div class="n">临床减负</div><div class="t">病历整理、MDT 会前准备、科研写作一站式</div></div>
+    </div>
+    <div class="note">核心理念：把医生从"信息检索与文书"里解放出来，把决策权和判断权<b>留在医生手中</b>，AI 只提供可核验的第二建议。</div>
+    <div class="foot"><span class="brand">medcode 医疗专病大模型</span><span>08</span></div>
+  </section>
+
+  <!-- 9 面向运营 -->
+  <section class="slide" id="s9">
+    <div class="kicker">价值 · 面向运营</div>
+    <div class="htitle">运营视角的差异化壁垒</div>
+    <div class="rule"></div>
+    <div class="cards">
+      <div class="card"><div class="n">共建壁垒</div><div class="t">专病数据 + 临床真值 = 难以复制的护城河</div></div>
+      <div class="card"><div class="n">数据飞轮</div><div class="t">真实反馈驱动 模型 / toolkit / harness 共同迭代</div></div>
+      <div class="card"><div class="n">可信背书</div><div class="t">顶级中心共建 · MedBench 榜单 Top1</div></div>
+      <div class="card"><div class="n">可交付</div><div class="t">可私有化 · 可商业化部署</div></div>
+    </div>
+    <div class="note">对运营而言，medcode 不是一个"通用问答外壳"，而是<b>越用越强</b>、别人越来越难追上的专病资产。</div>
+    <div class="foot"><span class="brand">medcode 医疗专病大模型</span><span>09</span></div>
+  </section>
+
+  <!-- 10 roadmap (规划中) -->
+  <section class="slide" id="s10">
+    <div class="kicker">建设路线</div>
+    <div class="htitle">2026 下半年方向<span class="pill">规划目标 · 非已落地</span></div>
+    <div class="rule"></div>
+    <div class="cards">
+      <div class="card"><div class="n">门诊</div><div class="t">AI 门诊多中心落地与验证（先门诊、再住院）</div></div>
+      <div class="card"><div class="n">呼吸</div><div class="t">呼吸专科大模型年底对外发布</div></div>
+      <div class="card"><div class="n">数据集</div><div class="t">人工智能数据集 2.0 对外发布（多模态）</div></div>
+      <div class="card"><div class="n">学术</div><div class="t">论文 / 专利 / 软著陆续申报</div></div>
+    </div>
+    <div class="note">以上为<b>规划目标</b>，标注用于区分已落地能力与在建方向，实际进度以最新周报 / 月报为准。</div>
+    <div class="foot"><span class="brand">medcode 医疗专病大模型</span><span>10</span></div>
+  </section>
+
+  <!-- 11 体验 QR -->
+  <section class="slide" id="s11">
+    <div class="kicker">欢迎使用</div>
+    <div class="htitle">立即体验</div>
+    <div class="rule"></div>
+    <div class="qrwrap">
+      <div>
+        <div class="big">PC 访问</div>
+        <div class="u">medwork.jd.com</div>
+        <div class="u2">手机扫一扫 →<br>体验产品</div>
+      </div>
+      <img src="assets/image16.png" alt="二维码">
+    </div>
+    <div class="foot"><span class="brand">medcode 医疗专病大模型</span><span>11</span></div>
+  </section>
+
+  <!-- 12 closing -->
+  <section class="slide" id="s12">
+    <div class="big">让专科智能，可信可用</div>
+    <div class="sm">medcode 医疗专病大模型 · 京东健康</div>
+    <div class="url">medwork.jd.com</div>
+  </section>
+
+</div>
+<div class="hint">← → / 空格 翻页　·　F 全屏</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  slides.forEach((s,k)=>{const f=s.querySelector('.foot span:last-child'); if(f)f.textContent=String(k+1).padStart(2,'0');});
+  let i=0;
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    document.getElementById('prog').style.width=((i+1)/slides.length*100)+'%';
+    document.querySelectorAll('video').forEach(v=>{if(!v.closest('.slide').classList.contains('active'))v.pause();});
+  }
+  function next(){show(i+1);} function prev(){show(i-1);}
+  document.addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key)){e.preventDefault();next();}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();prev();}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(slides.length-1);
+    else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+  });
+  document.addEventListener('click',e=>{
+    if(e.target.closest('video')||e.target.closest('a'))return;
+    if(e.clientX<window.innerWidth*0.25)prev();else next();
+  });
+  show(0);
+</script>
+</body>
+</html>
