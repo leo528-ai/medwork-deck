@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>京东健康 · 医疗大模型团队 · 校园招聘</title>
+<style>
+  :root{
+    --green:#0f9d63; --green-d:#0a7a4c; --green-dd:#075a38;
+    --leaf:#12a06b; --mint:#e8f6ef; --mint2:#d6efe2;
+    --ink:#1f2b26; --gray:#5b6b64; --line:#cfe6da;
+    --amber:#e08a1e; --amber-bg:#fdf3e2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{font-family:"京东朗正体","JDLANGZHENGTI","PingFang SC","Microsoft YaHei",sans-serif; background:#04150e; color:var(--ink); overflow:hidden;}
+  #deck{position:fixed; inset:0;}
+  .slide{position:absolute; inset:0; display:none; flex-direction:column; padding:4.8vh 5.4vw 6vh; background:#fff; opacity:0; transition:opacity .25s ease; overflow:hidden;}
+  .slide.active{display:flex; opacity:1;}
+  .slide:not(#s1):not(#end):not(#div){content:"";}
+  .slide:not(#s1):not(#end):not(#div)::after{content:""; position:absolute; top:-9vw; right:-9vw; width:28vw; height:28vw; border-radius:50%; background:radial-gradient(circle, rgba(18,160,107,.09), transparent 68%); pointer-events:none; z-index:0;}
+  .slide>*{position:relative; z-index:1;}
+  .kicker{display:inline-flex; align-items:center; gap:.6vw; font-size:1.35vw; color:var(--green-d); font-weight:700; letter-spacing:.01em;}
+  .kicker::before{content:""; width:.55vw; height:2vw; background:linear-gradient(180deg,var(--leaf),var(--green-d)); border-radius:3px;}
+  .htitle{font-size:2.6vw; font-weight:800; color:var(--ink); margin:.5vw 0 .2vw; line-height:1.15; letter-spacing:-.01em;}
+  .rule{height:3px; width:100%; background:linear-gradient(90deg,var(--leaf) 0%,var(--leaf) 18%,var(--line) 18%,transparent 60%); margin:.3vw 0 1.1vw;}
+  .stage{flex:1; display:flex; flex-direction:column; justify-content:center; min-height:0; gap:.9vw;}
+  .lead{font-size:1.42vw; color:var(--ink); line-height:1.5;}
+  .lead b,b,strong{color:var(--green-dd);}
+  .sub{font-size:1.25vw; color:var(--gray); line-height:1.5;}
+  .concl{font-size:1.3vw; font-weight:700; color:var(--green-d); line-height:1.45; background:linear-gradient(90deg,var(--mint),#f4fcf8 85%); border-left:6px solid var(--leaf); border-radius:0 12px 12px 0; padding:.95vw 1.5vw; margin-top:.5vw; box-shadow:0 4px 16px rgba(7,90,56,.07); display:flex; align-items:center; gap:.7vw;}
+  .concl::before{content:"一句话"; flex:none; font-size:.9vw; font-weight:800; color:#fff; background:var(--green-d); padding:.28vw .7vw; border-radius:999px; letter-spacing:.05em;}
+  .foot{position:absolute; left:5.4vw; right:5.4vw; bottom:2vh; display:flex; justify-content:space-between; align-items:center; font-size:1vw; color:var(--gray);}
+  .foot .brand{color:var(--green-d); font-weight:700;}
+  .progress{position:fixed; top:0; left:0; height:5px; background:var(--leaf); z-index:50; transition:width .25s;}
+  .cards{display:flex; gap:1.2vw; flex-wrap:wrap;}
+  .card{flex:1; min-width:11vw; background:var(--mint); border:1px solid var(--line); border-left:5px solid var(--leaf); border-radius:10px; padding:1vw 1.2vw;}
+  .card .n{font-size:1.9vw; font-weight:800; color:var(--green-d); line-height:1.1;}
+  .card .t{font-size:1.05vw; color:var(--gray); margin-top:.4vw; line-height:1.4;}
+  .badge{display:inline-flex; align-items:center; gap:.5vw; background:linear-gradient(135deg,var(--leaf),var(--green-d)); color:#fff; padding:.5vw 1.2vw; border-radius:999px; font-size:1.3vw; font-weight:700;}
+  .tag{display:inline-block; background:var(--mint2); color:var(--green-dd); border-radius:999px; padding:.32vw .95vw; font-size:1.05vw; font-weight:600; margin:.2vw;}
+  ul.plain{list-style:none; display:flex; flex-direction:column; gap:.6vw;}
+  ul.plain li{position:relative; padding-left:1.6vw; font-size:1.3vw; line-height:1.45; color:var(--ink);}
+  ul.plain li::before{content:""; position:absolute; left:.35vw; top:.62vw; width:.65vw; height:.65vw; background:var(--leaf); border-radius:50%;}
+  .steps{display:flex; gap:1.1vw; margin:.4vw 0;}
+  .step{flex:1; background:linear-gradient(180deg,#eef9f3,var(--mint)); border:1px solid var(--line); border-top:4px solid var(--leaf); border-radius:14px; padding:1.1vw 1.3vw; box-shadow:0 6px 20px rgba(7,90,56,.07);}
+  .step .sn{display:inline-flex; width:1.9vw; height:1.9vw; border-radius:50%; background:linear-gradient(135deg,var(--leaf),var(--green-d)); color:#fff; font-weight:800; align-items:center; justify-content:center; font-size:1.05vw; box-shadow:0 3px 10px rgba(15,157,99,.3);}
+  .step h5{font-size:1.22vw; color:var(--green-dd); margin:.45vw 0;}
+  .step .sd{font-size:1vw; color:var(--gray); line-height:1.45;}
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:1.1vw;}
+  .box{background:var(--mint); border:1px solid var(--line); border-radius:12px; padding:1vw 1.2vw;}
+  .box h4{font-size:1.3vw; color:var(--green-dd); margin-bottom:.4vw; display:flex; align-items:center; gap:.4vw;}
+  .box .it{font-size:1.02vw; color:var(--ink); line-height:1.6;}
+  .pgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:.9vw;}
+  .pcell{background:#fff; border:1px solid var(--line); border-radius:10px; padding:.75vw 1vw;}
+  .pcell .d{font-size:1.25vw; font-weight:800; color:var(--green-dd);}
+  .pcell .h{font-size:.98vw; color:var(--gray); margin-top:.2vw;}
+  .stmt{font-size:2.3vw; font-weight:800; color:var(--green-dd); text-align:center; line-height:1.4;}
+  .stmt.sm{font-size:1.5vw; color:var(--gray); font-weight:700; margin-top:1vw;}
+  .center{flex:1; display:flex; flex-direction:column; justify-content:center; gap:1vw;}
+  /* cover */
+  #s1{padding:0; background:radial-gradient(120% 120% at 15% 10%, #14b877 0%, #0f9d63 40%, #0a7a4c 78%, #075a38 100%); color:#fff; justify-content:center; overflow:hidden;}
+  #s1::before{content:""; position:absolute; top:-20vw; right:-14vw; width:52vw; height:52vw; border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,.16), transparent 62%);}
+  #s1::after{content:""; position:absolute; left:0; top:0; bottom:0; width:1.1vw; background:linear-gradient(180deg,#d8ffef,rgba(255,255,255,.4));}
+  #s1 .wrap{position:relative; z-index:2; padding:0 8vw;}
+  #s1 .k{display:inline-block; font-size:1.2vw; font-weight:700; letter-spacing:.06em; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.32); padding:.5vw 1.3vw; border-radius:999px;}
+  #s1 .logo{font-size:4vw; font-weight:800; margin:1.1vw 0 .3vw; text-shadow:0 6px 30px rgba(0,0,0,.28); letter-spacing:-.01em; line-height:1.14;}
+  #s1 .plat{font-size:1.9vw; font-weight:700; opacity:.97;}
+  #s1 .desc{font-size:1.5vw; opacity:.95; margin-top:2.2vw;}
+  #s1 .meta{margin-top:3vw; font-size:1.3vw; opacity:.95; display:inline-flex; align-items:center; gap:.8vw; font-weight:700;}
+  #s1 .meta::before{content:""; width:2.4vw; height:2px; background:rgba(255,255,255,.7);}
+  /* divider */
+  #div{background:radial-gradient(120% 120% at 15% 10%, #14b877 0%, #0f9d63 42%, #0a7a4c 80%, #075a38 100%); color:#fff; align-items:center; justify-content:center; text-align:center;}
+  #div .badge{background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.4); font-size:1.35vw;}
+  #div .stmt{color:#fff;} #div .stmt.sm{color:rgba(255,255,255,.92);}
+  /* closing */
+  #end{background:linear-gradient(120deg,#075a38,#0f9d63); color:#fff; align-items:center; justify-content:center; text-align:center;}
+  #end .big{font-size:3.8vw; font-weight:800;}
+  #end .sm{font-size:1.7vw; margin-top:1.4vw; opacity:.95;}
+  #end .cta{font-size:1.4vw; margin-top:2.4vw; background:rgba(255,255,255,.15); padding:.7vw 2vw; border-radius:999px;}
+  #end .creds{font-size:1.02vw; opacity:.82; margin-top:1.4vw; line-height:1.6; max-width:64vw;}
+  .hint{position:fixed; bottom:2vh; left:50%; transform:translateX(-50%); font-size:.95vw; color:rgba(255,255,255,.5); z-index:40;}
+  .slide .hint{color:var(--line);}
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+<div id="deck">
+
+  <!-- 1 封面 -->
+  <section class="slide" id="s1">
+    <div class="wrap">
+      <div class="k">2026 校园招聘 · 算法研究方向</div>
+      <div class="logo">京东健康<br>医疗大模型团队</div>
+      <div class="plat">用大模型，重构医疗的每一次决策</div>
+      <div class="desc">评测 · 可验证推理 · 医疗智能体 —— 一起把医疗 AI 做到可信、可规模化落地</div>
+      <div class="meta">京东健康　·　2026</div>
+    </div>
+  </section>
+
+  <!-- 2 我们是谁 -->
+  <section class="slide" id="s2">
+    <div class="kicker">我们是谁</div>
+    <div class="htitle">京东健康 · AI 与医疗大模型团队</div>
+    <div class="rule"></div>
+    <div class="lead">我们不做「说得通的一段话」，而是把医疗 AI 做成<b>可信、可审计、可规模化交付</b>的临床能力底座。</div>
+    <div class="cards" style="margin-top:.6vw;">
+      <div class="card"><div class="n">大模型基座</div><div class="t">医疗专用大模型 · 多模态 · 可验证推理</div></div>
+      <div class="card"><div class="n">评测科研</div><div class="t">行业公认的评测尺子 · 发论文 · 建榜单</div></div>
+      <div class="card"><div class="n">产品交付</div><div class="t">MedWork 个人医疗工作台 · 顶级医院落地</div></div>
+    </div>
+    <div class="concl">从<b>算法研究</b>到<b>临床落地</b>的完整闭环——你的模型不止刷榜，还会真的进医院、被医生用。</div>
+    <div class="foot"><span class="brand">京东健康 · 医疗大模型团队 · 校园招聘</span><span>02</span></div>
+  </section>
+
+  <!-- 3 命题 三基石 -->
+  <section class="slide" id="s3">
+    <div class="kicker">我们的命题</div>
+    <div class="htitle">医疗 AI 走向「规模化可信交付」</div>
+    <div class="rule"></div>
+    <div class="lead">单点 demo 容易；把医疗 AI 真正交付到<b>亿级用户</b>手里，要回答三个问题——这也是我们的三条研究主线。</div>
+    <div class="steps" style="margin-top:.5vw;">
+      <div class="step"><span class="sn">1</span><h5>怎么衡量「好不好」</h5><div class="sd">没有可信评测，就没有审批、支付与信任的依据。→ <b>评测</b></div></div>
+      <div class="step"><span class="sn">2</span><h5>怎么让推理「可信」</h5><div class="sd">医疗要求可解释、可审计，而非黑箱输出。→ <b>可验证推理 · MedCode</b></div></div>
+      <div class="step"><span class="sn">3</span><h5>怎么「规模化」交付</h5><div class="sd">把模型稳定、经济地送到每位医生手里。→ <b>开放交付 · MedWork</b></div></div>
+    </div>
+    <div class="concl">下一阶段的竞争不是「<b>谁的模型最大</b>」，而是「<b>谁能把 AI 可靠、可信、可规模化地交付</b>」。</div>
+    <div class="foot"><span class="brand">京东健康 · 医疗大模型团队 · 校园招聘</span><span>03</span></div>
+  </section>
+
+  <!-- 4 基石一 评测 -->
+  <section class="slide" id="s4">
+    <div class="kicker">研究主线一 · 评测</div>
+    <div class="htitle">建立一把被行业公认的尺子</div>
+    <div class="rule"></div>
+    <div class="lead">我们把评测基准、方法学与精标数据<b>向行业开放</b>，用可信的尺子牵引模型迭代方向。</div>
+    <ul class="plain" style="margin-top:.4vw;">
+      <li>覆盖<b>临床、科研 50+ 常见医学任务</b>的评测体系，文本与多模态并重</li>
+      <li>在 <b>MedBench 文本 &amp; 多模态榜单</b>取得 <b>Top1</b> 表现</li>
+      <li>评测方法学与数据集可沉淀为<b>论文与开放基准</b>，你的工作会被同行看到</li>
+    </ul>
+    <div class="concl">尺子做对了，优化才有方向——<b>评测是这里最被重视的科研能力之一</b>。</div>
+    <div class="foot"><span class="brand">京东健康 · 医疗大模型团队 · 校园招聘</span><span>04</span></div>
+  </section>
+
+  <!-- 5 基石二 MedCode -->
+  <section class="slide" id="s5">
+    <div class="kicker">研究主线二 · 可验证推理 MedCode</div>
+    <div class="htitle">用「代码化推理」让医疗决策可审计</div>
+    <div class="rule"></div>
+    <div class="lead">把医学推理表达成<b>可执行、可复核的代码步骤</b>，再以<b>多专家蒸馏</b>训练合版模型——推理过程看得见、查得清。</div>
+    <ul class="plain" style="margin-top:.4vw;">
+      <li><b>代码化推理 ＋ 多专家蒸馏</b>：小尺寸统一模型也能做到医疗专业卓越、通用能力不降</li>
+      <li><b>Skill 内化</b>：把专科规则沉淀成极简提示；<b>Agentic 服务化</b>：规范调用专业工具</li>
+      <li>你会接触到：<b>SFT / RL / 蒸馏 / 多模态 / Agent</b> 全链路训练与评估</li>
+    </ul>
+    <div class="concl">一套合版模型——<b>通用不降、医疗领先、成本更低、可端侧、可持续迭代</b>。</div>
+    <div class="foot"><span class="brand">京东健康 · 医疗大模型团队 · 校园招聘</span><span>05</span></div>
+  </section>
+
+  <!-- 6 基石三 MedWork -->
+  <section class="slide" id="s6">
+    <div class="kicker">研究主线三 · 开放交付 MedWork</div>
+    <div class="htitle">医疗人员的个人智能工作台</div>
+    <div class="rule"></div>
+    <div class="lead"><b>MedWork</b> 是医疗版 Codex —— 覆盖 PC / 手机 / 桌面，能完成复杂医疗任务而非单轮问答。</div>
+    <div class="grid3" style="margin-top:.5vw;">
+      <div class="box"><h4>🩺 医疗能力</h4><div class="it">医学问答 · 循证检索<br>AI-MDT 多学科会诊<br>病历书写 · 临床辅助决策</div></div>
+      <div class="box"><h4>🔬 科研能力</h4><div class="it">选题 · 综述 · 研究设计<br>数据清洗 · 统计分析<br>论文写作一站式</div></div>
+      <div class="box"><h4>🏥 真实落地</h4><div class="it">AI-MDT、病历辅诊<br>在<b>广医一院</b>门诊落地中<br>模型在真实临床被使用</div></div>
+    </div>
+    <div class="concl">你训练的模型，会通过 MedWork <b>真正交付到医生手里</b>——研究不止于论文。</div>
+    <div class="foot"><span class="brand">京东健康 · 医疗大模型团队 · 校园招聘</span><span>06</span></div>
+  </section>
+
+  <!-- 7 底座 + 专病共建 -->
+  <section class="slide" id="s7">
+    <div class="kicker">我们的资源</div>
+    <div class="htitle">权威知识底座 × 顶级医院专病共建</div>
+    <div class="rule"></div>
+    <div class="cards">
+      <div class="card"><div class="n">4000w+</div><div class="t">医学文献</div></div>
+      <div class="card"><div class="n">4w+</div><div class="t">权威指南</div></div>
+      <div class="card"><div class="n">2w+</div><div class="t">药品说明书</div></div>
+      <div class="card"><div class="n">50+</div><div class="t">临床 / 科研医学任务</div></div>
+    </div>
+    <div style="margin:1vw 0 .4vw; font-size:1.25vw; font-weight:700; color:var(--green-d);">专病共建矩阵</div>
+    <div class="pgrid">
+      <div class="pcell"><div class="d">临床营养</div><div class="h">温附一 · 国家营养实验室</div></div>
+      <div class="pcell"><div class="d">呼吸专病</div><div class="h">广州呼吸研究院</div></div>
+      <div class="pcell"><div class="d">消化道肿瘤</div><div class="h">北京大学肿瘤医院</div></div>
+      <div class="pcell"><div class="d">泌尿肿瘤</div><div class="h">中山大学孙逸仙医院</div></div>
+      <div class="pcell"><div class="d">心理专科</div><div class="h">北京安定医院</div></div>
+      <div class="pcell"><div class="d">乳腺肿瘤</div><div class="h">江苏省人民医院</div></div>
+    </div>
+    <div class="foot"><span class="brand">京东健康 · 医疗大模型团队 · 校园招聘</span><span>07</span></div>
+  </section>
+
+  <!-- 8 你会研究什么 -->
+  <section class="slide" id="s8">
+    <div class="kicker">你会研究什么</div>
+    <div class="htitle">校招生能真正上手的算法课题</div>
+    <div class="rule"></div>
+    <div class="grid3">
+      <div class="box"><h4>医疗大模型训练</h4><div class="it">领域预训练 · SFT · RLHF/RLVR · 蒸馏与合版</div></div>
+      <div class="box"><h4>多模态理解</h4><div class="it">医学影像 · 病理 · 3D 影像 · 图文联合推理</div></div>
+      <div class="box"><h4>可验证推理</h4><div class="it">代码化推理 · 工具调用 · 推理可审计</div></div>
+      <div class="box"><h4>医疗智能体</h4><div class="it">AI-MDT · 多智能体协作 · SkillHub 能力沉淀</div></div>
+      <div class="box"><h4>评测与基准</h4><div class="it">评测方法学 · 精标数据 · 开放基准与论文</div></div>
+      <div class="box"><h4>检索与循证</h4><div class="it">循证检索 · 证据分级 · 知识底座工程</div></div>
+    </div>
+    <div class="concl">真实数据、真实临床场景、真实算力——<b>你的研究有落点，也有影响力</b>。</div>
+    <div class="foot"><span class="brand">京东健康 · 医疗大模型团队 · 校园招聘</span><span>08</span></div>
+  </section>
+
+  <!-- 9 我们想要什么样的人 -->
+  <section class="slide" id="s9">
+    <div class="kicker">我们想要什么样的人</div>
+    <div class="htitle">对「把事做对」有执念的研究者</div>
+    <div class="rule"></div>
+    <ul class="plain" style="margin-top:.3vw;">
+      <li><b>扎实的机器学习 / 大模型基础</b>：熟悉 Transformer、训练与评估的基本原理</li>
+      <li><b>动手能力强</b>：能把想法快速实现成实验，读得懂也写得出好代码</li>
+      <li><b>结果导向、实事求是</b>：用数据和评测说话，不满足于「看起来能跑」</li>
+      <li><b>对医疗 / 科学问题有好奇心</b>：愿意深入陌生领域、和临床专家协作</li>
+      <li>加分项：<b>顶会论文、竞赛、开源、多模态 / RL / Agent 经验</b></li>
+    </ul>
+    <div class="concl">我们看重<b>成长速度与判断力</b>，胜过一时的背景标签。</div>
+    <div class="foot"><span class="brand">京东健康 · 医疗大模型团队 · 校园招聘</span><span>09</span></div>
+  </section>
+
+  <!-- 10 加入我们 -->
+  <section class="slide" id="end">
+    <div class="big">加入我们</div>
+    <div class="sm">用大模型，重构医疗的每一次决策</div>
+    <div class="cta">欢迎投递京东健康 2026 校园招聘 · 算法研究方向</div>
+    <div class="creds">京东健康 · AI 与医疗大模型团队　|　评测 · 可验证推理 MedCode · 医疗智能体 MedWork</div>
+  </section>
+
+</div>
+<div class="hint">← → / 空格 翻页　·　F 全屏</div>
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  slides.forEach(s=>{
+    if(s.id==='s1'||s.id==='end'||s.id==='div') return;
+    if(s.querySelector('.center')) return;
+    const rule=s.querySelector('.rule'); if(!rule) return;
+    const stage=document.createElement('div'); stage.className='stage';
+    let n=rule.nextElementSibling;
+    while(n){ const nx=n.nextElementSibling; if(!n.classList.contains('foot')&&!n.classList.contains('hint')) stage.appendChild(n); n=nx; }
+    rule.after(stage);
+  });
+  slides.forEach((s,k)=>{const f=s.querySelector('.foot span:last-child'); if(f)f.textContent=String(k+1).padStart(2,'0');});
+  let i=0;
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    document.getElementById('prog').style.width=((i+1)/slides.length*100)+'%';
+  }
+  function next(){show(i+1);} function prev(){show(i-1);}
+  document.addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key)){e.preventDefault();next();}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();prev();}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(slides.length-1);
+    else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+  });
+  document.addEventListener('click',e=>{ if(e.target.closest('a'))return; if(e.clientX<window.innerWidth*0.25)prev();else next(); });
+  show(0);
+</script>
+</body>
+</html>
