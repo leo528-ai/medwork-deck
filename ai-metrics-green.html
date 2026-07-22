@@ -112,6 +112,24 @@
   #s45x .badge{background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.4); font-size:1.35vw;}
   #s45x .stmt{color:#fff;}
   #s45x .stmt.sm{color:rgba(255,255,255,.92);}
+  /* ---- MedWork intro appendix ---- */
+  #mwx{background:radial-gradient(120% 120% at 15% 10%, #14b877 0%, #0f9d63 42%, #0a7a4c 80%, #075a38 100%); color:#fff; align-items:center; justify-content:center; text-align:center;}
+  #mwx .badge{background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.4); font-size:1.35vw;}
+  #mwx .stmt{color:#fff;} #mwx .stmt.sm{color:rgba(255,255,255,.92);}
+  .grow{display:flex; align-items:center; justify-content:center; min-height:0;}
+  img.shot{max-width:100%; max-height:100%; border-radius:12px; box-shadow:0 8px 26px rgba(7,90,56,.16); border:1px solid var(--line); object-fit:contain;}
+  .fblock{background:var(--mint); border:1px solid var(--line); border-radius:12px; padding:.85vw 1.2vw;}
+  .flabel{font-size:1.12vw; font-weight:800; color:var(--green-d); margin-bottom:.3vw;}
+  .tag{display:inline-block; background:var(--mint2); color:var(--green-dd); border-radius:999px; padding:.3vw .9vw; font-size:1.05vw; font-weight:600; margin:.2vw;}
+  .pano{display:grid; grid-template-columns:repeat(4,1fr); gap:1.1vw; width:100%;}
+  .pano .box{background:var(--mint); border:1px solid var(--line); border-radius:12px; padding:1vw 1.1vw;}
+  .pano .box h4{font-size:1.28vw; color:var(--green-dd); margin-bottom:.5vw;}
+  .pano .box .it{font-size:1vw; color:var(--ink); line-height:1.7;}
+  .qrwrap{display:flex; align-items:center; gap:4vw; justify-content:center;}
+  .qrwrap img{width:17vw; height:17vw; border-radius:16px; background:#fff; padding:1vw; box-shadow:0 10px 34px rgba(7,90,56,.22); object-fit:contain;}
+  .qrwrap .qbig{font-size:2.2vw; font-weight:800; color:var(--green-dd);}
+  .qrwrap .qu{font-size:1.5vw; color:var(--green-d); margin-top:.8vw; font-weight:700;}
+  .qrwrap .qu2{font-size:1.2vw; color:var(--gray); margin-top:1.6vw;}
   .hint{position:fixed; bottom:2vh; left:50%; transform:translateX(-50%); font-size:.95vw; color:rgba(255,255,255,.5); z-index:40;}
   .slide .hint{color:var(--line);}
 </style>
@@ -1084,6 +1102,196 @@
   </section>
 
   <!-- 45 谢谢 -->
+  <!-- ===== 附录：MedWork 产品介绍 ===== -->
+  <section class="slide" id="mwx">
+    <div class="center">
+      <div class="badge" style="margin:0 auto;">附录 · 产品介绍</div>
+      <div class="stmt">MedWork 智能平台</div>
+      <div class="stmt sm">医疗人员的个人智能工作台<br>PC 端 · 手机端 · 桌面端</div>
+    </div>
+  </section>
+
+  <!-- MW 是什么 -->
+  <section class="slide" id="mw2">
+    <div class="kicker">MedWork 是什么</div>
+    <div class="htitle">医疗版 Codex —— 医疗人员的个人工作台</div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col" style="flex:.9; justify-content:center;">
+        <ul class="plain">
+          <li>面向医疗人员的<b>个人智能工作台</b>，覆盖 <b>PC 端 · 手机端 · 桌面端</b></li>
+          <li>可完成<b>复杂医疗任务</b>，而非单轮问答</li>
+          <li><b>可私有化 · 可商业化</b>部署</li>
+        </ul>
+        <div style="margin-top:1vw;"><span class="badge">医疗版的 Codex / Openclaw</span></div>
+      </div>
+      <div class="col grow"><img class="shot" src="medwork-intro/img/s2_1.png" alt="MedWork 概览"></div>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台 · 京东健康</span><span>46</span></div>
+  </section>
+
+  <!-- MW 底层能力 -->
+  <section class="slide" id="mw3">
+    <div class="kicker">底层能力</div>
+    <div class="htitle">权威知识底座 × 顶级医院专病共建</div>
+    <div class="rule"></div>
+    <div class="cards">
+      <div class="card"><div class="n">4000w+</div><div class="t">医学文献</div></div>
+      <div class="card"><div class="n">4w+</div><div class="t">权威指南</div></div>
+      <div class="card"><div class="n">2w+</div><div class="t">药品说明书</div></div>
+      <div class="card"><div class="n">50+</div><div class="t">临床 / 科研常见医学任务</div></div>
+    </div>
+    <div style="margin:1vw 0 .4vw; font-size:1.25vw; font-weight:700; color:var(--green-d);">专病共建矩阵</div>
+    <ul class="plain" style="flex-direction:row; flex-wrap:wrap; gap:.4vw 2vw;">
+      <li>临床营养 · 温附一 / 国家营养实验室</li>
+      <li>呼吸专病 · 广州呼吸研究院</li>
+      <li>消化道肿瘤 · 北京大学肿瘤医院</li>
+      <li>泌尿肿瘤 · 中山大学孙逸仙医院</li>
+      <li>心理专科 · 北京安定医院</li>
+      <li>乳腺肿瘤 · 江苏省人民医院</li>
+    </ul>
+    <div style="margin-top:.8vw; display:flex; gap:1vw; align-items:center;">
+      <span class="tag">更多合作进行中…</span>
+      <span class="badge">MedBench 文本 &amp; 多模态榜单 Top1</span>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台 · 京东健康</span><span>47</span></div>
+  </section>
+
+  <!-- MW 产品结构 -->
+  <section class="slide" id="mw4">
+    <div class="kicker">MedWork 的产品结构</div>
+    <div class="htitle">四层结构：入口 · 交互 · 能力 · 空间</div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col" style="flex:.85; justify-content:center;">
+        <ul class="plain">
+          <li><b>首页</b>：统一入口与任务推荐</li>
+          <li><b>主对话</b>：医生与平台进行自然语言交互</li>
+          <li><b>SkillHub</b>：承载循证、病历处理、MDT、科研等具体医疗能力</li>
+          <li><b>工作空间</b>：每个用户拥有独立的工作空间</li>
+        </ul>
+      </div>
+      <div class="col grow"><img class="shot" src="medwork-intro/img/s4_1.png" alt="产品结构"></div>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台 · 京东健康</span><span>48</span></div>
+  </section>
+
+  <!-- MW 医学问答 -->
+  <section class="slide" id="mw5">
+    <div class="kicker">医疗能力 · 医学问答</div>
+    <div class="htitle">疾病 / 用药 / 检查 / 指南解读的智能问答</div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col" style="flex:.95;">
+        <div class="fblock"><div class="flabel">功能介绍</div><div class="sub">提供疾病、症状、用药、检查、指南解读等医学问题的智能问答服务，提升医学信息获取效率。</div></div>
+        <div class="fblock"><div class="flabel">功能要点</div><div class="sub"><b>输入</b>：文本、图片等常见患者状态信息（可接受图片类）<br><b>输出</b>：结构化医学回答 —— 核心结论、解释说明、风险提示、参考依据、下一步建议</div></div>
+        <div class="fblock"><div class="flabel">应用场景</div><div class="sub">常规基础单轮问答，最基础的能力。</div></div>
+      </div>
+      <div class="col grow"><img class="shot" src="medwork-intro/img/s5_1.png" alt="医学问答"></div>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台 · 京东健康</span><span>49</span></div>
+  </section>
+
+  <!-- MW 循证检索 -->
+  <section class="slide" id="mw6">
+    <div class="kicker">医疗能力 · 循证检索</div>
+    <div class="htitle">从指南 / 共识 / 说明书 / 文献快速取证</div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col" style="flex:.95;">
+        <div class="fblock"><div class="flabel">功能介绍</div><div class="sub">面向临床决策，从指南、共识、药品说明书、医学文献等来源快速检索证据，并对<b>证据等级、适用人群、推荐强度</b>归纳总结。</div></div>
+        <div class="fblock"><div class="flabel">功能要点</div><div class="sub"><b>输入</b>：临床问题或 PICO 问题<br><b>输出</b>：检索结果摘要、核心证据结论、推荐意见、证据来源</div></div>
+        <div class="fblock"><div class="flabel">应用场景</div><div class="sub">文献检索、诊断等对循证来源有较高要求的场景。</div></div>
+      </div>
+      <div class="col grow" style="flex-direction:column; gap:1vw;">
+        <img class="shot" src="medwork-intro/img/s6_1.png" alt="循证检索1" style="max-height:48%;">
+        <img class="shot" src="medwork-intro/img/s6_2.png" alt="循证检索2" style="max-height:48%;">
+      </div>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台 · 京东健康</span><span>50</span></div>
+  </section>
+
+  <!-- MW AI-MDT -->
+  <section class="slide" id="mw7">
+    <div class="kicker">医疗能力 · AI-MDT</div>
+    <div class="htitle">多学科 AI 智能体自动会诊</div>
+    <div class="rule"></div>
+    <div class="fblock"><div class="flabel">功能介绍</div><div class="sub">AI 自动分析病情，发起<b>多学科 AI 智能体</b>讨论并总结，生成最终会诊建议。</div></div>
+    <ul class="plain" style="margin-top:.6vw;">
+      <li><b>输入</b>：病历资料（基本病情、影像 / 病理结论、检验结果、既往治疗经过等）</li>
+      <li><b>输出</b>：标准化病例摘要、待讨论关键问题、分学科建议、会诊结论草案</li>
+      <li>支持<b>会前准备 · 会中记录 · 会后沉淀</b>，形成可复用 MDT 模板</li>
+      <li>应用：院内会诊前 AI 提供第二建议（<b>广附一落地中</b>）</li>
+    </ul>
+    <div class="foot"><span class="brand">MedWork 智能平台 · 京东健康</span><span>51</span></div>
+  </section>
+
+  <!-- MW 病历书写 -->
+  <section class="slide" id="mw8">
+    <div class="kicker">医疗能力 · 病历书写</div>
+    <div class="htitle">自然对话音频 → 结构化病情 + 辅诊建议</div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col" style="flex:.9;">
+        <div class="fblock"><div class="flabel">功能介绍</div><div class="sub">通过医患自然对话音频整理病情资料，并出具初步诊疗建议。</div></div>
+        <ul class="plain" style="margin-top:.4vw;">
+          <li><b>输入</b>：诊室录制的医患自然对话（音频记录）</li>
+          <li><b>输出</b>：患者病情结构化数据 + AI 基础诊疗建议</li>
+          <li>场景：门诊实时病情整理＆辅诊（<b>广附一落地中</b>）、互联网问诊实时 / 事后整理</li>
+        </ul>
+      </div>
+      <div class="col grow" style="flex-direction:column; gap:1vw;">
+        <img class="shot" src="medwork-intro/img/s8_1.png" alt="病历书写1" style="max-height:48%;">
+        <img class="shot" src="medwork-intro/img/s8_2.png" alt="病历书写2" style="max-height:48%;">
+      </div>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台 · 京东健康</span><span>52</span></div>
+  </section>
+
+  <!-- MW 论文写作 -->
+  <section class="slide" id="mw9">
+    <div class="kicker">科研能力 · 论文写作</div>
+    <div class="htitle">选题 → 综述 → 设计 → 数据 → 成稿一站式</div>
+    <div class="rule"></div>
+    <div class="fblock"><div class="flabel">功能介绍</div><div class="sub">提供医学论文选题、文献综述、研究设计、数据解读、论文写作的一站式服务，提升科研效率。</div></div>
+    <ul class="plain" style="margin-top:.5vw;">
+      <li><b>输入</b>：研究方向、疾病领域、关键词、研究数据、投稿目标期刊</li>
+      <li><b>输出</b>：论文 PDF 及过程数据</li>
+      <li>场景：有数据的科研数据分析与论文写作</li>
+    </ul>
+    <div class="foot"><span class="brand">MedWork 智能平台 · 京东健康</span><span>53</span></div>
+  </section>
+
+  <!-- MW 全景 -->
+  <section class="slide" id="mw10">
+    <div class="kicker">更多功能全景</div>
+    <div class="htitle">院内服务 · 一站式科研闭环</div>
+    <div class="rule"></div>
+    <div class="pano">
+      <div class="box"><h4>📋 医疗服务</h4><div class="it">循证检索<br>AI-MDT<br>病历文书<br>临床辅助决策<br>院后处置与风险识别<br>用药助手 · 营养治疗<br>影像解读 · 临床计算器<br>相似病历检索 · 诊断分析</div></div>
+      <div class="box"><h4>📚 科研服务</h4><div class="it">领域跟踪<br>选题研究方案<br>数据清洗<br>统计分析<br>图表制作<br>论文撰写 · 综述撰写<br>模拟审稿 · 审稿回复<br>真实世界研究</div></div>
+      <div class="box"><h4>🎯 数据服务</h4><div class="it">病历数据提取<br>病历汇总<br>科研数据提取</div></div>
+      <div class="box"><h4>🛠️ 办公场景</h4><div class="it">PPT 制作<br>汇报材料<br>Excel 表格处理</div></div>
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台 · 京东健康</span><span>54</span></div>
+  </section>
+
+  <!-- MW 欢迎使用 -->
+  <section class="slide" id="mw11">
+    <div class="kicker">欢迎使用</div>
+    <div class="htitle">立即体验 MedWork</div>
+    <div class="rule"></div>
+    <div class="qrwrap">
+      <div>
+        <div class="qbig">PC 访问</div>
+        <div class="qu">medwork.jd.com</div>
+        <div class="qu2">手机扫一扫 →<br>体验产品</div>
+      </div>
+      <img src="medwork-intro/img/s11_1.png" alt="二维码">
+    </div>
+    <div class="foot"><span class="brand">MedWork 智能平台 · 京东健康</span><span>55</span></div>
+  </section>
+
   <section class="slide" id="s45">
     <div class="big">谢谢</div>
     <div class="sm">如何优化 AI 产品 &amp; 如何训练 AI 模型 · 京东健康</div>
