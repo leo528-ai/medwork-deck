@@ -1034,8 +1034,8 @@
     <div class="lead"><b>代码化推理</b> ＋ <b>多专家蒸馏</b>训练 <b>MedCode 合版模型</b>——通用能力不下降的前提下医疗专业能力显著提升，用<b>统一模型</b>替代各业务 / 专病单独的全尺寸模型。</div>
     <div class="duo" style="margin-top:.5vw;">
       <div class="dbox good"><h5>模型能力提升</h5><div style="font-size:1.0vw;color:var(--ink);line-height:1.42;">针对传统 <b>CoT 易幻觉</b>，首创「<b>指南即代码</b>」＋模拟医生操作链，替代事后回溯思维链；用代码执行的<b>确定性</b>大幅降低医疗幻觉，专病与影像评测<b>明显提升</b>。</div></div>
-      <div class="dbox good"><h5>业务效果验证</h5><div style="font-size:1.0vw;color:var(--ink);line-height:1.42;">已具备<b>大为 / 知医 / 专病营养 / 精心</b>等核心业务能力，综合评测<b>达 GPT SOTA 同级</b>；已完成知医、大为病情收集、A2HTML、大为多模态、全托管诊断、精心、营养的<b>全量切换</b>（仅余少量 AB 观察桶），形成统一模型底座。</div></div>
-      <div class="dbox good"><h5>模型路线选择</h5><div style="font-size:1.0vw;color:var(--ink);line-height:1.42;">目标：效果<b>不低于 GPT 最新 SOTA</b>、<b>小尺寸</b>、低成本、<b>可端侧部署</b>；低幻觉低成本可下沉到<b>盒子级设备</b>，原生支持 <b>3D 医学影像</b>等多模态；依托医院真实连续病历＋高质量 <b>Rubric 标注</b>建立高质量迭代。</div></div>
+      <div class="dbox good"><h5>业务效果验证</h5><div style="font-size:1.0vw;color:var(--ink);line-height:1.42;">已具备<b>大为 / 知医 / 专病营养 / 精心</b>等核心业务能力，综合评测<b>达头部大模型同级水平</b>；已完成知医、大为病情收集、A2HTML、大为多模态、全托管诊断、精心、营养的<b>全量切换</b>（仅余少量 AB 观察桶），形成统一模型底座。</div></div>
+      <div class="dbox good"><h5>模型路线选择</h5><div style="font-size:1.0vw;color:var(--ink);line-height:1.42;">目标：效果<b>对齐头部大模型最新水平</b>、<b>小尺寸</b>、低成本、<b>可端侧部署</b>；低幻觉低成本可下沉到<b>盒子级设备</b>，原生支持 <b>3D 医学影像</b>等多模态；依托医院真实连续病历＋高质量 <b>Rubric 标注</b>建立高质量迭代。</div></div>
     </div>
     <div class="concl">一套 MedCode 合版模型——<b>通用不降、医疗领先、成本更低、可端侧、可持续迭代</b>，替代多套专家 / 全尺寸模型。</div>
     <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>55</span></div>
@@ -1046,16 +1046,16 @@
     <div class="kicker">MedCode 效果 · 专病临床评测</div>
     <div class="htitle">从营养、问诊到肿瘤分期与影像的临床落地</div>
     <div class="rule"></div>
-    <div class="lead">已上线场景<b>达 GPT SOTA 同级</b>；迭代中场景以「<b>替换为 MedCode、持平 / 超越 GPT</b>」为目标。</div>
+    <div class="lead">已上线场景<b>达头部大模型同级水平</b>；迭代中场景以「<b>替换为 MedCode、持平 / 超越头部大模型</b>」为目标。</div>
     <table class="dtable" style="margin-top:.4vw;font-size:.92vw;">
       <tr><th style="width:20%;">病种 / 场景</th><th style="width:12%;">状态</th><th>MedCode 相对表现（vs 头部模型）</th></tr>
       <tr><td class="em">临床营养</td><td>通过</td><td>院内处方无问题、已上线并规模化扩科</td></tr>
-      <tr><td class="em">精心</td><td>通过</td><td>北六专家评测，MedCode <b>略优于 GPT-5.5</b></td></tr>
-      <tr><td class="em">大为</td><td>全量</td><td>问诊 / 精心意图<b>优于基线与领域模型</b>；好评率<b>持平基线</b>、转化率<b>领先 GPT</b></td></tr>
-      <tr><td class="em">呼吸专科</td><td>迭代中</td><td>20 种常见病临床评测集；在线真实问诊 MedCode <b>持平 Gemini-Pro、优于 GPT-5.5</b>；已在广医一呼吸科门诊落地（以替换专家模型、持平 GPT-5.5 为目标）</td></tr>
-      <tr><td class="em">肺癌 · TNM 分期</td><td>迭代中</td><td>与 <b>GPT-5.5 基本持平</b></td></tr>
-      <tr><td class="em">消化道肿瘤<br>（食管 / 胃 / 结肠）</td><td>迭代中</td><td>基于北肿真实病例，用 MedCode <b>抽取肿瘤指南</b>逐步覆盖；食管癌 TNM <b>接近 GPT-5.5</b>、早筛精准率 / 召回率俱高</td></tr>
-      <tr><td class="em">3D 影像</td><td>迭代中</td><td>平扫 CT，MedCode <b>模拟医生操作流显著优于 GPT-5.5</b></td></tr>
+      <tr><td class="em">精心</td><td>通过</td><td>权威精神专科专家评测，MedCode <b>达到头部大模型水平</b></td></tr>
+      <tr><td class="em">大为</td><td>全量</td><td>问诊 / 精心意图<b>优于基线与领域模型</b>；好评率<b>持平基线</b>、转化率<b>领先基线</b></td></tr>
+      <tr><td class="em">呼吸专科</td><td>迭代中</td><td>20 种常见病临床评测集；在线真实问诊 MedCode <b>达到头部大模型水平</b>；已在合作医院呼吸科门诊试点落地</td></tr>
+      <tr><td class="em">肺癌 · TNM 分期</td><td>迭代中</td><td>与 <b>头部大模型基本持平</b></td></tr>
+      <tr><td class="em">消化道肿瘤<br>（食管 / 胃 / 结肠）</td><td>迭代中</td><td>基于合作医院真实病例，用 MedCode <b>抽取肿瘤指南</b>逐步覆盖；食管癌 TNM <b>接近头部大模型</b>、早筛精准率 / 召回率俱高</td></tr>
+      <tr><td class="em">3D 影像</td><td>迭代中</td><td>平扫 CT，MedCode <b>模拟医生操作流显著优于通用大模型</b></td></tr>
     </table>
     <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>56</span></div>
   </section>
@@ -1092,10 +1092,10 @@
     <div class="kicker">2H · 专病共建</div>
     <div class="htitle">与顶级医院共建专病大模型：联合攻关，回归临床</div>
     <div class="rule"></div>
-    <div class="lead">面向医院（2H）——与顶级医院<b>联合共建专病大模型</b>，共同申请国家重大科研任务，在回顾与前瞻队列中持续迭代。</div>
+    <div class="lead">面向医院——与顶级医院<b>联合共建专病大模型</b>，在回顾与前瞻队列中持续迭代。</div>
     <div class="duo" style="margin-top:.5vw;">
-      <div class="dbox good"><h5>合作专病矩阵</h5><ul><li><b>广医一</b>：呼吸专科</li><li><b>北肿 · 友谊</b>：消化（肿瘤 / 内镜）</li><li><b>孙逸仙</b>：前列腺癌</li><li><b>温附一</b>：临床营养</li></ul></div>
-      <div class="dbox good"><h5>共建模式 · 从科研到临床闭环</h5><ul><li>双方<b>联合共建</b>专病大模型</li><li>联合申请<b>国家重大科研任务</b></li><li>在<b>回顾 + 前瞻队列</b>中不断迭代模型能力</li><li>最终<b>辅助医生、帮助患者</b>——回归临床价值</li></ul></div>
+      <div class="dbox good"><h5>共建专病矩阵</h5><ul><li><b>呼吸专科</b></li><li><b>消化（肿瘤 / 内镜）</b></li><li><b>泌尿肿瘤</b></li><li><b>临床营养</b></li></ul></div>
+      <div class="dbox good"><h5>共建模式 · 从科研到临床闭环</h5><ul><li>双方<b>联合共建</b>专病大模型</li><li>在<b>回顾 + 前瞻队列</b>中持续迭代模型能力</li><li>最终<b>辅助医生、帮助患者</b>——回归临床价值</li></ul></div>
     </div>
     <div class="concl">顶级医院提供临床场景与队列，京东健康提供大模型与 Agent 底座——专病能力在真实临床中<b>沉淀、验证、迭代</b>。</div>
     <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>57</span></div>
@@ -1143,12 +1143,12 @@
     </div>
     <div style="margin:1vw 0 .4vw; font-size:1.25vw; font-weight:700; color:var(--green-d);">专病共建矩阵</div>
     <ul class="plain" style="flex-direction:row; flex-wrap:wrap; gap:.4vw 2vw;">
-      <li>临床营养 · 温附一 / 国家营养实验室</li>
-      <li>呼吸专病 · 广州呼吸研究院</li>
-      <li>消化道肿瘤 · 北京大学肿瘤医院</li>
-      <li>泌尿肿瘤 · 中山大学孙逸仙医院</li>
-      <li>心理专科 · 北京安定医院</li>
-      <li>乳腺肿瘤 · 江苏省人民医院</li>
+      <li>临床营养</li>
+      <li>呼吸专病</li>
+      <li>消化道肿瘤</li>
+      <li>泌尿肿瘤</li>
+      <li>心理专科</li>
+      <li>乳腺肿瘤</li>
     </ul>
     <div style="margin-top:.8vw; display:flex; gap:1vw; align-items:center;">
       <span class="tag">更多合作进行中…</span>
@@ -1184,8 +1184,8 @@
     <div class="body">
       <div class="col" style="flex:.95;">
         <div class="fblock"><div class="flabel">功能介绍</div><div class="sub">提供疾病、症状、用药、检查、指南解读等医学问题的智能问答服务，提升医学信息获取效率。</div></div>
-        <div class="fblock"><div class="flabel">功能要点</div><div class="sub"><b>输入</b>：文本、图片等常见患者状态信息（可接受图片类）<br><b>输出</b>：结构化医学回答 —— 核心结论、解释说明、风险提示、参考依据、下一步建议</div></div>
-        <div class="fblock"><div class="flabel">应用场景</div><div class="sub">常规基础单轮问答，最基础的能力。</div></div>
+        <div class="fblock"><div class="flabel">功能要点</div><div class="sub"><b>输入</b>：文本 / 图片等患者状态信息<br><b>输出</b>：结构化医学回答 —— 核心结论、解释说明、风险提示、参考依据、下一步建议</div></div>
+        <div class="fblock"><div class="flabel">应用场景</div><div class="sub">最基础的单轮问答能力。</div></div>
       </div>
       <div class="col grow"><img class="shot" src="medwork-intro/img/s5_1.png" alt="医学问答"></div>
     </div>
@@ -1221,7 +1221,7 @@
       <li><b>输入</b>：病历资料（基本病情、影像 / 病理结论、检验结果、既往治疗经过等）</li>
       <li><b>输出</b>：标准化病例摘要、待讨论关键问题、分学科建议、会诊结论草案</li>
       <li>支持<b>会前准备 · 会中记录 · 会后沉淀</b>，形成可复用 MDT 模板</li>
-      <li>应用：院内会诊前 AI 提供第二建议（<b>广附一落地中</b>）</li>
+      <li>应用：院内会诊前 AI 提供第二建议（<b>试点医院落地中</b>）</li>
     </ul>
     <div class="foot"><span class="brand">MedWork 智能平台 · 京东健康</span><span>51</span></div>
   </section>
@@ -1237,7 +1237,7 @@
         <ul class="plain" style="margin-top:.4vw;">
           <li><b>输入</b>：诊室录制的医患自然对话（音频记录）</li>
           <li><b>输出</b>：患者病情结构化数据 + AI 基础诊疗建议</li>
-          <li>场景：门诊实时病情整理＆辅诊（<b>广附一落地中</b>）、互联网问诊实时 / 事后整理</li>
+          <li>场景：门诊实时病情整理＆辅诊（<b>试点医院落地中</b>）、互联网问诊实时 / 事后整理</li>
         </ul>
       </div>
       <div class="col grow" style="flex-direction:column; gap:1vw;">
@@ -1290,6 +1290,25 @@
       <img src="medwork-intro/img/s11_1.png" alt="二维码">
     </div>
     <div class="foot"><span class="brand">MedWork 智能平台 · 京东健康</span><span>55</span></div>
+  </section>
+
+  <!-- 讲师简介 -->
+  <section class="slide" id="bio">
+    <div class="kicker">讲师简介</div>
+    <div class="htitle">Leo（胡浩源）· 京东健康 AI 副总裁</div>
+    <div class="rule"></div>
+    <div class="body">
+      <div class="col" style="flex:1.02;">
+        <div class="fblock"><div class="flabel">现任</div><div class="sub">京东健康 AI 副总裁，智能算法部 &amp; 医疗大模型负责人</div></div>
+        <div class="fblock"><div class="flabel">曾任</div><div class="sub">蚂蚁金服 金融 AI &amp; 金融大模型负责人、财富保险事业群大模型委员会主席<br>菜鸟网络 AI 负责人、阿里巴巴供应链与运筹优化小组副组长</div></div>
+        <div class="fblock"><div class="flabel">学术兼职</div><div class="sub">SIGKDD 高级领域主席（Applied Data Science Track）<br>浙江大学客座研究员 · 上海财经大学硕士生导师 · 浙江工业大学客座教授</div></div>
+      </div>
+      <div class="col" style="flex:1;">
+        <div class="fblock"><div class="flabel">业界</div><div class="sub">· 自研 greedy solver 应用于仓储 / 运输 / 履行 / 供应链，打破数十项世界纪录、创造十几亿业务价值，获 INFORMS Edelman Award Finalist<br>· 建设金融第一的 Finix 金融大模型，支撑蚂小财 3000w MAU、蚂蚁财富 200w DAU</div></div>
+        <div class="fblock"><div class="flabel">学术</div><div class="sub">· ICML / NeurIPS / MS 等国际顶会与顶刊发表论文数十篇<br>· INFORMS Franz Edelman 奖、Daniel H. Wagner 奖获得者<br>· 2024 吴文俊人工智能科技二等奖 · 2015 阿里巴巴 CEO 特别贡献奖 · 蚂蚁金服技术大奖 T-Star</div></div>
+      </div>
+    </div>
+    <div class="foot"><span class="brand">尺子做对了，优化才有方向 · 胡浩源 · 京东健康</span><span>57</span></div>
   </section>
 
   <section class="slide" id="s45">
