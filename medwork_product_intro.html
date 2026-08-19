@@ -6,160 +6,156 @@
 <title>MedWork 产品介绍 · 京东健康</title>
 <style>
   :root{
-    --green:#0f9d63; --green-d:#0a7a4c; --green-dd:#075a38;
-    --leaf:#12a06b; --mint:#e8f6ef; --mint2:#d6efe2;
-    --ink:#1f2b26; --gray:#5b6b64; --line:#cfe6da;
-    --gold:#c9a24b;
+    --ink:#0d0d0d; --gray:#6e6e73; --gray2:#a1a1a6;
+    --hair:#e5e5e3; --bg:#ffffff; --bg2:#f7f7f5;
+    --accent:#0f9d63;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{height:100%;}
   body{
     font-family:"京东朗正体","JDLANGZHENGTI","PingFang SC","Microsoft YaHei",sans-serif;
-    background:#04150e; color:var(--ink);
+    background:var(--ink); color:var(--ink);
     overflow:hidden;
+    -webkit-font-smoothing:antialiased;
   }
   #deck{position:fixed; inset:0;}
   .slide{
     position:absolute; inset:0; display:none;
-    flex-direction:column; padding:5.2vh 6vw 6vh;
-    background:#fff; opacity:0; transition:opacity .25s ease;
+    flex-direction:column; padding:7vh 8vw;
+    background:var(--bg); opacity:0; transition:opacity .3s ease;
   }
   .slide.active{display:flex; opacity:1;}
-  .kicker{display:inline-flex; align-items:center; gap:10px; font-size:1.4vw; color:var(--green-d); font-weight:700; letter-spacing:.14em; text-transform:uppercase;}
-  .kicker::before{content:""; width:.5vw; height:2.2vw; background:var(--leaf); border-radius:2px;}
-  .htitle{font-size:3.1vw; font-weight:800; color:var(--ink); margin:.6vw 0 .2vw; line-height:1.15;}
-  .rule{height:3px; width:100%; background:linear-gradient(90deg,var(--leaf),transparent); margin:.4vw 0 1.4vw;}
-  .body{flex:1; display:flex; gap:2.4vw; min-height:0;}
-  .col{flex:1; min-width:0; display:flex; flex-direction:column; gap:1vw;}
-  ul{list-style:none; display:flex; flex-direction:column; gap:.9vw;}
-  li{position:relative; padding-left:1.8vw; font-size:1.5vw; line-height:1.45; color:var(--ink);}
-  li::before{content:""; position:absolute; left:.4vw; top:.65vw; width:.7vw; height:.7vw; background:var(--leaf); border-radius:50%;}
-  .sub{font-size:1.3vw; color:var(--gray); line-height:1.5;}
-  b,strong{color:var(--green-dd);}
-  .foot{position:absolute; left:6vw; right:6vw; bottom:2.2vh; display:flex; justify-content:space-between; align-items:center; font-size:1.1vw; color:var(--gray);}
-  .foot .brand{color:var(--green-d); font-weight:700;}
-  .progress{position:fixed; top:0; left:0; height:5px; background:var(--leaf); z-index:50; transition:width .25s;}
-  .shot{flex:1; min-height:0; display:flex; align-items:center; justify-content:center; background:var(--mint); border:1px solid var(--line); border-radius:12px; padding:1vw; overflow:hidden;}
-  .shot img{max-width:100%; max-height:100%; object-fit:contain; border-radius:8px; box-shadow:0 6px 24px rgba(7,90,56,.18);}
-  /* Abridge 式大数字条 */
-  .statgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:1.6vw; flex:1; align-content:center;}
-  .stat{background:var(--mint); border:1px solid var(--line); border-radius:14px; padding:2vw 2vw 1.7vw; display:flex; flex-direction:column; justify-content:center;}
-  .stat .n{font-size:4.2vw; font-weight:800; color:var(--green-d); line-height:1.05; letter-spacing:-.01em;}
-  .stat .n small{font-size:2vw;}
-  .stat .t{font-size:1.35vw; color:var(--ink); margin-top:.7vw; font-weight:700;}
-  .stat .s{font-size:1.05vw; color:var(--gray); margin-top:.3vw; line-height:1.5;}
-  /* 工作流时间轴 */
-  .flow{display:grid; grid-template-columns:repeat(4,1fr); gap:1.2vw; flex:1; align-content:center;}
-  .stage{background:var(--mint); border:1px solid var(--line); border-radius:12px; padding:1.4vw 1.4vw; position:relative; display:flex; flex-direction:column;}
-  .stage::after{content:"→"; position:absolute; right:.7vw; bottom:.6vw; font-size:1.5vw; color:var(--leaf); font-weight:800; opacity:.85;}
-  .stage:last-child::after{content:"";}
-  .stage .ph{font-size:1.05vw; letter-spacing:.18em; color:var(--leaf); font-weight:800; text-transform:uppercase;}
-  .stage h4{font-size:1.6vw; color:var(--green-dd); margin:.5vw 0 .6vw;}
-  .stage .dd{font-size:1.15vw; color:var(--ink); line-height:1.65;}
-  .stage .cap{margin-top:auto; padding-top:.8vw; font-size:1vw; color:var(--gray); border-top:1px dashed var(--line);}
-  /* 权威背书条 */
-  .authrow{display:grid; grid-template-columns:repeat(4,1fr); gap:1.3vw;}
-  .auth{background:#fff; border:1px solid var(--line); border-left:5px solid var(--leaf); border-radius:10px; padding:1.1vw 1.3vw;}
-  .auth .a{font-size:1.45vw; font-weight:800; color:var(--green-dd);}
-  .auth .b{font-size:1.05vw; color:var(--gray); margin-top:.35vw; line-height:1.5;}
-  .cards{display:flex; gap:1.4vw; flex-wrap:wrap;}
-  .card{flex:1; min-width:12vw; background:var(--mint); border:1px solid var(--line); border-left:5px solid var(--leaf); border-radius:10px; padding:1.2vw 1.4vw;}
-  .card .n{font-size:2.3vw; font-weight:800; color:var(--green-d); line-height:1.1;}
-  .card .t{font-size:1.2vw; color:var(--gray); margin-top:.4vw;}
-  /* 深底金句页（三明治结构） */
-  .quote{padding:0; background:linear-gradient(120deg,#075a38,#0f9d63); color:#fff; align-items:center; justify-content:center; text-align:center;}
-  .quote .q{font-size:3.4vw; font-weight:800; line-height:1.4; padding:0 10vw;}
-  .quote .a{font-size:1.5vw; opacity:.85; margin-top:2.4vw;}
+  .kicker{font-size:1.05vw; color:var(--gray); font-weight:500; letter-spacing:.16em; text-transform:uppercase; margin-bottom:1.6vw;}
+  .htitle{font-size:3.6vw; font-weight:700; color:var(--ink); line-height:1.18; letter-spacing:-.015em; margin-bottom:2.6vw; max-width:62vw;}
+  .body{flex:1; display:flex; gap:4vw; min-height:0;}
+  .col{flex:1; min-width:0; display:flex; flex-direction:column;}
+  ul{list-style:none; display:flex; flex-direction:column;}
+  li{padding:1.15vw 0; font-size:1.45vw; line-height:1.6; color:var(--ink); border-top:1px solid var(--hair);}
+  li:last-child{border-bottom:1px solid var(--hair);}
+  .sub{font-size:1.2vw; color:var(--gray); line-height:1.6;}
+  b,strong{color:var(--ink); font-weight:700;}
+  .foot{position:absolute; left:8vw; right:8vw; bottom:3.2vh; display:flex; justify-content:space-between; align-items:center; font-size:.95vw; color:var(--gray2);}
+  .progress{position:fixed; top:0; left:0; height:2px; background:var(--ink); z-index:50; transition:width .25s;}
+  .shot{flex:1; min-height:0; display:flex; align-items:center; justify-content:center; background:var(--bg2); border-radius:16px; padding:1.6vw; overflow:hidden;}
+  .shot img{max-width:100%; max-height:100%; object-fit:contain; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,.08), 0 12px 40px rgba(0,0,0,.10);}
+  /* 大数字：无卡片，细线分栏 */
+  .statgrid{display:grid; grid-template-columns:repeat(3,1fr); flex:1; align-content:center; gap:0;}
+  .stat{padding:2.6vw 2.4vw; border-top:1px solid var(--hair);}
+  .stat:nth-child(-n+3){border-top:none;}
+  .stat:nth-child(3n+2),.stat:nth-child(3n){border-left:1px solid var(--hair);}
+  .stat .n{font-size:4.4vw; font-weight:600; color:var(--ink); line-height:1.15; letter-spacing:-.03em;}
+  .stat .n small{font-size:2.1vw; font-weight:500;}
+  .stat .t{font-size:1.25vw; color:var(--ink); margin-top:1vw; font-weight:600;}
+  .stat .s{font-size:1vw; color:var(--gray); margin-top:.45vw; line-height:1.55;}
+  /* 工作流：编号 + 细线，无卡片 */
+  .flow{display:grid; grid-template-columns:repeat(4,1fr); gap:3vw; flex:1; align-content:center;}
+  .stage{border-top:2px solid var(--ink); padding-top:1.4vw;}
+  .stage .ph{font-size:.95vw; letter-spacing:.16em; color:var(--gray); font-weight:600; text-transform:uppercase;}
+  .stage h4{font-size:1.7vw; color:var(--ink); margin:.7vw 0 .8vw; font-weight:700; letter-spacing:-.01em;}
+  .stage .dd{font-size:1.15vw; color:var(--gray); line-height:1.7;}
+  .stage .dd b{color:var(--ink);}
+  .stage .cap{margin-top:1.1vw; font-size:.95vw; color:var(--gray2);}
+  /* 信任四栏 */
+  .authrow{display:grid; grid-template-columns:repeat(2,1fr); gap:0;}
+  .auth{padding:1.8vw 2.2vw 1.8vw 0; border-top:1px solid var(--hair);}
+  .auth:nth-child(-n+2){border-top:none;}
+  .auth:nth-child(2n){padding-left:2.2vw; border-left:1px solid var(--hair);}
+  .auth .a{font-size:1.5vw; font-weight:700; color:var(--ink); letter-spacing:-.01em;}
+  .auth .b{font-size:1.1vw; color:var(--gray); margin-top:.5vw; line-height:1.65;}
+  /* 右侧小结列表 */
+  .mini{display:flex; flex-direction:column;}
+  .mini .m{padding:1.3vw 0; border-top:1px solid var(--hair);}
+  .mini .m:last-child{border-bottom:1px solid var(--hair);}
+  .mini .mn{font-size:1.35vw; font-weight:700; color:var(--ink);}
+  .mini .mt{font-size:1.05vw; color:var(--gray); margin-top:.3vw; line-height:1.55;}
+  /* 深色页（OpenAI 黑场） */
+  .dark{background:var(--ink); color:#fff;}
+  .dark .kicker{color:#8e8e93;}
+  .quote{align-items:flex-start; justify-content:center;}
+  .quote .q{font-size:3.8vw; font-weight:600; line-height:1.3; letter-spacing:-.02em; max-width:74vw; color:#fff;}
+  .quote .q em{font-style:normal; color:#8e8e93;}
+  .quote .a{font-size:1.3vw; color:#8e8e93; margin-top:3vw;}
   /* cover */
-  #s1{padding:0; background:linear-gradient(120deg,#0a7a4c 0%,#0f9d63 55%,#14b877 100%); color:#fff; justify-content:center; overflow:hidden;}
-  #s1 .wrap{position:relative; z-index:2; padding:0 8vw;}
-  #s1 .logo{font-size:5vw; font-weight:800; letter-spacing:.02em; text-shadow:0 4px 24px rgba(0,0,0,.25); line-height:1.2;}
-  #s1 .line{width:26vw; height:4px; background:rgba(255,255,255,.7); margin:2.2vw 0 1.6vw; border-radius:2px;}
-  #s1 .desc{font-size:2vw; opacity:.95;}
-  #s1 .meta{margin-top:4vw; font-size:1.4vw; opacity:.85;}
-  #s1 .trust{margin-top:1.2vw; display:flex; gap:1vw;}
-  #s1 .badge2{background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.35); border-radius:999px; padding:.45vw 1.3vw; font-size:1.15vw;}
-  #sEnd{background:linear-gradient(120deg,#075a38,#0f9d63); color:#fff; align-items:center; justify-content:center; text-align:center;}
-  #sEnd .big{font-size:4.6vw; font-weight:800; line-height:1.3;}
-  #sEnd .sm{font-size:1.9vw; margin-top:1.6vw; opacity:.95;}
-  #sEnd .url{font-size:1.8vw; margin-top:2.6vw; background:rgba(255,255,255,.15); padding:.8vw 2vw; border-radius:999px; display:inline-block;}
-  .hint{position:fixed; bottom:2.2vh; left:50%; transform:translateX(-50%); font-size:1vw; color:rgba(255,255,255,.5); z-index:40;}
+  #s1{background:var(--bg); justify-content:center;}
+  #s1 .logo{font-size:5.6vw; font-weight:700; letter-spacing:-.025em; line-height:1.15; color:var(--ink); max-width:78vw;}
+  #s1 .desc{font-size:1.7vw; color:var(--gray); margin-top:2.4vw; max-width:60vw; line-height:1.5;}
+  #s1 .trust{margin-top:3vw; display:flex; gap:2.6vw; font-size:1.05vw; color:var(--gray);}
+  #s1 .trust span{display:inline-flex; align-items:center; gap:.5vw;}
+  #s1 .trust span::before{content:""; width:.45vw; height:.45vw; border-radius:50%; background:var(--accent);}
+  #s1 .meta{position:absolute; left:8vw; bottom:3.2vh; font-size:1vw; color:var(--gray2);}
+  #sEnd{justify-content:center;}
+  #sEnd .big{font-size:4.8vw; font-weight:700; line-height:1.25; letter-spacing:-.02em; color:#fff; max-width:80vw;}
+  #sEnd .url{font-size:1.4vw; margin-top:3.2vw; color:#8e8e93;}
+  #sEnd .url b{color:#fff; font-weight:600;}
+  .hint{position:fixed; bottom:3.2vh; right:8vw; font-size:.9vw; color:var(--gray2); z-index:40;}
 </style>
 </head>
 <body>
 <div class="progress" id="prog"></div>
 <div id="deck">
 
-  <!-- 1 封面：使命句先行（Abridge 式） -->
+  <!-- 1 封面 -->
   <section class="slide" id="s1">
-    <div class="wrap">
-      <div class="logo">把医生的时间，<br>还给医学本身</div>
-      <div class="line"></div>
-      <div class="desc">MedWork —— 覆盖诊疗与科研每一个环节的医疗 AI 工作台</div>
-      <div class="trust">
-        <span class="badge2">结论可溯源</span>
-        <span class="badge2">代码可验证</span>
-        <span class="badge2">支持私有化部署</span>
-      </div>
-      <div class="meta">medwork.jd.com　|　京东健康 · 智能算法部 · 2026</div>
+    <div class="logo">把医生的时间，<br>还给医学本身。</div>
+    <div class="desc">MedWork —— 覆盖诊疗与科研每一个环节的医疗 AI 工作台</div>
+    <div class="trust">
+      <span>结论可溯源</span>
+      <span>代码可验证</span>
+      <span>支持私有化部署</span>
     </div>
+    <div class="meta">medwork.jd.com　·　京东健康 智能算法部　·　2026</div>
   </section>
 
-  <!-- 2 结果数字开路（Abridge 式大数字条） -->
+  <!-- 2 结果数字 -->
   <section class="slide">
     <div class="kicker">Why MedWork</div>
     <div class="htitle">先看结果，再谈功能</div>
-    <div class="rule"></div>
     <div class="body">
       <div class="statgrid">
         <div class="stat"><div class="n">Top<small>1</small></div><div class="t">HealthBench Hard（OpenAI 基准）</div><div class="s">262 位执业医生编写的评测中，底座模型 Hard 子集全球第一（50.6）</div></div>
-        <div class="stat"><div class="n">36.4<small>%</small>→76.2<small>%</small></div><div class="t">循证肿瘤方案正确率</div><div class="s">对比外部公开基线，指南代码化后的方案生成正确率翻倍</div></div>
-        <div class="stat"><div class="n">-50<small>%</small></div><div class="t">端到端算力成本</div><div class="s">MedWork 架构重构后算力下降一半，支撑全量用户服务</div></div>
+        <div class="stat"><div class="n">2.1<small>×</small></div><div class="t">循证肿瘤方案正确率</div><div class="s">36.4% → 76.2%：对比外部公开基线，指南代码化后正确率翻倍</div></div>
+        <div class="stat"><div class="n">−50<small>%</small></div><div class="t">端到端算力成本</div><div class="s">MedWork 架构重构后算力下降一半，支撑全量用户服务</div></div>
         <div class="stat"><div class="n">4000万<small>+</small></div><div class="t">医学文献底座</div><div class="s">智医文库：4000万文献 + 4万指南共识，结论引用到页码</div></div>
         <div class="stat"><div class="n">75.77<small>%</small></div><div class="t">3D 阅片人机对战</div><div class="s">43 名医生实测：模型正确率介于本科生与博士生之间</div></div>
-        <div class="stat"><div class="n">20<small>条</small></div><div class="t">单次 MDT 可溯源建议</div><div class="s">七个 AI 专科并行会诊，每条建议标注依据专家（2026-08 实测）</div></div>
+        <div class="stat"><div class="n">20<small> 条</small></div><div class="t">单次 MDT 可溯源建议</div><div class="s">七个 AI 专科并行会诊，每条建议标注依据专家（2026-08 实测）</div></div>
       </div>
     </div>
-    <div class="foot"><span class="brand">京东健康 · MedWork</span><span>02</span></div>
+    <div class="foot"><span>京东健康 · MedWork</span><span>02</span></div>
   </section>
 
-  <!-- 3 问题：医生的时间去哪了 -->
+  <!-- 3 问题 -->
   <section class="slide">
     <div class="kicker">The Problem</div>
-    <div class="htitle">医生的一天，一半不在病人身上</div>
-    <div class="rule"></div>
+    <div class="htitle">医生的一天，<br>一半不在病人身上</div>
     <div class="body">
       <div class="col" style="justify-content:center;">
         <ul>
           <li>检索文献、核对指南、写病历、组会诊、跑统计——每一件都<b>吃掉临床时间</b>。</li>
           <li>通用聊天 AI 帮不上忙：<b>无法核验、无法引用、无法执行</b>，医疗场景不敢用。</li>
-          <li>各科室工具割裂：阅片一个系统、文献一个系统、科研一个系统，<b>没有一个完整的智能层</b>。</li>
+          <li>工具割裂：阅片、文献、科研各一个系统，<b>没有一个完整的智能层</b>。</li>
         </ul>
       </div>
-      <div class="col" style="justify-content:center;">
-        <div class="cards" style="flex-direction:column;">
-          <div class="card"><div class="n">碎片化</div><div class="t">任务散落在多个系统，反复切换、重复录入</div></div>
-          <div class="card"><div class="n">不可信</div><div class="t">通用大模型无出处、会幻觉，临床不敢直接采纳</div></div>
-          <div class="card"><div class="n">难落地</div><div class="t">数据不能出院，公有云工具与院内合规冲突</div></div>
+      <div class="col" style="flex:0 0 26vw; justify-content:center;">
+        <div class="mini">
+          <div class="m"><div class="mn">碎片化</div><div class="mt">任务散落多系统，反复切换、重复录入</div></div>
+          <div class="m"><div class="mn">不可信</div><div class="mt">无出处、会幻觉，临床不敢直接采纳</div></div>
+          <div class="m"><div class="mn">难落地</div><div class="mt">数据不能出院，公有云与院内合规冲突</div></div>
         </div>
       </div>
     </div>
-    <div class="foot"><span class="brand">京东健康 · MedWork</span><span>03</span></div>
+    <div class="foot"><span>京东健康 · MedWork</span><span>03</span></div>
   </section>
 
-  <!-- 4 答案定位：one intelligence layer -->
-  <section class="slide quote">
-    <div>
-      <div class="q">MedWork 是医疗工作的<br>「一个智能层」——<br>诊前、诊中、诊后、科研，一个入口。</div>
-      <div class="a">底座：京医千询医疗大模型（medcode 代码范式）</div>
-    </div>
+  <!-- 4 定位金句（黑场） -->
+  <section class="slide dark quote">
+    <div class="q">MedWork 是医疗工作的<br>一个智能层。<br><em>诊前、诊中、诊后、科研，一个入口。</em></div>
+    <div class="a">底座：京医千询医疗大模型 · medcode 代码范式</div>
   </section>
 
-  <!-- 5 工作流叙事（Abridge 式 per moment of care） -->
+  <!-- 5 工作流 -->
   <section class="slide">
     <div class="kicker">Care Workflow</div>
     <div class="htitle">跟着医生的一天走</div>
-    <div class="rule"></div>
     <div class="body">
       <div class="flow">
         <div class="stage"><div class="ph">诊前</div><h4>循证准备</h4><div class="dd">循证问答引用指南到<b>具体页码</b>；病例自动分期、治疗路径比对，进诊室前信息已就绪。</div><div class="cap">循证问答 · 专家推荐</div></div>
@@ -168,119 +164,109 @@
         <div class="stage"><div class="ph">科研</div><h4>研究闭环</h4><div class="dd">样本量、统计、图表由<b>真实代码执行</b>；Results 润色、期刊匹配，从数据到投稿。</div><div class="cap">科研助手 · 文献管理</div></div>
       </div>
     </div>
-    <div class="foot"><span class="brand">京东健康 · MedWork</span><span>05</span></div>
+    <div class="foot"><span>京东健康 · MedWork</span><span>05</span></div>
   </section>
 
-  <!-- 6 实测一：肿瘤专家推荐 -->
+  <!-- 6 实测一 -->
   <section class="slide">
     <div class="kicker">Live Demo · 2026-08-19</div>
-    <div class="htitle">病例进，方案与专家出——全程可溯源</div>
-    <div class="rule"></div>
+    <div class="htitle">病例进，方案与专家出</div>
     <div class="body">
-      <div class="col" style="flex:0 0 30vw;">
+      <div class="col" style="flex:0 0 28vw; justify-content:center;">
         <ul>
-          <li>输入：49 岁女性，肺腺癌磨玻璃结节病例描述。</li>
-          <li>模型<b>运行代码完成 TNM 分期</b>（T1a N0 M0 → IA1），非文本猜测。</li>
-          <li>治疗方案引用 <b>NCCN 第 9 版</b>，精确到页码（pp.123）。</li>
-          <li>自动匹配 3 位对症专家，衔接线上问诊。</li>
-          <li>右侧「依据详情」面板：<b>每条结论可点开核验</b>。</li>
+          <li>49 岁女性，肺腺癌磨玻璃结节病例。</li>
+          <li><b>运行代码完成 TNM 分期</b>（T1a N0 M0 → IA1），非文本猜测。</li>
+          <li>方案引用 <b>NCCN 第 9 版</b>，精确到页码。</li>
+          <li>自动匹配 3 位对症专家；每条结论<b>可点开核验</b>。</li>
         </ul>
       </div>
       <div class="shot"><img src="assets_intro/sug1-oncology-top.png" alt="肿瘤专家推荐实测"></div>
     </div>
-    <div class="foot"><span class="brand">京东健康 · MedWork</span><span>06</span></div>
+    <div class="foot"><span>京东健康 · MedWork</span><span>06</span></div>
   </section>
 
-  <!-- 7 实测二：AI-MDT -->
+  <!-- 7 实测二 -->
   <section class="slide">
     <div class="kicker">Live Demo · 2026-08-19</div>
     <div class="htitle">一次会诊：七个专科，20 条编号建议</div>
-    <div class="rule"></div>
     <div class="body">
-      <div class="col" style="flex:0 0 30vw;">
+      <div class="col" style="flex:0 0 28vw; justify-content:center;">
         <ul>
-          <li>病例：结肠癌肺转移多线治疗后，靶向疗效评估。</li>
+          <li>结肠癌肺转移多线治疗后，靶向疗效评估。</li>
           <li>先归纳<b>关键问题清单</b>，主动指出缺失资料。</li>
-          <li>自动拟定专家名单：肿瘤内科、分子病理、影像、放疗、药学、疼痛、营养——<b>各带职责范围</b>。</li>
-          <li>20 条建议按治疗域分组，<b>每条标注「依据：某专家」</b>。</li>
-          <li>药学专家自动提示 CYP3A4 相互作用与出血风险。</li>
+          <li>自动拟定七个专科的专家名单，<b>各带职责范围</b>。</li>
+          <li>20 条建议按治疗域分组，<b>每条标注依据专家</b>；药学自动提示相互作用与出血风险。</li>
         </ul>
       </div>
       <div class="shot"><img src="assets_intro/retest-mdt-experts.png" alt="AI-MDT 实测"></div>
     </div>
-    <div class="foot"><span class="brand">京东健康 · MedWork</span><span>07</span></div>
+    <div class="foot"><span>京东健康 · MedWork</span><span>07</span></div>
   </section>
 
-  <!-- 8 实测三：科研 -->
+  <!-- 8 实测三 -->
   <section class="slide">
     <div class="kicker">Live Demo · 2026-08</div>
-    <div class="htitle">统计交给代码执行，而不是模型口算</div>
-    <div class="rule"></div>
+    <div class="htitle">统计交给代码执行，<br>而不是模型口算</div>
     <div class="body">
-      <div class="col" style="flex:0 0 30vw;">
+      <div class="col" style="flex:0 0 28vw; justify-content:center;">
         <ul>
-          <li>任务：两组率比较的样本量计算。</li>
-          <li>输出<b>每组 291 例</b>：公式、参数、连续性校正全过程展示。</li>
+          <li>两组率比较的样本量计算。</li>
+          <li>输出<b>每组 291 例</b>：公式、参数、连续性校正全过程。</li>
           <li>数值来自<b>实际执行的统计代码</b>，可复核、可复现。</li>
-          <li>同一入口完成：回归解读、Results 中英文润色、期刊匹配。</li>
+          <li>同一入口：回归解读、Results 润色、期刊匹配。</li>
         </ul>
       </div>
       <div class="shot"><img src="assets_intro/sug4-samplesize.png" alt="样本量计算实测"></div>
     </div>
-    <div class="foot"><span class="brand">京东健康 · MedWork</span><span>08</span></div>
+    <div class="foot"><span>京东健康 · MedWork</span><span>08</span></div>
   </section>
 
-  <!-- 9 权威与信任（OpenEvidence 式背书页） -->
+  <!-- 9 信任 -->
   <section class="slide">
     <div class="kicker">Evidence &amp; Trust</div>
-    <div class="htitle">信任不是承诺出来的，是设计出来的</div>
-    <div class="rule"></div>
+    <div class="htitle">信任不是承诺出来的，<br>是设计出来的</div>
     <div class="body">
-      <div class="col">
-        <div class="authrow" style="grid-template-columns:repeat(2,1fr);">
+      <div class="col" style="justify-content:center;">
+        <div class="authrow">
           <div class="auth"><div class="a">指南引用到页码</div><div class="b">NCCN、CSCO 等权威指南结构化入库；每条结论挂「依据详情」，版本与页码可核。</div></div>
-          <div class="auth"><div class="a">代码范式推理</div><div class="b">分期、剂量、统计等关键计算以可执行代码完成，结果可复现——不是生成的文字，是运行的结果。</div></div>
-          <div class="auth"><div class="a">执行全程留痕</div><div class="b">检索、代码、阅片每一步在执行过程面板可见可回放；产物文件落盘可下载。</div></div>
-          <div class="auth"><div class="a">分歧明示 · 边界自知</div><div class="b">专家意见不一致时如实呈现；结论自带不确定性与适用范围声明，最终决策权在医生。</div></div>
+          <div class="auth"><div class="a">代码范式推理</div><div class="b">分期、剂量、统计以可执行代码完成，结果可复现——不是生成的文字，是运行的结果。</div></div>
+          <div class="auth"><div class="a">执行全程留痕</div><div class="b">检索、代码、阅片每一步可见可回放；产物文件落盘可下载。</div></div>
+          <div class="auth"><div class="a">分歧明示 · 边界自知</div><div class="b">专家意见不一致时如实呈现；结论自带适用范围声明，最终决策权在医生。</div></div>
         </div>
       </div>
-      <div class="col" style="flex:0 0 26vw; justify-content:center;">
-        <div class="cards" style="flex-direction:column;">
-          <div class="card"><div class="n">私有化</div><div class="t">支持医院内部署，数据不出院</div></div>
-          <div class="card"><div class="n">院士团队</div><div class="t">与国内顶尖专科团队专病共建，专家背书</div></div>
-          <div class="card"><div class="n">全线打通</div><div class="t">与知医 / 卓医 / AI 京医同一模型底座</div></div>
+      <div class="col" style="flex:0 0 24vw; justify-content:center;">
+        <div class="mini">
+          <div class="m"><div class="mn">私有化</div><div class="mt">支持医院内部署，数据不出院</div></div>
+          <div class="m"><div class="mn">院士团队</div><div class="mt">与国内顶尖专科团队专病共建</div></div>
+          <div class="m"><div class="mn">全线打通</div><div class="mt">与知医 / 卓医 / AI 京医同一模型底座</div></div>
         </div>
       </div>
     </div>
-    <div class="foot"><span class="brand">京东健康 · MedWork</span><span>09</span></div>
+    <div class="foot"><span>京东健康 · MedWork</span><span>09</span></div>
   </section>
 
-  <!-- 10 落地矩阵（Abridge 式客户叙事，脱敏口径） -->
+  <!-- 10 落地 -->
   <section class="slide">
     <div class="kicker">Deployment</div>
     <div class="htitle">从个人注册即用，到医院整体部署</div>
-    <div class="rule"></div>
     <div class="body">
       <div class="flow" style="grid-template-columns:repeat(3,1fr);">
-        <div class="stage" style="--x:1;"><div class="ph">个人</div><h4>网页直达</h4><div class="dd">medwork.jd.com 注册即用；医生、科研人员的日常临床与研究任务一站式完成。</div><div class="cap">已服务多专科真实临床用户</div></div>
-        <div class="stage"><div class="ph">医院</div><h4>私有化部署</h4><div class="dd">模型与平台整体进院，对接院内系统；算力成本重构后下降 50%，部署门槛大幅降低。</div><div class="cap">南方某三甲已落地 AI 一体机</div></div>
+        <div class="stage"><div class="ph">个人</div><h4>网页直达</h4><div class="dd">medwork.jd.com 注册即用；医生、科研人员的日常临床与研究任务一站式完成。</div><div class="cap">已服务多专科真实临床用户</div></div>
+        <div class="stage"><div class="ph">医院</div><h4>私有化部署</h4><div class="dd">模型与平台整体进院，对接院内系统；算力成本重构后<b>下降 50%</b>，部署门槛大幅降低。</div><div class="cap">南方某三甲已落地 AI 一体机</div></div>
         <div class="stage"><div class="ph">共建</div><h4>专病共建</h4><div class="dd">呼吸、消化、肿瘤、心血管、精神等方向与<b>多家顶级医院</b>推进中：医院出专家与场景，我们出模型与工程，成果共享。</div><div class="cap">含院士团队合作专科</div></div>
       </div>
     </div>
-    <div class="foot"><span class="brand">京东健康 · MedWork</span><span>10</span></div>
+    <div class="foot"><span>京东健康 · MedWork</span><span>10</span></div>
   </section>
 
-  <!-- 11 结尾：使命收束 -->
-  <section class="slide" id="sEnd">
-    <div>
-      <div class="big">让每一位医疗工作者，<br>拥有一支 AI 团队</div>
-      <div class="sm">MedWork · 京东健康</div>
-      <div class="url">medwork.jd.com</div>
-    </div>
+  <!-- 11 结尾（黑场） -->
+  <section class="slide dark" id="sEnd">
+    <div class="big">让每一位医疗工作者，<br>拥有一支 AI 团队。</div>
+    <div class="url"><b>medwork.jd.com</b>　·　京东健康</div>
   </section>
 
 </div>
-<div class="hint">← → 翻页　|　F 全屏</div>
+<div class="hint">← → 翻页 · F 全屏</div>
 <script>
 const slides=[...document.querySelectorAll('.slide')];let cur=0;
 function show(i){cur=Math.max(0,Math.min(slides.length-1,i));slides.forEach((s,j)=>s.classList.toggle('active',j===cur));document.getElementById('prog').style.width=((cur+1)/slides.length*100)+'%';}
