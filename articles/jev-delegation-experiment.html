@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<title>有限判断何时值得委派：Jev 的一组集成实验｜胡浩源</title>
+<meta name="description" content="依据 2026 年 9 月 22 日内部接入报告，拆解 Jev 在 768 条分类、连续浏览器操作、多标签与小任务中的结果：哪里更快，哪里未达质量线，哪些结论仍不能外推。">
+<meta name="author" content="胡浩源">
+<meta name="color-scheme" content="light">
+<style>
+:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:3px solid var(--clay);outline-offset:5px}
+.skip{position:absolute;left:1rem;top:-5rem;background:var(--surface);padding:.5rem 1rem;z-index:5}.skip:focus{top:1rem}
+.shell{width:min(100% - 40px,760px);margin:0 auto}
+.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.masthead a{color:var(--muted)}header{padding:52px 0 26px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);font-weight:700;margin:0 0 20px}
+h1{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif;font-size:clamp(32px,5.8vw,46px);line-height:1.35;font-weight:700;letter-spacing:-.035em;margin:0 0 25px}
+.byline{font-size:14px;margin:0;color:var(--muted)}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}
+.contents{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px;color:var(--muted)}
+.contents summary{cursor:pointer;font-weight:600;color:var(--ink)}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}
+article p{margin:0 0 22px}blockquote{margin:0 0 34px;padding:6px 0 6px 20px;border-left:3px solid var(--clay);font-size:18px;color:var(--muted)}blockquote p:last-child{margin-bottom:0}
+h2{font-size:26px;line-height:1.5;font-weight:700;margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}
+h3{font-size:20px;line-height:1.55;margin:32px 0 18px}strong{font-weight:700}code{font:0.88em/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#EBE5D9;border-radius:3px;padding:.1em .3em;overflow-wrap:anywhere}
+ul,ol{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}
+.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650;color:var(--ink)}tbody th{font-weight:500;width:36%}tr:last-child th,tr:last-child td{border-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:14px;line-height:1.95;color:var(--muted)}hr~h3{font-size:17px;margin-top:0}
+.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){body{font-size:16px;line-height:1.95}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px}header{padding:36px 0 24px}h2{font-size:23px;margin-top:42px}h3{font-size:19px}blockquote{font-size:17px;padding-left:16px}.table-wrap{margin-left:-2px;margin-right:-2px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}h3{font-size:13pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}blockquote{font-size:12pt}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">跳至正文</a>
+<div class="shell">
+<nav class="masthead" aria-label="站点导航"><span>工程实践 · 实验与边界</span><a href="../blog/">返回博客</a></nav>
+<header>
+<p class="eyebrow">MedWork / Engineering Notes</p>
+<h1>有限判断何时值得委派：Jev 的一组集成实验</h1>
+<p class="byline">胡浩源｜京东健康AI副总裁</p>
+<p class="dateline">依据 2026 年 9 月 22 日接入报告整理</p>
+</header>
+<details class="contents"><summary>文章目录</summary><nav aria-label="文章目录"><ol><li><a href="#section-1">一、这次接入的 Jev，承担的是有限判断与连续执行</a></li><li><a href="#section-2">二、768 条分类：端到端时间降了，任务要求没有缩水</a></li><li><a href="#section-3">三、“需复核”不是失败，完整性也不等于正确性</a></li><li><a href="#section-4">四、主模型 Token 减少，不等于总费用已经下降</a></li><li><a href="#section-5">五、浏览器：执行器有效，自动委派还没有成立</a></li><li><a href="#section-6">六、两个反例：更小的任务更慢，多标签更快但未达质量线</a></li><li><a href="#section-7">七、从这轮结果得到的，是一条有条件的委派规则</a></li><li><a href="#section-8">八、下一轮需要补的，不只是更多速度数字</a></li></ol></nav></details>
+<main id="main"><article>
+<blockquote><p>一次单标签分类对照给出了清晰的效率收益；小任务、多标签质量和自主委派测试，则划出了不能忽略的边界。下面讨论的都是 2026 年 9 月 22 日接入报告中的内部工程结果，不是外部排行榜，也不是临床有效性评估。</p></blockquote>
+<p>给 Agent 增加一个工具，不等于它会主动使用；让一段任务跑得更快，也不等于整个系统更便宜、更准确。Jev 接入 MedWork 的这轮结果，恰好把这些问题分开了。</p>
+<p>最直观的结果来自同一附件的 768 条评价分类：禁用 <code>jev_batch</code> 时，从用户发送请求到助手完成交付需要 46.027 秒；明确使用时需要 16.852 秒，耗时降低 63.4%，约为 2.73 倍速度。两组都交付了 768 个唯一 ID，按既有样本答案核对，正确数由 744 条变为 757 条。</p>
+<p>但这不是 768 条独立真实客户评价的线上试验。输入是由 32 种语义模式扩展而来的测试记录，端到端对照只各运行了一次。能够成立的结论，是在这份输入、这套任务要求和这次执行路径下，专用批处理工具减少了交付等待；不能据此推导所有分类任务的平均收益。</p>
+<p>更有价值的部分，是把这次成功与另外几组并不理想的结果放在一起看：什么工作适合交出去，什么工作不值得交，交出去以后又该验收什么。</p>
+<h2 id="section-1">一、这次接入的 Jev，承担的是有限判断与连续执行</h2>
+<p>报告使用的是 Jev 1.13.0 接口，交付了两个工具：<code>jev_browser</code> 和 <code>jev_batch</code>。报告没有解释 Jev 的英文全称，也未披露底层模型架构和训练细节。这里沿用其名称，只讨论报告能够支持的接口行为与接入结果。</p>
+<p>它的接入方式不是让 Jev 给出建议，再由主模型把每一步建议翻译成工具调用。主 Agent 先提供目标、规则、必要输入、权限和验收条件；工具在一次外层调用中完成多步操作或多批记录；主 Agent 最后核验目标并组织交付。</p>
+<p>两条路径各自承担不同的工作：</p>
+<ul><li><strong>浏览器路径：</strong>观察真实页面，在有限的 DOM 候选动作中判断，执行后再观察。适用工作包括连续点击、跳转、筛选、滚动，以及填入调用方已经提供的准确文本。</li><li><strong>批处理路径：</strong>读取选定文本字段，按有限标签集合判断，再由程序完成 ID 映射、数量统计、明细和分组文件输出。</li></ul>
+<p>这次接入复用了既有工具执行环境，收益主要来自减少主 Agent 的重复判断与执行往返。</p>
+<p>这也决定了责任边界。浏览器操作完成不等于业务目标完成，最终验收仍由主 Agent 负责；批处理返回完整文件，也不等于分类质量已经达到所有业务的要求。</p>
+<h2 id="section-2">二、768 条分类：端到端时间降了，任务要求没有缩水</h2>
+<p>这组对照的要求相当具体：只读取每条记录的 <code>text</code>，以 <code>id</code> 作为唯一标识，按照本人当前的主要诉求，分为配送问题、商品问题、退款售后、好评、需复核五类。多个未解决问题没有主次，或者信息不足时，应该输出“需复核”。交付物不仅是标签，还包括各类数量、完整逐条结果和分组文件。</p>
+<p>两次请求的目标一致，主要差别是明确使用或禁止使用 <code>jev_batch</code>；两次均未激活 Skill，因此比较的是通用主 Agent 路径，而不是两个不同的业务 Skill。</p>
+<div class="table-wrap" role="region" aria-label="实验数据表 1" tabindex="0"><table><caption class="sr-only">实验数据表 1：指标、禁用 Jev、使用 Jev</caption><thead><tr><th scope="col">指标</th><th scope="col">禁用 Jev</th><th scope="col">使用 Jev</th></tr></thead><tbody><tr><th scope="row">用户发送至助手完成</th><td>46.027 秒</td><td>16.852 秒</td></tr><tr><th scope="row">主模型调用次数</th><td>6 次</td><td>4 次</td></tr><tr><th scope="row">主模型累计输入</th><td>234,022 Token</td><td>76,270 Token</td></tr><tr><th scope="row">主模型累计输出</th><td>4,756 Token</td><td>1,304 Token</td></tr><tr><th scope="row">交付的唯一 ID 数</th><td>768</td><td>768</td></tr><tr><th scope="row">按既有答案核对的正确数</th><td>744 / 768</td><td>757 / 768</td></tr><tr><th scope="row">对应正确率</th><td>96.88%</td><td>98.57%</td></tr></tbody></table></div>
+<p>耗时减少了 29.175 秒。主模型累计输入减少 67.4%，输出也明显缩短。正确数增加 13 条，对应正确率提高约 1.69 个百分点，而不是“提高 13%”。</p>
+<p>两条执行路径的差别，比单独看速度更能说明问题。</p>
+<p>禁用 Jev 时，主 Agent 通过 5 次终端调用完成数据读取、推理、生成分类映射脚本、映射与核验。使用 Jev 时，外层是 1 次终端调用和 1 次 Jev 批处理，后者内部实际发出了 24 个请求。报告记录的 Jev 工具内部用时为 3.480 秒，768 条全部处理，失败批次和未处理项都为零。</p>
+<p><strong>3.480 秒是工具内部时间，16.852 秒才是这次用户实际等待的端到端时间。</strong>不能用前者去与基线的 46.027 秒相除，制造一个更大的“提速倍数”。同样，外层的一次批处理调用，也不意味着底层只有一次模型请求。</p>
+<p>这次收益与执行路径的变化相符：把文件交给专用工具完成判断、统计和落盘，减少了主模型反复阅读大段数据、生成映射脚本和组织长输出的工作。不过，报告没有提供逐阶段耗时拆分，不能进一步声称每一项机制分别贡献了多少秒。</p>
+<p>还有一个容易混淆的细节：工具支持对指定字段完全相同的记录进行精确去重，但这次 768 条记录实际全部经过判断，没有发生精确去重。因此，这次提速不能归因于“把重复记录省掉了”。</p>
+<h2 id="section-3">三、“需复核”不是失败，完整性也不等于正确性</h2>
+<p>报告中的两张会话结果截图，给出了分类数量：</p>
+<div class="table-wrap" role="region" aria-label="实验数据表 2" tabindex="0"><table><caption class="sr-only">实验数据表 2：输出标签、禁用 Jev、使用 Jev</caption><thead><tr><th scope="col">输出标签</th><th scope="col">禁用 Jev</th><th scope="col">使用 Jev</th></tr></thead><tbody><tr><th scope="row">配送问题</th><td>120</td><td>120</td></tr><tr><th scope="row">商品问题</th><td>144</td><td>135</td></tr><tr><th scope="row">退款售后</th><td>144</td><td>144</td></tr><tr><th scope="row">好评</th><td>168</td><td>142</td></tr><tr><th scope="row">需复核</th><td>192</td><td>227</td></tr><tr><th scope="row">合计</th><td>768</td><td>768</td></tr></tbody></table></div>
+<p>使用 Jev 的结果中，有 227 条被分到“需复核”，约占 29.6%。这不是 227 条执行失败，也不是 227 条漏判：按照任务定义，在信息不足或无法确定主要诉求时，“需复核”本身就是合法的目标标签。报告同时记录了零未处理项，两者并不冲突。</p>
+<p>反过来，保留了全部 ID、五类数量相加等于 768，只能说明交付完整，不能证明语义判断正确。正确率还需要和预设答案比较。</p>
+<p>这里至少要区分三件事：</p>
+<ol><li><strong>执行有没有完成：</strong>有没有失败批次、未处理项。</li><li><strong>数据有没有交齐：</strong>是否存在漏行、重复 ID，统计是否与明细一致。</li><li><strong>判断有没有做对：</strong>标签是否符合任务口径和参考答案。</li></ol>
+<p>这次对照的前两项都通过了，第三项并非满分：Jev 仍有 11 条与既有答案不一致，禁用路径有 24 条不一致。</p>
+<p>“需复核”增加 35 条，与正确数增加 13 条，也不能直接解释成同一件事。报告没有提供逐条预测、真实标签和混淆矩阵，无法判断这 35 条具体从哪些类别转来，哪些改判是正确的。不能仅凭分类数量就宣称某种“更谨慎的策略”导致了质量提升。</p>
+<p>对实际部署而言，这组结果说明的是：验收应同时看完成情况、交付完整性和标签质量，而不是只看一个正确率，或者只看文件是否成功生成。</p>
+<h2 id="section-4">四、主模型 Token 减少，不等于总费用已经下降</h2>
+<p>这次对照中，主模型输入从 234,022 Token 降到 76,270 Token，是一个明确的路径变化指标。但使用 Jev 的一侧，还有额外用量：</p>
+<div class="table-wrap" role="region" aria-label="实验数据表 3" tabindex="0"><table><caption class="sr-only">实验数据表 3：Jev 额外用量、报告记录</caption><thead><tr><th scope="col">Jev 额外用量</th><th scope="col">报告记录</th></tr></thead><tbody><tr><th scope="row">输入</th><td>166,157 Token</td></tr><tr><th scope="row">输出</th><td>44,508 Token</td></tr></tbody></table></div>
+<p>因此，“主模型输入减少 67.4%”可以直接引用；“总 Token 减少 67.4%”不可以；“费用降低 67.4%”更没有依据。</p>
+<p>不同调用路径的计费单价、缓存折扣、输入输出计价和其他费用，都不能从主模型 Token 一项里推导出来。报告明确将实际费用留待账单核算，也没有提供足以进行费用对照的完整计价条件。</p>
+<p>这里适合保留两个独立结论：这次任务的<strong>端到端延迟降低了</strong>，主模型承担的<strong>输入输出负担减轻了</strong>。系统总成本是否更低，仍是待核算的问题。</p>
+<p>把延迟、主模型占用和费用拆开，反而能更准确地判断工具的工程价值。有的路径可能以额外专用调用换取更短等待，有的路径可能同时节省费用；只有完整账单才能回答属于哪一种。</p>
+<h2 id="section-5">五、浏览器：执行器有效，自动委派还没有成立</h2>
+<p>浏览器部分的最新受控回归是一个七动作任务，明确启用 Jev，只有一对运行：</p>
+<div class="table-wrap" role="region" aria-label="实验数据表 4" tabindex="0"><table><caption class="sr-only">实验数据表 4：指标、不用 Jev、使用 Jev</caption><thead><tr><th scope="col">指标</th><th scope="col">不用 Jev</th><th scope="col">使用 Jev</th></tr></thead><tbody><tr><th scope="row">耗时</th><td>11.552 秒</td><td>8.451 秒</td></tr><tr><th scope="row">主模型调用次数</th><td>19 次</td><td>4 次</td></tr><tr><th scope="row">真实页面验收</th><td>通过</td><td>通过</td></tr></tbody></table></div>
+<p>这一对运行中，耗时降低 26.8%，主模型调用数由 19 次降到 4 次。它证明了在这个受控任务里，连续操作可以被放进专用执行路径，且最终页面状态通过了验收。</p>
+<p>但另一组结果必须同时公开：<strong>浏览器自然选择测试共 33 次，主 Agent 一次也没有委派给 Jev。</strong></p>
+<p>“工具执行时有收益”和“Agent 会在合适的时候调用工具”，是两道不同的门槛。受控回归支持前者，自然选择测试没有支持后者。不能把明确启用条件下的 19 → 4 次调用，写成系统默认行为已经自动优化。</p>
+<p>在报告所述配置中，浏览器工具的可见性也有条件。<code>jev_browser</code> 不是默认工具，需要由 <code>browser-use</code> Skill 声明，并依赖 Desktop 内置浏览器；纯云端环境没有该浏览器时不可用。因此，接入报告提出的下一步重点是完善 Skill 委派，让适合的流程明确交出整段任务，而不是期待工具注册后就自然获得调用。</p>
+<p>执行边界并没有因为“连续”而取消。按报告描述，工具基于真实 DOM 候选执行，并校验页面快照；不通过任意脚本或猜测坐标绕过边界；缺少必需输入时停止；必要时可要求观察到正文，避免把标题当成已经读过的内容。既有权限和操作安全检查保持不变。</p>
+<p>这些是报告描述的实现约束，不是独立安全审计的结论。一两步直达操作、需要看图推理、输入不完整或高风险的任务，也不在其默认适用范围内。</p>
+<h2 id="section-6">六、两个反例：更小的任务更慢，多标签更快但未达质量线</h2>
+<p>如果只展示 768 条单标签任务，这次接入很容易被误读成“分类全部交给 Jev”。另外两组评测说明，这样的默认策略并不合适。</p>
+<h3>240 条多标签：约 1.61 倍速度，但两组都未达标</h3>
+<p>这组输入是 24 种语义模式加流水号形成的 240 条记录，两种条件各运行 3 次。报告说明，多次运行采用中位数汇总。</p>
+<div class="table-wrap" role="region" aria-label="实验数据表 5" tabindex="0"><table><caption class="sr-only">实验数据表 5：指标、不用 Jev、使用 Jev</caption><thead><tr><th scope="col">指标</th><th scope="col">不用 Jev</th><th scope="col">使用 Jev</th></tr></thead><tbody><tr><th scope="row">耗时</th><td>14.173 秒</td><td>8.812 秒</td></tr><tr><th scope="row">报告所列正确率</th><td>91.81%</td><td>91.67%</td></tr></tbody></table></div>
+<p>速度约提高到 1.61 倍，但 Jev 的正确率没有提高，反而低了 0.14 个百分点；两组都低于报告设定的 95% 质量线。</p>
+<p>因此，这组结果不能作为“多标签任务可以放心委派”的证据。它只说明，在该测试里更快的路径仍未满足质量要求。若质量门槛不可让步，延迟收益不能替代达标。</p>
+<p>报告也没有给出多标签正确率的详细计分定义、逐次运行明细或逐标签指标。这里保留其原始指标，不将其擅自解释成完全匹配率、微平均 F1 或其他常见评测口径。</p>
+<h3>24 条和 12 条小任务：开放工具的条件更慢</h3>
+<p>在小型内联任务中，主 Agent 自主选择是否调用 Jev；工具可用，并不意味着每轮都实际使用。两类任务同样各运行 3 次：</p>
+<div class="table-wrap" role="region" aria-label="实验数据表 6" tabindex="0"><table><caption class="sr-only">实验数据表 6：小型任务、不用 Jev、Jev 可用、自主选择</caption><thead><tr><th scope="col">小型任务</th><th scope="col">不用 Jev</th><th scope="col">Jev 可用、自主选择</th></tr></thead><tbody><tr><th scope="row">24 条多标签</th><td>6.498 秒</td><td>14.263 秒</td></tr><tr><th scope="row">12 条共享背景</th><td>3.114 秒</td><td>8.876 秒</td></tr></tbody></table></div>
+<p>这不是对每次实际 Jev 调用开销的纯测量，因为有些轮次没有调用工具。能够直接说的是：在这两类小任务和这组自主选择设置下，开放工具的路径没有获得效率收益，耗时反而更高。</p>
+<p>工具调用和交接并非免费。材料很少时，主模型直接完成可能更合适。不过，这几组结果不足以给出一个通用的条数阈值，例如“超过 100 条一定更快”。文本长度、标签复杂度、输出要求和执行环境都可能影响分界点，报告没有进行这样的阈值扫描。</p>
+<h2 id="section-7">七、从这轮结果得到的，是一条有条件的委派规则</h2>
+<p>把正面结果与反例放在一起，当前更合理的使用方式并不复杂：</p>
+<div class="table-wrap" role="region" aria-label="实验数据表 7" tabindex="0"><table><caption class="sr-only">实验数据表 7：工具、优先考虑、不应默认使用</caption><thead><tr><th scope="col">工具</th><th scope="col">优先考虑</th><th scope="col">不应默认使用</th></tr></thead><tbody><tr><th scope="row"><code>jev_batch</code></th><td>已有较大批量独立文本、有限标签、边界明确，且结果需要直接统计和分组</td><td>少量简单文本、确定性计算、复杂多标签、高风险医学判断</td></tr><tr><th scope="row"><code>jev_browser</code></th><td>目标清晰、多屏多对象、连续常规操作，并由适合的 Skill 明确委派</td><td>一两步直达、看图推理、必需输入缺失、高风险操作</td></tr></tbody></table></div>
+<p>在本次接入实现中，批处理工具可用于云端和本地环境，默认对主 Agent 可见，也可由 Skill 排除。它支持工作空间 JSON/JSONL 或内联记录、单标签或多标签以及共享业务背景；但“接口支持”不等于“每种设置都已经证明适用”。</p>
+<p>其工程实现中还有两项值得保留的边界：只发送指定文本字段，精确相同字段只判断一次，再还原全部 ID 和原始顺序，不做语义近似合并；失败时保留未处理子集供续跑，不重跑已完成项。这些机制有助于控制数据流与重复执行，但本轮报告没有给出失败恢复专项测试，不能把支持能力写成已经量化验证的收益。</p>
+<p>报告还说明，合法判断会直接执行，不因概率低就交回主模型逐项重判。这减少了“专用工具判断一遍，主模型再判断一遍”的重复路径，却不意味着低置信结果天然可靠。有限标签的设计、允许“需复核”的业务口径、适用范围限制和结果抽检，仍然重要。</p>
+<p>对于医疗健康场景尤其如此。这轮分类输入是评价测试记录，浏览器评测是工程操作任务；它们没有验证诊断、处方或其他高风险医学判断。不能从评价分类的 98.57% 正确率，跨越到临床准确性或医疗安全性的结论。</p>
+<h2 id="section-8">八、下一轮需要补的，不只是更多速度数字</h2>
+<p>本次报告足以支持一条有边界的工程判断：在一部分连续操作和大批量有限标签任务中，主 Agent 不必亲自承担每一步重复判断与执行，专用路径可以减少端到端等待。</p>
+<p>要把它变成稳定的默认策略，还需要补齐几类证据：</p>
+<ul><li><strong>重复性：</strong>768 条端到端任务和七动作浏览器回归目前都只有一对运行。需要多次、交错顺序的对照，观察波动，而不是把单次倍数当成长期均值。</li><li><strong>样本覆盖：</strong>768 条来自 32 种语义模式，240 条来自 24 种语义模式。记录数不等于独立语义场景数，需要更广的任务分布验证。</li><li><strong>质量定位：</strong>提供逐条预测、参考答案、错误类型和多标签计分定义，才能知道哪些标签受益、哪些边界仍然容易误判。</li><li><strong>自动委派：</strong>既测“明确交给工具后能否完成”，也测“无需提示时是否会在合适任务上调用”，并观察不该调用时是否避免调用。</li><li><strong>完整成本：</strong>把主模型和 Jev 的实际账单放在同一个任务口径下核算，而不是用某一路 Token 的减少代替总费用变化。</li></ul>
+<p>这些是从现有证据缺口推导出的下一轮验证建议，不是已经完成的结果。</p>
+<p>这轮接入最值得保留的，不是一个脱离条件的“2.73 倍”，而是任务拆分后的判断标准：<strong>大批量、有限判断、完整交付，可以优先考虑委派；任务很小、质量未达标、边界不清，就不要为了使用工具而使用工具。</strong></p>
+<p>让主 Agent 更专注于规划和交付，前提不是它做得越少越好，而是交出去的工作有清楚的输入、执行边界和验收标准。Jev 在部分任务上已经显示了这条路径的收益，下一步要解决的是何时交、能否稳定交对，以及交付之后如何证明结果可信。</p>
+<hr>
+<h3>资料与口径</h3>
+<p>本文依据《MedWork · Jev 工具接入汇报》（2026 年 9 月 22 日）的正文、表格和两张内嵌会话结果截图整理。数值为报告所列的内部工程评测结果，未作独立复跑或第三方验证；文中的百分比与倍数按原始数值计算并四舍五入。</p>
+<p>报告在受控评测部分将对照模型记为 <strong>Qwen 3.8 27B</strong>。现有材料未提供完整模型配置、采样参数、硬件、并发、缓存和网络条件，亦未为 768 条端到端对照单独列出完整配置，本文不据此补写缺失设置。原报告引用的评测明细、代码及样本文件未随当前材料展开，因此本文不把这些引用等同于已逐项核验的证据。</p>
+<p>为便于公开阅读，本文未保留本地会话地址、内部会话标识、开发目录和原始界面截图；使用的是匿名汇总结果。</p>
+</article></main>
+<footer class="page-footer"><a href="../blog/">← 返回博客</a><a href="index.html">文章目录 →</a></footer>
+</div>
+</body>
+</html>
