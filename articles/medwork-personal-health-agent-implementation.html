@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<title>MedWork 健康管理 Personal Agent 的实现｜胡浩源</title>
+<meta name="description" content="以虚构用户陈晨的一年为线索，设计多模态事件、分层记忆、证据检索、MedCode 与 Harness 协作、授权执行和长程回放评测的完整闭环。">
+<meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人">
+<meta name="color-scheme" content="light">
+<link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/medwork-personal-health-agent-implementation.html">
+<style>
+:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:3px solid var(--clay);outline-offset:5px}
+.skip{position:absolute;left:1rem;top:-5rem;background:var(--surface);padding:.5rem 1rem;z-index:5}.skip:focus{top:1rem}
+.shell{width:min(100% - 40px,760px);margin:0 auto}
+.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.masthead a{color:var(--muted)}header{padding:52px 0 26px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);font-weight:700;margin:0 0 20px}
+h1{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif;font-size:clamp(32px,5.8vw,46px);line-height:1.35;font-weight:700;letter-spacing:-.035em;margin:0 0 25px}
+.byline{font-size:14px;margin:0;color:var(--muted)}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}
+.contents{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px;color:var(--muted)}
+.contents summary{cursor:pointer;font-weight:600;color:var(--ink)}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}
+article p{margin:0 0 22px}blockquote{margin:0 0 34px;padding:6px 0 6px 20px;border-left:3px solid var(--clay);font-size:18px;color:var(--muted)}blockquote p:last-child{margin-bottom:0}
+h2{font-size:26px;line-height:1.5;font-weight:700;margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}
+h3{font-size:20px;line-height:1.55;margin:32px 0 18px}strong{font-weight:700}code{font:0.88em/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#EBE5D9;border-radius:3px;padding:.1em .3em;overflow-wrap:anywhere}
+ul,ol{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}
+.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650;color:var(--ink)}tbody th{font-weight:500;width:36%}tr:last-child th,tr:last-child td{border-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:14px;line-height:1.95;color:var(--muted)}hr~h3{font-size:17px;margin-top:0}
+.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){body{font-size:16px;line-height:1.95}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px}header{padding:36px 0 24px}h2{font-size:23px;margin-top:42px}h3{font-size:19px}blockquote{font-size:17px;padding-left:16px}.table-wrap{margin-left:-2px;margin-right:-2px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}h3{font-size:13pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}blockquote{font-size:12pt}}
+
+h1{text-wrap:balance}
+.subtitle{font-family:ui-serif,"Songti SC","STSong",serif;font-size:21px;line-height:1.65;color:var(--muted);margin:0 0 24px}
+article a{overflow-wrap:anywhere}.source-heading{font-size:21px;border-top:0;margin-top:0;padding-top:0}.references-list{font-size:14px;color:var(--muted)}
+.code-block{border:1px solid var(--line);background:#EEE8DC;border-radius:8px;margin:26px 0 32px;overflow:hidden}.code-label{margin:0!important;padding:9px 16px!important;border-bottom:1px solid var(--line);font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:700}
+pre{margin:0;padding:18px 20px;max-width:100%;overflow:auto;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:4;scrollbar-color:var(--clay) #EEE8DC}pre code{background:none;padding:0;border-radius:0;font:inherit;overflow-wrap:normal}pre:focus-visible{outline:3px solid var(--clay);outline-offset:-3px}
+.architecture{margin:30px 0}.flow{list-style:none;counter-reset:flow;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.flow li{counter-increment:flow;border:1px solid var(--line);background:var(--surface);padding:16px;margin:0;font-size:15px;line-height:1.9;border-radius:6px}.flow li:before{content:counter(flow,decimal-leading-zero) " → ";display:block;font:12px/1.7 ui-monospace,SFMono-Regular,monospace;letter-spacing:.08em;color:var(--clay);margin-bottom:6px}
+table{min-width:610px}tbody th{width:26%}td{width:37%}
+@media(max-width:600px){.subtitle{font-size:19px}.flow{grid-template-columns:1fr}.flow li{padding:13px 15px}.code-block{margin:24px 0}.code-label{padding:8px 12px!important}pre{font-size:12px;padding:14px 12px}.page-footer{flex-wrap:wrap;gap:12px}.masthead{font-size:12px;letter-spacing:.03em}}
+@media print{pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}.code-block{break-inside:auto}.flow li{break-inside:avoid}.table-wrap{overflow:visible}table{min-width:0}.references-list{font-size:9pt}}
+</style>
+</head>
+<body id="top"><a class="skip" href="#main">跳至正文</a><div class="shell">
+<nav class="masthead" aria-label="站点导航"><span>架构设计 · 个人健康 Agent</span><a href="../blog/">返回博客</a></nav>
+<header><p class="eyebrow">MedWork / Engineering Notes</p><h1>MedWork 健康管理 Personal Agent 的实现</h1><p class="subtitle">从一张午餐照片，到一整年可追溯、可调整的个人健康陪伴</p><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-10-17">2026 年 10 月 17 日</time></p></header>
+<details class="contents"><summary>文章目录</summary><nav aria-label="文章目录"><ol><li><a href="#section-1">一、先定义一个具体的人，再定义系统要承担什么</a></li><li><a href="#section-2">二、架构要把理解、决策和行动分开</a></li><li><a href="#section-3">三、多模态输入首先变成事件，不直接变成事实</a></li><li><a href="#section-4">四、长期记忆必须分层，并允许真正忘记</a></li><li><a href="#section-5">五、结构化档案保存数据，检索负责带回证据</a></li><li><a href="#section-6">六、Rubrics、MedGuide、MedCode 各自承担一件事</a></li><li><a href="#section-7">七、规划不是一次排满日历，而是滚动选择下一步</a></li><li><a href="#section-8">八、Harness 管好状态、幂等与恢复，才谈得上跨天执行</a></li><li><a href="#section-9">九、主动服务要有同意、节制和退出机制</a></li><li><a href="#section-10">十、把陈晨的一周跑通，尤其要跑通出错的那一周</a></li><li><a href="#section-11">十一、长程回放要测状态与行动，不能只评分回答好不好</a></li><li><a href="#section-12">十二、MVP 按完整闭环切分，研发按契约交付</a></li><li><a href="#references">公开资料与阅读说明</a></li></ol></nav></details>
+<main id="main"><article>
+<blockquote><p>本文是一份面向研发协作的架构设计，沿用 MedWork 及 Rubrics、MedGuide、MedCode 的既有能力命名，讨论它们在 Personal Agent 中的组合方案，不披露或确认具体生产部署，也不构成疗效、临床安全性或合规声明。陈晨及全部事件、数值、对话均为虚构示例；方案仅依据公开官方资料、上述能力定位与工程推演。</p></blockquote>
+<p>个人健康 Agent 最难的工作，往往不在回答“今天吃什么”，而在一个月之后仍能解释：为什么当时这样建议，用户实际做了什么，哪条信息后来被纠正，以及现在是否还应该继续。</p>
+<p>一年不是一次超长对话。它由照片、语音、设备记录、报告、计划和失约组成。系统需要把这些零散输入转成有来源的状态，再把状态转成范围明确的行动。多模态理解负责提出候选解释，长期记忆保存经确认的事实与约束，搜索补足证据，规划选择下一步，执行反馈再改变状态。任何一环失去来源、时间或权限，后面都可能认真地做错事。</p>
+<p>我希望实现的 Personal Agent，是一个用户能检查、纠正、暂停和撤回授权的长期协作系统。它可以帮助组织健康生活与就医资料，但不能把持续陪伴包装成持续诊断。</p>
+<h2 id="section-1">一、先定义一个具体的人，再定义系统要承担什么</h2>
+<p>陈晨，38 岁，经常出差，不喜欢跑步，工作日主要在食堂吃午餐。他愿意拍体脂秤报告、三餐菜单，偶尔上传手表睡眠记录，再用语音补一句：“今天开会到很晚，别给我安排晚上运动。”这些信息来自不同时间，也有不同可信度，不能被合成一个看似完整、实际未经确认的人设。</p>
+<p>首次使用只收集完成当前任务所需的信息：目标、已知健康限制、饮食禁忌、可用时间、偏好，以及允许保存与主动提醒的范围。没有填写病史，不应自动记成“无病史”；没有提到食物过敏，也不能写成“无过敏”。涉及个体运动或饮食限制而关键信息不足时，先澄清，必要时交由医生判断。</p>
+<p>双方先建立一个小契约：本周帮助整理饮食记录、在用户主动询问时提供食堂选择，并尝试一个本人确认可行的活动候选；不设未经确认的减重目标，不推断疾病，不自动购买、预约、发消息或调整药物。全年陪伴由这些短周期契约累积，不从第一天就生成不可执行的三百六十五天日程。</p>
+<p>产品界面至少需要三种入口：“我给你一条新信息”“我想改之前的记录”“暂停这个计划”。它们对应三种不同事件。把所有输入都当作追加聊天，会让纠错、撤回和执行混在一起，最终无法解释系统为什么继续提醒。</p>
+<h2 id="section-2">二、架构要把理解、决策和行动分开</h2>
+<p>建议先用一个主协调器，配合职责清楚的服务，而不是让多个角色自由讨论。多模态解析可以并行，权限判断与状态提交必须收口。图中的箭头代表数据与状态转换，不意味着每一步都要调用一个大模型。</p>
+<figure class="architecture" aria-label="健康 Personal Agent 六层架构"><ol class="flow"><li>多模态接入｜照片、语音、菜单、设备记录</li><li>事件理解｜抽取候选、识别未知、请求核对</li><li>档案与记忆｜结构化事实、偏好、情境、计划</li><li>证据检索｜个人证据、官方知识、获准外部搜索</li><li>规划与验收｜MedGuide 条件、Rubrics 检查</li><li>执行与反馈｜Harness 执行、回执、MedCode 修订</li></ol></figure>
+<p>贯穿六层的是 Harness：它维护持久任务状态、权限、预算、重试和审计。旁路还有隐私控制、临床规则审核与离线评测。模型可以建议调用工具，执行服务决定这个动作此刻是否允许；模型可以说“完成”，验收服务必须拿到相应证据。</p>
+<p>数据上保留三种对象。原始证据对象保存用户提供的文件及其访问控制；事件记录保存发生了什么以及何时被系统知道；派生视图保存当前档案和计划。模型上下文只是其中一部分的临时装配，不是唯一数据库。Anthropic 的上下文工程文章强调有限上下文与按需取回信息；本文据此选择保留证据引用、按任务加载的方式，不把一年聊天全文反复塞给模型。<a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" rel="noopener noreferrer">1</a></p>
+<p>服务接口应返回结构化结果：输入版本、结论状态、证据引用、未知项和下一步候选。单独返回一段流畅文字，不足以让其他模块安全接续。展示文案可以自然，内部交接必须能校验。</p>
+<h2 id="section-3">三、多模态输入首先变成事件，不直接变成事实</h2>
+<p>一张体脂秤照片至少经过文件校验、图像质量检查、区域定位、文字与数值抽取、单位识别、归属核对。语音先转写，再区分事实、偏好、临时约束与指令。“今晚不运动”可能是今天的约束，不等于永久讨厌运动；“上次那个数看错了”则必须关联到旧事件。</p>
+<p>下面是内部事件协议示意，不是完整 FHIR 资源。示例中体重读数可以辨认，但测量时间和体脂率尚不清楚；置信分数没有经过校准，因而不伪造一个小数。<code>unknown</code> 是需要处理的业务状态，不用零、空字符串或模型猜测代替。</p>
+<div class="code-block"><p class="code-label">JSON</p><pre tabindex="0" aria-label="json 示例代码"><code>{
+  &quot;schema_version&quot;: &quot;health-event.v1&quot;,
+  &quot;event_id&quot;: &quot;evt_demo_001&quot;,
+  &quot;subject_id&quot;: &quot;user_demo_chen&quot;,
+  &quot;type&quot;: &quot;measurement_candidate&quot;,
+  &quot;source&quot;: {
+    &quot;kind&quot;: &quot;user_photo&quot;,
+    &quot;artifact_ref&quot;: &quot;artifact_demo_scale_01&quot;,
+    &quot;extractor_version&quot;: &quot;parser.v1&quot;
+  },
+  &quot;observed_at&quot;: null,
+  &quot;received_at&quot;: &quot;2026-10-12T08:10:00+08:00&quot;,
+  &quot;timezone&quot;: &quot;Asia/Shanghai&quot;,
+  &quot;measurements&quot;: [
+    {&quot;name&quot;: &quot;weight&quot;, &quot;value&quot;: 78.4, &quot;unit&quot;: &quot;kg&quot;},
+    {&quot;name&quot;: &quot;body_fat&quot;, &quot;value&quot;: null, &quot;unit&quot;: &quot;%&quot;}
+  ],
+  &quot;confidence&quot;: {&quot;score&quot;: null, &quot;status&quot;: &quot;uncalibrated&quot;},
+  &quot;unknown&quot;: [&quot;observed_at&quot;, &quot;body_fat.value&quot;],
+  &quot;validation&quot;: &quot;needs_confirmation&quot;,
+  &quot;authorization&quot;: {
+    &quot;consent_version&quot;: &quot;consent_demo_v3&quot;,
+    &quot;purpose&quot;: &quot;personal_health_record&quot;,
+    &quot;scopes&quot;: [&quot;parse_upload&quot;, &quot;store_health_record&quot;],
+    &quot;external_share&quot;: false
+  },
+  &quot;supersedes&quot;: null
+}</code></pre></div>
+<p>事件发生时间、设备记录时间、报告出具时间、平台接收时间分别保存。昨天的睡眠记录今天上传，不能归为今天夜间睡眠。时间不明时允许记录证据，但阻止依赖准确日期的趋势计算。每个字段还要能指向图片区域、原文片段或设备记录标识，便于用户核对。</p>
+<p>照片中的食物可以形成“可能包含米饭、鱼和蔬菜”的候选，不能凭一个角度断言精确克数、烹调油量或热量。菜单描述的是可选菜品，不代表已经吃过；餐前照片不代表全部吃完。营养估计需要标注份量假设与不确定性，不满足估算条件时直接不算。</p>
+<p>解析服务还应拒绝把图片、报告或搜索网页里的指令当成系统命令。文件内容只能成为待验证的数据。恶意文字要求上传其他报告时，不能因为它出现在“用户提供的文件”里就获得权限。异常文件进入隔离队列，原始输入与解析日志也不能直接出现在开放调试面板。</p>
+<h2 id="section-4">四、长期记忆必须分层，并允许真正忘记</h2>
+<p>健康档案与长期记忆不是同一个大摘要。档案负责可查询的测量和记录；记忆负责会影响未来协作的约束。建议把记忆分成四层，每条都有来源、有效期、确认状态和修订链。</p>
+<div class="table-wrap" role="region" tabindex="0" aria-label="层次对照表"><table><thead><tr><th scope="col">层次</th><th scope="col">陈晨的例子</th><th scope="col">更新与失效方式</th></tr></thead><tbody><tr><th scope="row">事实记忆</th><td>某次体重记录，用户确认的年龄信息</td><td>关联原始证据；纠错生成新版本，不静默改历史</td></tr><tr><th scope="row">偏好记忆</th><td>不喜欢跑步，午餐常在食堂</td><td>可被本人修改；定期轻量确认，不推断为医学禁忌</td></tr><tr><th scope="row">情境记忆</th><td>本周出差，今天加班</td><td>到期失效；新行程覆盖前先核对冲突</td></tr><tr><th scope="row">计划记忆</th><td>午休尝试十分钟轻活动候选</td><td>保存承诺、触发条件、执行记录与暂停状态</td></tr></tbody></table></div>
+<p>每条记忆至少带有 <code>memory_id</code>、<code>kind</code>、<code>source_event_ids</code>、<code>valid_from</code>、<code>valid_until</code>、<code>recorded_at</code>、<code>status</code>、<code>revision</code>。记录“当时适用的事实”和“系统何时知道它”这两条时间轴，才能解释迟到反馈。未经用户确认的提取结果留在候选区，不能因为被总结了两次就升级为确定事实。</p>
+<p>纠错不是在摘要末尾补一句“前面有误”。陈晨确认体重数字看错后，系统将旧版本标为被取代，更新当前视图，并沿依赖关系标记相关趋势、报告和计划需要重算。已经展示过的错误解释要给出修正说明；不能只让数据库变对，却让用户继续相信旧结论。</p>
+<p>到期与删除也要区分。出差信息到期后不参与当前建议，是否保留历史由保存政策决定。用户要求删除某张报告时，应覆盖原件、抽取字段、摘要、向量索引、缓存与派生报告；仅删聊天气泡没有意义。备份删除或密钥销毁需要明确期限、可验证状态和恢复时的删除清单，避免旧备份把已删信息重新带回。</p>
+<p>审计可以保留完成删除所必需的最小操作元数据，但不能以“日志不可变”为理由无限保留健康正文。保留什么、多久、谁能查看，要按明确适用要求设计并向用户说明。删除后缺失的事实重新变为未知，Agent 不能从旧摘要里偷偷补回来。</p>
+<h2 id="section-5">五、结构化档案保存数据，检索负责带回证据</h2>
+<p>档案中的测量条目需要值、原始单位、标准单位编码、比较符、测量方法、设备、时间和来源。不同设备、测量条件或分析方法的数据不能无条件拼成同一趋势。原始值始终可追溯，单位换算单独记录规则及版本；单位、项目或样本类型不明确，就先阻止比较。</p>
+<p>FHIR R4 的 Observation 为测量提供结构参照，Quantity 区分显示单位与机器可处理的编码；Observation 的生理相关时间、结果版本发布时间也各有含义，不能直接替换平台接收时间。结果缺失的 <code>dataAbsentReason</code> 只在对应值不存在时使用，不是所有“未知”的通用容器。本文的事件协议仍需单独校验与映射，不能自称已经通过 FHIR 互操作验证。<a href="https://hl7.org/fhir/R4/observation.html" rel="noopener noreferrer">2</a> <a href="https://hl7.org/fhir/R4/datatypes.html#Quantity" rel="noopener noreferrer">3</a></p>
+<p>个人证据检索与公共知识检索分开。前者回答“陈晨上次的结果是什么，来自哪份报告”；后者回答“解释这类信息时有哪些可采用的官方知识”。餐厅搜索则属于第三类实时服务信息。每个检索结果附来源、时间、适用条件和失效时间，不把搜索排名当成证据等级。</p>
+<p>权限过滤必须在检索前就限定用户与数据范围，向量搜索不能先跨用户取回，再指望模型忽略不该看的内容。个人材料在内部索引查询，不把姓名、报告全文、病史连同关键词发送给外部搜索。查餐厅只提交本次许可需要的位置粒度与筛选条件。</p>
+<p>返回上下文采用受限证据包，例如最多二十条片段、明确总长度上限，并优先保留冲突和未知项。这些是建议起始配置，需要用召回率与成本评估调整。摘要只帮助导航，不替代原件。FHIR Provenance 可为来源与修订链提供参考，但有溯源记录不等于内容一定正确。<a href="https://hl7.org/fhir/R4/provenance.html" rel="noopener noreferrer">4</a></p>
+<h2 id="section-6">六、Rubrics、MedGuide、MedCode 各自承担一件事</h2>
+<p>沿用既有能力定位，本方案让 Rubrics 承担验收、MedGuide 提供经审核的条件规则、MedCode 参与代码与执行级推理。组合关系需要明确，不能把它们都做成不同名字的提示词，也不能把模型与运行环境混为一层。</p>
+<p>Rubrics 判断这次结果是否够格。午餐建议至少检查：是否使用了已确认的早餐信息，是否遵守已知禁忌与偏好，是否把照片估计写成确定值，是否提供可在食堂执行的选项，是否标明未知与证据。结果为通过、不通过、待补充或需人工复核，关键安全项不能被其他项目的高分抵消。</p>
+<p>MedGuide 表达有适用条件、版本和责任人的规则。临床相关内容由有资格的专业团队审核，不让模型临时编写诊断阈值。它可以先从非诊疗的确定规则开始：单位未核对就不做趋势比较；用户没有确认实际摄入就不把建议餐食计为已吃；外发许可缺失就不生成可执行发送动作。</p>
+<div class="table-wrap" role="region" tabindex="0" aria-label="条件对照表"><table><thead><tr><th scope="col">条件</th><th scope="col">决策</th><th scope="col">必须留下的记录</th></tr></thead><tbody><tr><th scope="row">报告数值存在，单位未知</th><td>暂停数值比较，要求核对</td><td>未知字段、原件位置、阻断规则版本</td></tr><tr><th scope="row">用户明确说只吃了半份</th><td>更新该餐实际摄入描述</td><td>关联餐次、反馈时间、原估计失效标记</td></tr><tr><th scope="row">餐厅搜索有位置许可，无交易许可</th><td>可搜索并展示候选</td><td>查询范围、结果时间、禁止下单的动作边界</td></tr><tr><th scope="row">命中经审核的紧急风险条件</th><td>中止日常规划，给出就医升级提示</td><td>触发依据、提示回执、人工接续状态</td></tr></tbody></table></div>
+<p>MedCode 是代码／执行级医疗大模型。在这个组合中，它理解并拆解任务，生成程序或动作提案，再利用真实工具结果修订下一步。例如“出差找午餐”可以拆成补全约束、查询候选、检查结果时效、比较选项和等待选择；搜索失败或菜单不匹配时，模型根据反馈调整提案，而不是假装完成。它不是静态规则引擎，也不等同于流程封装。</p>
+<p>程序和动作生成不自动带来执行权。Harness 负责类型检查、工具白名单、隔离运行、权限、预算、超时、持久状态和后置校验；经校验的提案才进入执行。MedCode 不能改写这些控制点，也不能直接访问全部档案或自行批准外发。规则一致性、程序执行成功和医学正确性是三件事，必须分别验证。</p>
+<p>三者通过一个决策对象衔接：<code>decision_id</code>、证据版本、规则版本、候选动作、拒绝原因、需要确认的内容与验收结果。规则为未知时，流程走澄清或专业复核，不把未知当作通过。提示用户寻求医生帮助与实际联系医生也是两个动作，后者仍需明确接收对象、内容和发送许可。</p>
+<h2 id="section-7">七、规划不是一次排满日历，而是滚动选择下一步</h2>
+<p>规划器读入当前目标、已确认事实、可用时间、偏好、近期执行反馈与安全限制，输出少量候选及其依据。硬约束先过滤，软偏好再排序，最后由用户选择。不能为了提高所谓坚持率，默默放宽禁忌、扩大授权或把用户没有答复解释成同意。</p>
+<p>对陈晨，最初的晚餐后活动方案连续两次没有实现，他反馈原因是加班。系统不需要训诫，也不应该继续用更强提醒逼他完成，而应提出“是否改为午休十分钟的轻活动候选”。这只是时间安排示例，不是适用于所有人的运动处方；健康限制未核对或出现不适时，不自行推进个体运动方案。</p>
+<p>计划拆成目标、承诺和动作。目标是想改善的生活习惯；承诺是陈晨确认本周愿意尝试什么；动作是某一天符合条件时展示一次提醒。完成某个动作不等于实现目标，更不等于产生健康收益。计划版本变化后，旧提醒失效，但历史执行记录保留其原版本。</p>
+<p>不执行也应有可选反馈：没时间、不舒服、不合口味、忘记记录，或不想说明。系统据此调整安排，不将缺失反馈统一判为失败。每次再规划说明使用了哪条新信息，让用户能看懂变化，而不是感觉 Agent 每天换一套说法。</p>
+<h2 id="section-8">八、Harness 管好状态、幂等与恢复，才谈得上跨天执行</h2>
+<p>任务状态建议明确为：已接收、待核对、可规划、待确认、待执行、执行中、结果核对中、已完成、已暂停、已取消和失败。状态转换必须记录事件与原因。报告生成成功只完成生成步骤；用户批准发送、实际发送成功与对方回执是独立状态，不能用一句“已处理”覆盖。</p>
+<div class="code-block"><p class="code-label">TEXT</p><pre tabindex="0" aria-label="text 示例代码"><code>RECEIVED → NEEDS_REVIEW → READY → AWAITING_CONSENT
+READY / AWAITING_CONSENT → QUEUED → RUNNING
+RUNNING → SUCCEEDED / FAILED / RECONCILING
+任意未完成状态 → PAUSED / CANCELLED
+RECONCILING → SUCCEEDED / FAILED / 人工核对</code></pre></div>
+<p>每个任务固定输入快照和流程版本，携带档案版本、记忆版本、计划版本、授权版本与逻辑动作标识。执行前重新核对当前授权和适用安全规则；快照过期、计划被暂停或关键事实纠正后，旧任务不能照常跑完。模型窗口结束时保存的是外部状态与证据引用，不依赖下一轮模型记住上一轮全部文本。Anthropic 的长任务文章提供了进度记录、增量推进和验收的工程启发，但其开发场景结果不能直接当成健康服务验证。<a href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents" rel="noopener noreferrer">5</a></p>
+<p>下面是接近实现结构的 Python 伪代码，<code>db</code>、<code>policy</code>、<code>gateway</code> 等是待实现接口，并非可直接部署的完整程序。关键是把接收去重、事务写入、授权关口和结果不明拆开。</p>
+<div class="code-block"><p class="code-label">PYTHON</p><pre tabindex="0" aria-label="python 示例代码"><code>def receive(event):
+    # 多模态解析在事务外完成；此处只做轻量 schema 校验
+    checked = validate_event(event)
+    with db.transaction():
+        if db.inbox.contains(event.event_id):
+            return &quot;already_received&quot;
+        db.events.append(checked)
+        revision = update_views_deterministically(checked)
+        db.outbox.enqueue(
+            kind=&quot;replan&quot;,
+            subject_id=event.subject_id,
+            input_revision=revision,
+        )
+        db.inbox.mark(event.event_id)
+
+def propose(task_id):
+    with db.read_transaction():
+        snapshot = capture_snapshot(task_id)
+        # 包含 task/profile/memory/plan/consent/rules 版本
+
+    # 不持有数据库锁；检索网关仍检查当前访问与外发许可
+    evidence = retrieve_allowed_evidence(snapshot)
+    decision = medguide.evaluate(snapshot, evidence)
+    proposal = medcode.propose(snapshot, evidence, decision)
+    review = rubrics.evaluate(proposal, evidence)
+
+    with db.transaction():
+        if not db.compare_versions(snapshot.versions):
+            return db.outbox.enqueue_replan_once(task_id)
+        # 提案、等待确认状态与允许入队动作原子提交
+        db.persist_proposal(task_id, proposal, review)
+        db.outbox.enqueue_allowed_steps(proposal, review)
+
+def execute(intent):
+    # claim 使用租约和 fencing token，过期 worker 不能提交结果
+    claim = ledger.claim(intent.logical_action_id)
+    if claim.already_finished:
+        return claim.result
+    current = load_current_versions(intent.subject_id)
+    verdict = policy.check(intent, current)
+    if not verdict.allowed:
+        return ledger.pause(claim, verdict.reason)
+    try:
+        result = gateway.execute(
+            intent,
+            consent_version=current.consent_version,
+            expected_versions=current.versions,
+            idempotency_key=intent.logical_action_id,
+            fencing_token=claim.token,
+        )
+    except OutcomeUnknown:
+        return ledger.reconcile(claim)
+    return ledger.finish(claim, verify_receipt(result))</code></pre></div>
+<p><code>inbox</code> 去重与事件写入、<code>outbox</code> 排队必须在同一事务中提交，防止记了数据却丢任务。重复事件不再入账，但已持久化的未完成规划仍由任务调度恢复。模型、网络检索和耗时评价放在事务外；提交时 CAS 比较任务、档案、记忆、计划、授权与规则版本，任一相关版本改变就重新取快照，不能只替换版本号强行保存。</p>
+<p>逻辑动作标识绑定用户、目标、动作类型和触发窗口，同一业务动作在重试或恢复时保持不变。计划修订不应自动产生第二个相同提醒；实质改变动作时，先明确取消或替换旧动作，再取得所需确认。计划版本用于有效性校验，不能被当成绕过去重的新身份。工作流恢复不自动赋予外部系统“恰好执行一次”的能力；有副作用的接口需要幂等键或可查询回执。</p>
+<p>Temporal 的工作流文档说明了依据持久事件历史恢复执行的机制，Activity 文档则提醒可重试活动可能执行多次，应设计幂等。<a href="https://docs.temporal.io/workflow-execution" rel="noopener noreferrer">9</a> <a href="https://docs.temporal.io/activity-definition" rel="noopener noreferrer">10</a> 这里借鉴其工程原则，不指定必须采用该产品。运行时恢复使用已记录的模型输出、搜索结果和时间信息，不在回放中重新采样来改变过去的决定；这与重新运行新版本模型的评测回放是两回事。</p>
+<p>例如提醒请求超时，可能是未发送，也可能是已发送但回执丢失。状态先进入结果核对中，查询服务端记录；确认未执行后才能重试。没有查询能力且重复执行会伤害用户时，交给人工核对，不能因为“报错”就再发一次。租约解决并发占用，fencing token 拒绝过期工作进程写回，但仍需要下游配合，不能只靠数据库里一个锁宣称解决所有竞态。</p>
+<p>撤回与动作准入必须在同一权威策略账本中串行化：网关原子核对当前授权、相关版本与具体动作参数，并记录准入结果。这个提交点是并发边界，撤权阻断尚未准入的动作；已经准入或在途的动作只能尽力取消并核对结果，不能保证收回外部影响。偏好、情境等记忆修订也必须推进版本，防止只改记忆而让旧提案通过。已发送数据的后续处理范围需向用户说明。网络限制或审批失败时停在边界，不改用其他工具、代理或会话继续完成同一未获准动作。</p>
+<h2 id="section-9">九、主动服务要有同意、节制和退出机制</h2>
+<p>长期陪伴不等于持续打扰。主动服务协议应单独包含主题、触发条件、频率、渠道、安静时间、时区、有效期和暂停方式。允许记录睡眠，不自动等于允许每天推送睡眠评价；允许一次位置搜索，不自动成为长期位置追踪许可。</p>
+<p>陈晨可以选择工作日午餐前一次轻提醒，晚上进入安静时间，出差时按本人确认的所在地时区调整。错过窗口的提醒通常过期或合并，不在半夜补发。频率上限、同一事件去重和冷却时间由执行层控制，模型不能通过改写文案绕过限制。</p>
+<p>医学风险相关流程必须由专业团队定义适用范围与升级方式。系统不能承诺全天候监测或紧急救援；命中经审核的紧急症状条件时，应明确提示及时寻求当地医疗或急救帮助，不能让用户等待下一次自动提醒。是否通知家属或医生则属于另一项外发授权，不能默认开放。</p>
+<p>FHIR Consent 可以表达目的、动作、数据范围等同意要素，但官方将具体执行机制排除在资源职责之外。<a href="https://hl7.org/fhir/R4/consent.html" rel="noopener noreferrer">6</a> 因而产品需要可见的授权面板与可执行的策略网关。WHO 关于健康 AI 的原则强调自主权、透明与问责；在本方案里，这落实为能看见依据、能撤回服务、能纠错以及能找到责任人，而不是一份勾选过就不再出现的声明。<a href="https://www.who.int/news/item/28-06-2021-who-issues-first-global-report-on-ai-in-health-and-six-guiding-principles-for-its-design-and-use" rel="noopener noreferrer">7</a></p>
+<h2 id="section-10">十、把陈晨的一周跑通，尤其要跑通出错的那一周</h2>
+<p>周一早晨，陈晨上传体脂秤照片与手表睡眠记录，语音说“昨晚很晚睡，今天别催我跑步”。系统分别登记测量候选、设备观测和当天约束。设备给出的睡眠标签不能直接升级为睡眠障碍诊断；照片时间不清时先核对，不在日报里制造一条确定趋势。</p>
+<p>午餐前，他拍食堂菜单并询问选择。系统检索当天已确认的早餐记录、饮食偏好与已知限制，给出少量可选组合，解释为什么适合当前任务。早餐没有记录就承认不知道，不能从习惯推断今天吃过什么。菜单和照片都不足以支持精确热量时，只讨论可识别食物与份量选择。</p>
+<p>午餐后，陈晨补充“主食只吃了半份，其他也没吃完”。反馈关联同一餐次，保存实际描述并撤销“全部食用”的候选假设；不能简单把整餐估计热量乘二分之一。当天汇总使用新版本，后续晚餐建议也读新快照，并让陈晨看到修改依据。</p>
+<p>周二出差，他授权“这次用附近位置找餐厅”。系统说明发送给搜索服务的位置粒度与条件，许可通过后查询，返回距离、营业信息及核验时间。搜索结果可能过时，点餐前仍由本人核实。没有交易授权，流程到候选展示即结束，不因为找到了餐厅就自动下单。</p>
+<p>周三加班，原定晚餐后活动没有完成。陈晨说晚间安排难坚持，系统提出改为午休十分钟的轻活动候选，待他确认并核对限制后生成新计划，取消尚未发出的旧提醒。它优化的是可执行性，而不是把提醒点击率当作健康目标。</p>
+<p>周四才到达的一条“周二实际没吃那家餐厅”反馈，按周二的餐次修订，按周四的接收时间触发重算。系统检查依赖这条信息的汇总与建议，只修正受影响部分；已经过期的午餐提醒不重新发送。若识别为重复上传，返回既有处理状态；若无法确定对应餐次，先请陈晨选择，不任意覆盖最近一餐。</p>
+<p>到了复查，Agent 整理历次报告时逐项核对项目、单位、采样时间、来源和原报告参考范围，标出不可比较与待医生确认的部分。不把设备指标与检验结果混成一条曲线，也不擅自解释治疗变化。默认生成供本人查看的资料包；真正发送给医生前展示接收人、附件、字段和用途，再取得这次发送所需授权。</p>
+<p>年末复盘呈现记录覆盖程度、计划修改、执行反馈、测量条件和仍未解决的问题。若用户少上传了三个月，图上应保留缺口。即便某些指标发生变化，也不能归因于 Agent，不能写成降低疾病风险或实现疗效。年度价值首先是信息更连贯、行动更可解释，这些同样需要实际评测。</p>
+<h2 id="section-11">十一、长程回放要测状态与行动，不能只评分回答好不好</h2>
+<p>评测集应从虚构或明确获准的数据构建，覆盖连续一周、一个月和一年的事件轨迹。每条轨迹包含期望状态、允许动作与禁止动作。模拟时钟推进、设备断连、跨时区、重复事件、迟到反馈、单位错误、用户撤回和数据删除，再比较最终档案、任务账本与实际副作用。</p>
+<div class="table-wrap" role="region" tabindex="0" aria-label="回放故障对照表"><table><thead><tr><th scope="col">回放故障</th><th scope="col">应观察的结果</th><th scope="col">发布前的硬性检查</th></tr></thead><tbody><tr><th scope="row">同一午餐事件重复到达</th><td>同一事件只生效一次</td><td>不生成重复计划或提醒</td></tr><tr><th scope="row">单位缺失或项目不一致</th><td>比较被阻断，保留原件</td><td>不输出确定数值趋势</td></tr><tr><th scope="row">外发超时，回执迟到</th><td>进入核对并收敛到真实状态</td><td>不盲目重复发送</td></tr><tr><th scope="row">撤回许可与任务执行并发</th><td>未准入动作被拦截，在途动作核对结果</td><td>不得新增准入或伪称外部影响已撤销</td></tr><tr><th scope="row">删除报告后恢复备份</th><td>删除策略继续生效</td><td>不从索引或摘要复活正文</td></tr><tr><th scope="row">跨用户相似记录检索</th><td>仅返回本人的许可范围</td><td>不出现他人证据片段</td></tr></tbody></table></div>
+<p>Rubrics 的文本评价只是一部分，还要检查证据引用是否真的支持结论、未知项是否保留、计划改变是否有原因，以及医生升级条件是否正确触发。模型评分器可以辅助发现问题，但关键状态应由确定性断言和人工抽查核验。对单条成功回答的奖励，不能抵消一次错误外发。</p>
+<p>长程指标可包括事件归档准确率、修订传播完整率、重复动作率、授权违规次数、证据可追溯率、无依据断言率和恢复收敛时间，同时观察不同输入质量、设备和语言条件下的差异。阈值由风险评估确定，不能先挑容易达标的平均分。任何“零错误”都只描述给定测试覆盖，不能当成未来绝对保证。</p>
+<p>Anthropic 的 Agent 评测文章区分轨迹与最终结果，并讨论组合使用不同评分方式；这里将其用于设计测试框架，不据此证明健康服务有效。<a href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents" rel="noopener noreferrer">8</a> 真实用户阶段还需要独立的隐私、安全与专业评估。长期依从性、生活质量或临床结果属于另外的研究问题，不能由技术回放替代。</p>
+<h2 id="section-12">十二、MVP 按完整闭环切分，研发按契约交付</h2>
+<p>第一阶段只做用户主动输入的记录整理与本人可见的建议，不接外发和自动执行。必须先跑通照片或语音进入事件、未知澄清、档案修订、来源展示和删除。验收不是页面能聊天，而是陈晨能指出一条错误并看到所有依赖结果正确更新。</p>
+<p>第二阶段加入餐次规划与反馈，只覆盖少量清晰场景，再引入用户明确选择的提醒。第三阶段才接获准位置搜索和医生资料包；发送、预约、购买等副作用分别立项。每一阶段有独立开关与回退路径，出现问题时可以暂停动作服务，而保留用户查阅和导出自己的记录的能力。</p>
+<div class="table-wrap" role="region" tabindex="0" aria-label="研发职责对照表"><table><thead><tr><th scope="col">研发职责</th><th scope="col">交付契约</th><th scope="col">对接验收</th></tr></thead><tbody><tr><th scope="row">多模态与数据接入</th><td>事件 schema、字段证据、未知状态、解析版本</td><td>低清图片和矛盾语音不被硬填</td></tr><tr><th scope="row">档案与记忆服务</th><td>版本读写、时间语义、修订传播、删除接口</td><td>迟到纠错与备份恢复一致</td></tr><tr><th scope="row">知识与专业规则</th><td>来源注册、适用条件、MedGuide 审核与失效</td><td>冲突证据、过期规则可阻断</td></tr><tr><th scope="row">MedCode 与 Harness</th><td>模型提案及反馈接口、状态机、动作账本</td><td>模型修订可检查；重试、暂停、恢复不扩大权限</td></tr><tr><th scope="row">产品与权限服务</th><td>确认界面、授权面板、安静时间、反馈入口</td><td>用户知道发给谁、能随时暂停</td></tr><tr><th scope="row">质量与平台安全</th><td>回放集、Rubrics、隔离、审计、观测指标</td><td>跨用户泄漏、重复外发等用例通过</td></tr></tbody></table></div>
+<p>团队先冻结第一版事件协议、权限动作目录和状态转换表，再并行开发。接口联调使用合成数据与故障注入，不借用真实个人健康资料充当方便的测试集。日志默认脱敏，排障访问有范围和期限；服务之间按目的取得最小数据，而不是共享一份包含全部报告的万能上下文。</p>
+<p>上线前做只生成建议、不真正执行的影子运行，再按明确授权逐步开放低风险动作。工程看板同时展示延迟、成本与未完成原因，不能为了降低等待时间省掉核对或确认。能暂停、能恢复、能解释失败，本身就是产品能力。</p>
+<p>如果这一套系统一年后还能说清“这条建议依据哪份证据、哪个版本的计划和哪次授权”，并且允许用户轻松纠正或停止，它才开始具备长期 Personal Agent 的基础。陪伴的连续性来自可信状态与反馈闭环，不来自模型永远在线，也不来自它对用户生活拥有越来越大的控制权。</p>
+<hr>
+<h2 class="source-heading" id="references">公开资料与阅读说明</h2>
+<ol class="references-list"><li>Anthropic，Effective context engineering for AI agents，2025 年 9 月 29 日。<a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" rel="noopener noreferrer">https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents</a></li><li>HL7，FHIR R4 Observation 及字段定义，版本 4.0.1。<a href="https://hl7.org/fhir/R4/observation.html" rel="noopener noreferrer">https://hl7.org/fhir/R4/observation.html</a> ；<a href="https://hl7.org/fhir/R4/observation-definitions.html" rel="noopener noreferrer">https://hl7.org/fhir/R4/observation-definitions.html</a></li><li>HL7，FHIR R4 Quantity 数据类型。<a href="https://hl7.org/fhir/R4/datatypes.html#Quantity" rel="noopener noreferrer">https://hl7.org/fhir/R4/datatypes.html#Quantity</a></li><li>HL7，FHIR R4 Provenance。<a href="https://hl7.org/fhir/R4/provenance.html" rel="noopener noreferrer">https://hl7.org/fhir/R4/provenance.html</a></li><li>Anthropic，Effective harnesses for long-running agents，2025 年 11 月 26 日。<a href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents" rel="noopener noreferrer">https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents</a></li><li>HL7，FHIR R4 Consent。<a href="https://hl7.org/fhir/R4/consent.html" rel="noopener noreferrer">https://hl7.org/fhir/R4/consent.html</a></li><li>WHO，健康 AI 六项指导原则官方摘要，2021 年 6 月 28 日。<a href="https://www.who.int/news/item/28-06-2021-who-issues-first-global-report-on-ai-in-health-and-six-guiding-principles-for-its-design-and-use" rel="noopener noreferrer">https://www.who.int/news/item/28-06-2021-who-issues-first-global-report-on-ai-in-health-and-six-guiding-principles-for-its-design-and-use</a></li><li>Anthropic，Demystifying evals for AI agents。<a href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents" rel="noopener noreferrer">https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents</a></li><li>Temporal，Workflow Execution。<a href="https://docs.temporal.io/workflow-execution" rel="noopener noreferrer">https://docs.temporal.io/workflow-execution</a></li><li>Temporal，Activity Definition。<a href="https://docs.temporal.io/activity-definition" rel="noopener noreferrer">https://docs.temporal.io/activity-definition</a></li></ol>
+<p>以上公开官方网页于 2026 年 10 月 17 日实际读取核对。本文选择 FHIR R4 作为结构参照，不声称它是所有机构当前使用的版本；工程博客与伦理原则也不构成本文方案的临床验证。架构、接口、示例、角色划分和实施阶段均为作者提出的设计方案，待研发、专业团队和适用治理流程进一步评审。</p>
+</article></main>
+<footer class="page-footer"><a href="../blog/">返回博客</a><a href="index.html">系列目录</a><a href="#top">回到顶部 ↑</a></footer>
+</div></body></html>
