@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<title>少问一次“是否允许”，前提是多做一层真正的隔离｜胡浩源</title>
+<meta name="description" content="读 Anthropic 的 Claude Code 沙箱设计：区分文件读取、文件修改和网络外发，理解子进程边界与代理凭据，让 Agent 的自主性建立在可强制执行的边界之内。">
+<meta name="author" content="胡浩源">
+<meta name="color-scheme" content="light">
+<link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/claude-code-sandboxing-boundaries.html">
+<style>
+:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:3px solid var(--clay);outline-offset:5px}
+.skip{position:absolute;left:1rem;top:-5rem;background:var(--surface);padding:.5rem 1rem;z-index:5}.skip:focus{top:1rem}
+.shell{width:min(100% - 40px,760px);margin:0 auto}
+.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.masthead a{color:var(--muted)}header{padding:52px 0 26px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);font-weight:700;margin:0 0 20px}
+h1{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif;font-size:clamp(32px,5.8vw,46px);line-height:1.35;font-weight:700;letter-spacing:-.035em;margin:0 0 25px}
+.byline{font-size:14px;margin:0;color:var(--muted)}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}
+.contents{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px;color:var(--muted)}
+.contents summary{cursor:pointer;font-weight:600;color:var(--ink)}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}
+article p{margin:0 0 22px}blockquote{margin:0 0 34px;padding:6px 0 6px 20px;border-left:3px solid var(--clay);font-size:18px;color:var(--muted)}blockquote p:last-child{margin-bottom:0}
+h2{font-size:26px;line-height:1.5;font-weight:700;margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}
+h3{font-size:20px;line-height:1.55;margin:32px 0 18px}strong{font-weight:700}code{font:0.88em/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#EBE5D9;border-radius:3px;padding:.1em .3em;overflow-wrap:anywhere}
+ul,ol{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}
+.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650;color:var(--ink)}tbody th{font-weight:500;width:36%}tr:last-child th,tr:last-child td{border-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:14px;line-height:1.95;color:var(--muted)}hr~h3{font-size:17px;margin-top:0}
+.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){body{font-size:16px;line-height:1.95}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px}header{padding:36px 0 24px}h2{font-size:23px;margin-top:42px}h3{font-size:19px}blockquote{font-size:17px;padding-left:16px}.table-wrap{margin-left:-2px;margin-right:-2px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}h3{font-size:13pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}blockquote{font-size:12pt}}
+
+.subtitle{font-family:ui-serif,"Songti SC","STSong",serif;font-size:21px;line-height:1.65;color:var(--muted);margin:0 0 24px}article a{overflow-wrap:anywhere}.source-heading{font-size:19px;border-top:0;padding-top:0;margin-top:0}#source-notes+ul{font-size:14px;color:var(--muted)}@media(max-width:600px){.subtitle{font-size:19px}.masthead{gap:12px;letter-spacing:.03em}.page-footer{flex-wrap:wrap}}
+</style>
+</head>
+<body id="top">
+<a class="skip" href="#main">跳至正文</a>
+<div class="shell">
+<nav class="masthead" aria-label="站点导航"><span>工程解读 · 执行与边界</span><a href="../blog/">返回博客</a></nav>
+<header>
+<p class="eyebrow">MedWork / Engineering Notes</p>
+<h1>少问一次“是否允许”，前提是多做一层真正的隔离</h1>
+<p class="subtitle">读 Anthropic 的 Claude Code 沙箱设计：Agent 的自主性，应该从执行边界里长出来</p>
+<p class="byline">胡浩源｜京东健康 AI 副总裁</p>
+<p class="dateline"><time datetime="2026-10-17">2026 年 10 月 17 日</time></p>
+</header>
+<details class="contents"><summary>文章目录</summary><nav aria-label="文章目录"><ol><li><a href="#section-1">一、批准了一条命令，不等于看清了它的后果</a></li><li><a href="#section-2">二、为什么只关文件，或者只关网络，都不够</a></li><li><a href="#section-3">三、限制必须跟着进程走，不能只停在工具入口</a></li><li><a href="#section-4">四、网络代理管的是通路，域名名单不是完整的数据政策</a></li><li><a href="#section-5">五、Git 代理最重要的设计，是不把完整钥匙交进去</a></li><li><a href="#section-6">六、迁移到医疗科研场景，应当迁移机制，而不是迁移结论</a></li><li><a href="#section-7">七、把安全问题从“你批准了吗”推进到“它实际能做什么”</a></li><li><a href="#source-notes">原文与阅读说明</a></li></ol></nav></details>
+<main id="main"><article>
+<blockquote><p>本文解读 Anthropic 于 2025 年 10 月 20 日发布的《Beyond permission prompts: making Claude Code more secure and autonomous》。这是一篇经典工程文章回读，不是新品速报。原文事实与下文的工程判断分别说明；涉及医疗科研的讨论是设计推演，不代表已验证的产品或临床成果。</p></blockquote>
+<p>做 Agent，最容易陷入的一种安全直觉是：只要重要操作都问过用户，系统就足够安全。</p>
+<p>第一次弹窗，人会认真看。第十次，开始按习惯确认。连续几十次之后，“是否允许”可能不再是一道判断题，而成了让任务继续运行的按钮。</p>
+<p>Anthropic 这篇文章讨论的，不是如何把确认框做得更醒目，而是怎样减少必须交给人的逐次判断。它给出的路径很明确：先在执行环境中建立可强制执行的边界，再允许 Agent 在边界内自主行动。</p>
+<p>这里最值得借鉴的，不是“少弹窗”这个体验结果，而是背后的责任转移：不要让用户在每条 shell 命令前临时承担安全架构师的职责。</p>
+<h2 id="section-1">一、批准了一条命令，不等于看清了它的后果</h2>
+<p>原文首先交代了当时 Claude Code 的权限模式：默认只读，修改和大多数命令执行需要批准；echo、cat 等被视为安全的命令存在自动放行的例外。这是原文描述的产品状态，不应当被理解为所有版本、所有配置下永远不变的规则。</p>
+<p>问题出在执行链条。用户看到的可能只是一条测试命令，但实际运行的还有测试脚本、依赖中的代码，以及它们启动的子进程。理解命令的表面用途，并不意味着已经检查了所有间接行为。</p>
+<p>如果 Agent 又受到提示注入影响——例如把读到的外部内容误当作行动指令——“这一步看起来像正常工作”就更难成为可靠依据。</p>
+<p>我的理解是，逐次审批有价值，但不适合承担全部防线。它更适合处理真正跨越信任边界的动作，而不是替代底层隔离。否则，审批次数越多，人越疲惫；人越疲惫，系统越难获得它以为自己获得的审慎授权。</p>
+<p>Anthropic 报告，其内部使用中，沙箱使权限提示减少了 84%。这个数字的口径是<strong>权限提示数量</strong>，不是攻击成功率，不是泄露风险下降幅度，也不是所有用户都能复制的生产效率增益。原文没有提供足够的样本和实验细节，让读者把它进一步换算成其他指标。</p>
+<p>这个数字说明了一种可行性：更少打断与更明确的隔离可以同时发生。它不能单独证明一个系统已经安全。</p>
+<h2 id="section-2">二、为什么只关文件，或者只关网络，都不够</h2>
+<p>原文把沙箱拆成两条边界。</p>
+<p>第一条是文件系统边界：规定进程可以访问或修改哪些目录，防止受攻击的 Agent 修改敏感系统文件。</p>
+<p>第二条是网络边界：规定进程能够连接哪些服务器，减少向外传送敏感信息或下载恶意内容的机会。</p>
+<p>两条边界必须组合起来理解。只限制文件写入，却放开任意外联，已经可读的数据仍可能被传出去；只限制网络，却让进程任意改写宿主环境，也可能给绕开网络限制创造条件。原文正是用这两个方向解释为什么需要双重隔离。</p>
+<p>这里有一个容易被“沙箱”这个词遮住的细节：<strong>禁止写入，不等于禁止读取。</strong></p>
+<p>在介绍 sandboxed bash tool 时，原文具体描述的文件策略是允许读写当前工作目录，并阻止修改目录之外的文件；同时说明文件路径和域名规则都可以配置。不能据此自行补出“当前目录之外的文件一律不可读”这个更强结论。</p>
+<p>对工程团队而言，这个差别很实在。某份凭据不能被改写，不代表它不会被读到；某份数据只能读，也不代表它不敏感。读权限、写权限和外发权限，需要分别检查。</p>
+<p>我更愿意把沙箱看成一张能力清单，而不是一个安全标签：可以读什么，可以改什么，可以连接哪里，什么行为必须回到边界之外重新授权。只有把这些问题逐项回答，“在沙箱里运行”才有可讨论的含义。</p>
+<h2 id="section-3">三、限制必须跟着进程走，不能只停在工具入口</h2>
+<p>原文介绍的运行时基于操作系统级机制：Linux 上使用 bubblewrap，macOS 上使用 seatbelt。文章发布时，这个运行时处于 beta／research preview 阶段，并提供了开源研究预览版本。</p>
+<p>它的工程意义，在于限制不仅覆盖 Claude Code 直接发起的交互，还覆盖命令启动的脚本、程序和子进程。原文同时指出，这个运行时可以用于任意进程、Agent 和 MCP server，而不要求先启动和管理一个容器。</p>
+<p>为什么子进程覆盖值得单独强调？</p>
+<p>因为工具入口只是执行链的起点。假设上层检查认定“运行测试”可以放行，但测试脚本随后调用另一个程序。如果限制没有继续作用于新进程，入口审核就会变成一道形式上的门禁：正门登记过，进入之后却没有分区。</p>
+<p>这是我对原文的工程延伸，而不是原文提供的攻击实验。它提醒我们，评审 Agent 工具时，不能只检查函数名称和参数 schema，还要问实际代码在哪里执行，以及衍生行为继承什么约束。</p>
+<p>同样，提示词中写着“不要访问其他目录”，和操作系统拒绝访问其他目录，是两种不同机制。前者要求模型持续遵守规则；后者是在模型没有遵守规则时，仍然限制实际结果。两者可以配合，但不能相互替代。</p>
+<h2 id="section-4">四、网络代理管的是通路，域名名单不是完整的数据政策</h2>
+<p>原文的网络设计很具体：沙箱内的互联网访问通过 Unix domain socket，连接到沙箱外运行的代理服务器；代理负责限制可连接的域名，并处理新增域名访问的用户确认。需要更严格策略时，也可以自定义代理，对出站流量实施额外规则。</p>
+<p>这个设计把一个重要控制点留在了被约束环境之外。Agent 可以提出连接请求，但不能仅靠在内部改一段代码就成为自己的网络政策制定者。</p>
+<p>不过，我不认为“域名在名单里”就足以回答所有安全问题。</p>
+<p>同一个服务可能承载不同租户、项目和接口。允许访问某个协作平台，不代表允许把任何数据写入那个平台；允许下载依赖，也不等于下载的内容就值得信任。域名层面的放行回答的是“通向哪里”，而数据政策还要回答“以什么身份、把什么内容、发给哪个对象”。</p>
+<p>原文没有声称域名名单能够独立解决这些问题。它提供自定义代理规则的扩展点，恰好说明网络边界还可以进一步细化。</p>
+<p>因此，落地时应该区分两层：底层先消除任意外联，上层再决定业务允许的具体交互。不能把“目标地址获准”偷换成“这次数据处理获准”。</p>
+<h2 id="section-5">五、Git 代理最重要的设计，是不把完整钥匙交进去</h2>
+<p>文章的另一个部分讨论 Claude Code on the web。当时发布的云端方案让每个会话运行在独立沙箱中，并将敏感凭据，例如真实的 Git 凭据或签名密钥，留在沙箱之外。</p>
+<p>其中的 Git 交互通过专门的代理完成：</p>
+<ol><li>沙箱里的 Git 客户端使用一个定制的、受限作用域的凭据向代理认证。</li><li>代理检查凭据和 Git 交互的内容，例如是否只向配置的分支推送。</li><li>检查通过之后，代理才附加正确的认证 token，把请求转发给 GitHub。</li></ol>
+<p>这里不能简化为“沙箱里没有任何凭据”。原文明明写了内部存在用于访问代理的 scoped credential。关键在于：内部拿到的不是可任意使用的完整外部凭据，而且代理会再次检查具体操作。</p>
+<p>这是一种比“把密钥藏得更深”更清晰的结构。工作进程获得完成任务所需的受限能力，代理保留更高权限的凭据，并独立判断这次请求是否符合授权范围。</p>
+<p>我的判断是，这个模式的价值不局限于代码仓库。只要一个 Agent 必须代表用户访问外部系统，就值得思考：能否不给它完整钥匙，而是给它一张范围明确、可被服务端再次核查的通行证？</p>
+<p>当然，这并不意味着代理天然可靠。代理配置是否正确、校验是否完整、日志是否足以追溯，仍然需要工程验证。把信任集中到一个控制点，是为了更容易审计它，不是为了省略审计。</p>
+<h2 id="section-6">六、迁移到医疗科研场景，应当迁移机制，而不是迁移结论</h2>
+<p>如果把这篇文章用于医疗 AI 的工程讨论，我首先想到的不是“让 Agent 更大胆”，而是把任务内的自主性和任务外的授权分开。</p>
+<p>以下是设计推演，不是京东健康或其他机构已经部署的方案。</p>
+<p>假设一个科研辅助 Agent 的任务，是在指定目录内检查研究代码、运行数据质量脚本，并生成一份供研究者复核的报告。合理的边界可以包括：只读获准的数据副本，只在指定输出目录写入结果，禁止不必要的外联；对于必须访问的服务，再按身份、项目和操作范围进行授权。</p>
+<p>还要特别区分两件事：操作系统沙箱限定的是技术上能做什么，用户授权限定的是任务上被允许做什么。前者不能扩大后者。遇到越界或审批要求，正确动作是停在边界前，由有权主体决定；换一个执行环境、代理或工具继续做，不会让未获授权的行为变得正当。</p>
+<p>这时，重复运行获准脚本和修复输出格式，可以在既定边界内完成；新增数据源、把结果发送给外部人员、写回正式业务系统，则不是“顺手做下一步”，而是授权范围发生了变化。</p>
+<p>文件系统和网络隔离能够降低某些误操作与外泄路径的风险，却不能保证研究结论正确。它不会自动识别统计设计缺陷、数据标签错误或医学解释的不当外推。执行边界、数据治理和专业复核，解决的是不同问题。</p>
+<p>尤其不能从一篇开发工具的沙箱文章推导出“满足医疗合规”或“具备临床安全性”。原文没有提供这类证据。</p>
+<h2 id="section-7">七、把安全问题从“你批准了吗”推进到“它实际能做什么”</h2>
+<p>这篇文章包含一句非常强的安全表述：即使提示注入成功，也会被完整隔离，不影响用户整体安全。我不会把这句话当作无条件成立的系统保证。</p>
+<p>从工程上看，隔离效果仍然取决于授权范围、规则配置、底层实现和可信代理。如果敏感数据本来就在允许读取的范围内，某个危险动作本来就在允许执行的范围内，沙箱不会自动理解这些权限是否给多了。原文也没有提供足以证明所有攻击路径均被覆盖的形式化证明或完整测试结果。</p>
+<p>因此，读完这篇文章，我最想保留的不是“有沙箱就安全”，而是一组可以在设计评审会上追问的问题：</p>
+<ul><li>文件读取、文件修改和网络外发是否分别定义了边界？</li><li>脚本、依赖和子进程是否受到同样的约束？</li><li>高权限凭据是否可以留在执行环境之外？</li><li>越界请求如何被识别、记录，并由真正有权的人决定？</li><li>减少确认框之后，我们依据什么证据判断隔离仍然有效？</li></ul>
+<p>Agent 的自主性不应该靠用户一遍遍点击“允许”来兑换。更合理的路径是先把工作空间划清，再让它在里面充分行动。</p>
+<p><strong>值得争取的不是无限自主，而是边界足够明确之后，可以放心交出去的那一部分自主。</strong></p>
+<hr>
+<h2 class="source-heading" id="source-notes">原文与阅读说明</h2>
+<ul><li>Anthropic，<em>Beyond permission prompts: making Claude Code more secure and autonomous</em>。</li><li>发布日期：2025 年 10 月 20 日。</li><li>原文作者：David Dworken、Oliver Weller-Davies。</li><li>官方原文：<a href="https://www.anthropic.com/engineering/claude-code-sandboxing" rel="noopener noreferrer">https://www.anthropic.com/engineering/claude-code-sandboxing</a></li><li>本文于 2026 年 10 月 17 日实际读取该官方页面后撰写，以原文发布时的机制说明为对象，不将其描述为当前所有版本的行为承诺。</li><li>本文为原创工程解读，不是全文或逐句翻译；医疗场景仅用于解释设计边界，不构成诊疗建议、临床有效性或合规结论。</li></ul>
+</article></main>
+<footer class="page-footer"><a href="../blog/">返回博客</a><a href="index.html">系列目录</a><a href="#top">回到顶部 ↑</a></footer>
+</div>
+</body>
+</html>
