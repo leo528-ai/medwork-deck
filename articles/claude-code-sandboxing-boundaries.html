@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
 <title>少问一次“是否允许”，前提是多做一层真正的隔离｜胡浩源</title>
 <meta name="description" content="读 Anthropic 的 Claude Code 沙箱设计：区分文件读取、文件修改和网络外发，理解子进程边界与代理凭据，让 Agent 的自主性建立在可强制执行的边界之内。">
-<meta name="author" content="胡浩源">
+<meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人">
 <meta name="color-scheme" content="light">
 <link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/claude-code-sandboxing-boundaries.html">
 <style>
@@ -47,12 +47,12 @@ hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:1
 <p class="eyebrow">MedWork / Engineering Notes</p>
 <h1>少问一次“是否允许”，前提是多做一层真正的隔离</h1>
 <p class="subtitle">读 Anthropic 的 Claude Code 沙箱设计：Agent 的自主性，应该从执行边界里长出来</p>
-<p class="byline">胡浩源｜京东健康 AI 副总裁</p>
+<p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p>
 <p class="dateline"><time datetime="2026-10-17">2026 年 10 月 17 日</time></p>
 </header>
 <details class="contents"><summary>文章目录</summary><nav aria-label="文章目录"><ol><li><a href="#section-1">一、批准了一条命令，不等于看清了它的后果</a></li><li><a href="#section-2">二、为什么只关文件，或者只关网络，都不够</a></li><li><a href="#section-3">三、限制必须跟着进程走，不能只停在工具入口</a></li><li><a href="#section-4">四、网络代理管的是通路，域名名单不是完整的数据政策</a></li><li><a href="#section-5">五、Git 代理最重要的设计，是不把完整钥匙交进去</a></li><li><a href="#section-6">六、迁移到医疗科研场景，应当迁移机制，而不是迁移结论</a></li><li><a href="#section-7">七、把安全问题从“你批准了吗”推进到“它实际能做什么”</a></li><li><a href="#source-notes">原文与阅读说明</a></li></ol></nav></details>
 <main id="main"><article>
-<blockquote><p>本文解读 Anthropic 于 2025 年 10 月 20 日发布的《Beyond permission prompts: making Claude Code more secure and autonomous》。这是一篇经典工程文章回读，不是新品速报。原文事实与下文的工程判断分别说明；涉及医疗科研的讨论是设计推演，不代表已验证的产品或临床成果。</p></blockquote>
+<blockquote><p>Anthropic 于 2025 年 10 月 20 日发布《Beyond permission prompts: making Claude Code more secure and autonomous》。涉及医疗科研的讨论是设计推演，不代表已验证的产品或临床成果。</p></blockquote>
 <p>做 Agent，最容易陷入的一种安全直觉是：只要重要操作都问过用户，系统就足够安全。</p>
 <p>第一次弹窗，人会认真看。第十次，开始按习惯确认。连续几十次之后，“是否允许”可能不再是一道判断题，而成了让任务继续运行的按钮。</p>
 <p>Anthropic 这篇文章讨论的，不是如何把确认框做得更醒目，而是怎样减少必须交给人的逐次判断。它给出的路径很明确：先在执行环境中建立可强制执行的边界，再允许 Agent 在边界内自主行动。</p>
@@ -112,7 +112,7 @@ hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:1
 <p><strong>值得争取的不是无限自主，而是边界足够明确之后，可以放心交出去的那一部分自主。</strong></p>
 <hr>
 <h2 class="source-heading" id="source-notes">原文与阅读说明</h2>
-<ul><li>Anthropic，<em>Beyond permission prompts: making Claude Code more secure and autonomous</em>。</li><li>发布日期：2025 年 10 月 20 日。</li><li>原文作者：David Dworken、Oliver Weller-Davies。</li><li>官方原文：<a href="https://www.anthropic.com/engineering/claude-code-sandboxing" rel="noopener noreferrer">https://www.anthropic.com/engineering/claude-code-sandboxing</a></li><li>本文于 2026 年 10 月 17 日实际读取该官方页面后撰写，以原文发布时的机制说明为对象，不将其描述为当前所有版本的行为承诺。</li><li>本文为原创工程解读，不是全文或逐句翻译；医疗场景仅用于解释设计边界，不构成诊疗建议、临床有效性或合规结论。</li></ul>
+<ul><li>Anthropic，<em>Beyond permission prompts: making Claude Code more secure and autonomous</em>。</li><li>发布日期：2025 年 10 月 20 日。</li><li>原文作者：David Dworken、Oliver Weller-Davies。</li><li>官方原文：<a href="https://www.anthropic.com/engineering/claude-code-sandboxing" rel="noopener noreferrer">https://www.anthropic.com/engineering/claude-code-sandboxing</a></li><li>查阅日期：2026 年 10 月 17 日。文中机制说明以原文发布时为准，不代表当前所有版本的行为。</li><li>医疗场景仅用于解释设计边界，不构成诊疗建议、临床有效性或合规结论。</li></ul>
 </article></main>
 <footer class="page-footer"><a href="../blog/">返回博客</a><a href="index.html">系列目录</a><a href="#top">回到顶部 ↑</a></footer>
 </div>
