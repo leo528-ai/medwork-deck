@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; media-src 'self'; script-src 'sha256-Bi0MPYR5nsOrA2/kiL7Hibjc2/xNu9mup2KbHsbh5oc='; base-uri 'none'; form-action 'none'">
+<title>多模态不是识别一张图，而是理解一个人｜胡浩源</title><meta name="description" content="跟随虚构用户陈晨的一年，看照片、语音、菜单、报告和反馈怎样连接成可纠正、可持续的个人健康服务。"><meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人"><meta name="color-scheme" content="light"><link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/multimodal-personal-health-agent-demo.html">
+<style>
+:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:3px solid var(--clay);outline-offset:5px}
+.skip{position:absolute;left:1rem;top:-5rem;background:var(--surface);padding:.5rem 1rem;z-index:5}.skip:focus{top:1rem}
+.shell{width:min(100% - 40px,760px);margin:0 auto}
+.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.masthead a{color:var(--muted)}header{padding:52px 0 26px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);font-weight:700;margin:0 0 20px}
+h1{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif;font-size:clamp(32px,5.8vw,46px);line-height:1.35;font-weight:700;letter-spacing:-.035em;margin:0 0 25px}
+.byline{font-size:14px;margin:0;color:var(--muted)}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}
+.contents{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px;color:var(--muted)}
+.contents summary{cursor:pointer;font-weight:600;color:var(--ink)}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}
+article p{margin:0 0 22px}blockquote{margin:0 0 34px;padding:6px 0 6px 20px;border-left:3px solid var(--clay);font-size:18px;color:var(--muted)}blockquote p:last-child{margin-bottom:0}
+h2{font-size:26px;line-height:1.5;font-weight:700;margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}
+h3{font-size:20px;line-height:1.55;margin:32px 0 18px}strong{font-weight:700}code{font:0.88em/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#EBE5D9;border-radius:3px;padding:.1em .3em;overflow-wrap:anywhere}
+ul,ol{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}
+.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650;color:var(--ink)}tbody th{font-weight:500;width:36%}tr:last-child th,tr:last-child td{border-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:14px;line-height:1.95;color:var(--muted)}hr~h3{font-size:17px;margin-top:0}
+.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){body{font-size:16px;line-height:1.95}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px}header{padding:36px 0 24px}h2{font-size:23px;margin-top:42px}h3{font-size:19px}blockquote{font-size:17px;padding-left:16px}.table-wrap{margin-left:-2px;margin-right:-2px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}h3{font-size:13pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}blockquote{font-size:12pt}}
+
+h1{text-wrap:balance}
+.subtitle{font-family:ui-serif,"Songti SC","STSong",serif;font-size:21px;line-height:1.65;color:var(--muted);margin:0 0 24px}
+article a{overflow-wrap:anywhere}.source-heading{font-size:21px;border-top:0;margin-top:0;padding-top:0}.references-list{font-size:14px;color:var(--muted)}
+.code-block{border:1px solid var(--line);background:#EEE8DC;border-radius:8px;margin:26px 0 32px;overflow:hidden}.code-label{margin:0!important;padding:9px 16px!important;border-bottom:1px solid var(--line);font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:700}
+pre{margin:0;padding:18px 20px;max-width:100%;overflow:auto;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:4;scrollbar-color:var(--clay) #EEE8DC}pre code{background:none;padding:0;border-radius:0;font:inherit;overflow-wrap:normal}pre:focus-visible{outline:3px solid var(--clay);outline-offset:-3px}
+.architecture{margin:30px 0}.flow{list-style:none;counter-reset:flow;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.flow li{counter-increment:flow;border:1px solid var(--line);background:var(--surface);padding:16px;margin:0;font-size:15px;line-height:1.9;border-radius:6px}.flow li:before{content:counter(flow,decimal-leading-zero) " → ";display:block;font:12px/1.7 ui-monospace,SFMono-Regular,monospace;letter-spacing:.08em;color:var(--clay);margin-bottom:6px}
+table{min-width:610px}tbody th{width:26%}td{width:37%}
+@media(max-width:600px){.subtitle{font-size:19px}.flow{grid-template-columns:1fr}.flow li{padding:13px 15px}.code-block{margin:24px 0}.code-label{padding:8px 12px!important}pre{font-size:12px;padding:14px 12px}.page-footer{flex-wrap:wrap;gap:12px}.masthead{font-size:12px;letter-spacing:.03em}}
+@media print{pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}.code-block{break-inside:auto}.flow li{break-inside:avoid}.table-wrap{overflow:visible}table{min-width:0}.references-list{font-size:9pt}}
+
+h1{max-width:none}h1 span{display:block}
+.video-feature{margin:34px 0 42px;padding:24px;border:1px solid var(--line);border-radius:10px;background:var(--surface);display:grid;grid-template-columns:minmax(0,290px) minmax(0,1fr);gap:26px;align-items:start}.video-stage{min-width:0}.video-stage video{display:block;width:100%;max-height:75vh;aspect-ratio:9/16;object-fit:contain;background:#1b201e;border-radius:7px}.video-caption{font-size:12px;line-height:1.9;color:var(--muted);margin:12px 0 0}.video-links{display:flex;flex-wrap:wrap;gap:8px 16px;margin:12px 0 0;font-size:12px}.video-guide{min-width:0}.video-guide h2{font-family:ui-serif,"Songti SC","STSong",serif;font-size:23px;line-height:1.5;margin:0 0 14px;padding:0;border:0}.video-guide>p{font-size:14px;line-height:1.9;color:var(--muted);margin:0 0 14px}.chapters{list-style:none;margin:0;padding:0}.chapters li{margin:0;border-top:1px solid var(--line);padding:11px 0;font-size:13px;line-height:1.8}.chapter-month{font-weight:700;color:var(--clay);font-size:12px;display:block}.chapter-description{display:block;color:var(--muted)}.chapter-button{display:block;text-align:left;width:100%;border:0;padding:0;background:transparent;color:inherit;font:inherit;cursor:pointer}.chapter-button:hover .chapter-title{text-decoration:underline;text-underline-offset:4px}.chapter-button:focus-visible{outline:2px solid var(--clay);outline-offset:4px}.chapter-time{font:12px ui-monospace,SFMono-Regular,monospace;margin-left:9px;color:var(--muted)}.video-status{font-size:12px!important;min-height:1.9em;margin-top:10px!important}.demo-boundary{font-size:14px!important;color:var(--muted);line-height:1.9}
+@media(max-width:650px){.video-feature{grid-template-columns:1fr;padding:16px;gap:24px;margin-top:26px}.video-stage video{width:min(100%,340px);margin:auto;max-height:72vh}.video-links{justify-content:center}.video-caption{text-align:center}.video-guide h2{font-size:21px}.chapters{display:grid;grid-template-columns:1fr 1fr;gap:0 15px}.chapters li{min-width:0;padding:12px 0}.video-feature .video-guide{width:100%}}
+@media(max-width:360px){.chapters{grid-template-columns:1fr}.video-feature{padding:12px}}
+@media print{.video-feature{display:block;break-inside:avoid}.video-stage video,.video-links,.video-status{display:none}.video-guide{margin-top:15px}.chapter-button{color:#000}.chapter-description{color:#333}}
+</style></head>
+<body id="top"><a class="skip" href="#main">跳至正文</a><div class="shell">
+<nav class="masthead" aria-label="站点导航"><span>应用案例 · 多模态健康 Agent</span><a href="../blog/">返回博客</a></nav>
+<header><p class="eyebrow">MedWork / A Year with a Personal Agent</p><h1><span>多模态不是识别一张图，</span><span>而是理解一个人</span></h1><p class="subtitle">从一日三餐到全年陪伴：Personal Agent 怎样把帮助持续做下去</p><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-10-17">2026 年 10 月 17 日</time></p></header>
+<section class="video-feature" aria-labelledby="video-title">
+<div class="video-stage"><video id="demo-video" controls playsinline preload="metadata" poster="../assets/video/multimodal-personal-health-agent-demo.jpg" aria-label="陈晨一年的个人健康 Agent 概念演示" tabindex="0"><source src="../assets/video/multimodal-personal-health-agent-demo.mp4" type="video/mp4"><track kind="subtitles" src="../assets/video/multimodal-personal-health-agent-demo.vtt" srclang="zh-CN" label="简体中文">浏览器不支持嵌入视频，请使用下方下载链接。</video><p class="video-caption">03:11 · 720p · 画面内含中文字幕</p><p class="video-links"><a href="../assets/video/multimodal-personal-health-agent-demo.mp4" download>下载视频 MP4</a><a href="../assets/video/multimodal-personal-health-agent-demo.vtt" download>下载中文字幕</a><a href="../assets/video/multimodal-personal-health-agent-demo-storyboards.zip" download>下载全部分镜图</a></p></div>
+<div class="video-guide"><h2 id="video-title">看同一个人，怎样走过一年</h2><p>从第一次建档，到日常选择、反馈纠正与年终回顾。</p><ol class="chapters"><li><button class="chapter-button" type="button" data-start="0.22"><span class="chapter-month">1 月</span><span class="chapter-title">从照片与语音建立健康档案</span><span class="chapter-time">00:00</span><span class="chapter-description">体脂秤、早餐、体检报告与生活习惯共同进入个人档案。</span></button></li><li><button class="chapter-button" type="button" data-start="21.178"><span class="chapter-month">1 月</span><span class="chapter-title">由本人确认长期记忆</span><span class="chapter-time">00:21</span><span class="chapter-description">测量事实、个人偏好和生活约束分开呈现，逐条确认、修改或不保存。</span></button></li><li><button class="chapter-button" type="button" data-start="43.595"><span class="chapter-month">2 月</span><span class="chapter-title">在食堂做出具体选择</span><span class="chapter-time">00:43</span><span class="chapter-description">结合早餐记录和饮食偏好，从当前菜单中选择一顿午餐。</span></button></li><li><button class="chapter-button" type="button" data-start="68.803"><span class="chapter-month">2 月</span><span class="chapter-title">用餐后反馈修正记录</span><span class="chapter-time">01:08</span><span class="chapter-description">“米饭只吃了一半”更新实际摄入，保留照片与实际食用之间的区别。</span></button></li><li><button class="chapter-button" type="button" data-start="80.428"><span class="chapter-month">4 月</span><span class="chapter-title">出差中的授权与选择</span><span class="chapter-time">01:20</span><span class="chapter-description">位置授权流程后查看示意餐厅候选，再根据次日行程调整早餐与活动。</span></button></li><li><button class="chapter-button" type="button" data-start="118.262"><span class="chapter-month">6 月</span><span class="chapter-title">纠正记忆并重新规划</span><span class="chapter-time">01:58</span><span class="chapter-description">把记录空白与执行结果分开，结合下班过晚的反馈调整为午休活动。</span></button></li><li><button class="chapter-button" type="button" data-start="143.053"><span class="chapter-month">9 月</span><span class="chapter-title">复查核对与医生交接</span><span class="chapter-time">02:23</span><span class="chapter-description">核对单位和参考范围，把指标、生活变化、缺失信息与问题整理成一页摘要。</span></button></li><li><button class="chapter-button" type="button" data-start="168.053"><span class="chapter-month">12 月</span><span class="chapter-title">沿时间线回看这一年</span><span class="chapter-time">02:48</span><span class="chapter-description">回到原记录核验每次选择和调整，形成下一阶段可执行的目标。</span></button></li></ol><p id="video-status" class="video-status" role="status" aria-live="polite"></p></div>
+</section>
+<details class="contents"><summary>文章目录</summary><nav aria-label="文章目录"><ol><li><a href="#section-1">一、1 月：先认识陈晨，也让陈晨决定被记住什么</a></li><li><a href="#section-2">二、2 月：从看懂菜单，到记住真正吃下去的那一餐</a></li><li><a href="#section-3">三、4 月：到了陌生城市，帮助也要跟着处境改变</a></li><li><a href="#section-4">四、6 月：用户纠正系统，是持续服务最有价值的输入</a></li><li><a href="#section-5">五、9 月：复查时，把一年中的零散记录交成一份可核对的材料</a></li><li><a href="#section-6">六、12 月：年度总结，应当总结发生了什么</a></li><li><a href="#section-7">七、真正需要连起来的，是理解、记忆和下一步行动</a></li></ol></nav></details>
+<main id="main"><article><blockquote><p>视频为概念演示，以虚构人物陈晨、示意餐厅与健康记录，呈现个人健康 Agent 的交互设计。</p></blockquote>
+<p>拍下一份午餐，系统告诉你“这是米饭、青菜和鸡肉”，只能算识别的开始。真正有用的下一步，还要知道：你早餐吃了什么，今天在哪里，是否赶时间，上一次建议有没有做到，以及你愿意把哪些信息交给它记住。</p>
+<p>一年的时间线串起陈晨的生活：从第一次建立档案，到吃饭、出差、调整习惯、复查和年终回顾。照片、语音、菜单、报告与设备记录并不是几条平行的输入通道，而是在不同时间回答同一个问题：现在怎样帮助这个人，才适合他的真实处境？</p>
+<h2 id="section-1">一、1 月：先认识陈晨，也让陈晨决定被记住什么</h2>
+<p>陈晨 38 岁，经常出差，午餐多在食堂解决，不喜欢跑步。他想把日常健康管理做得更有条理，却不希望每天重新介绍自己，也不想被提醒填满生活。</p>
+<p>建档不能只是一张等着填完的表。陈晨可以拍体重秤、上传报告，也可以用语音补充“这张照片是昨天的”“最近工作比较忙”。多模态理解把分散的信息转成可确认的记录：数值是什么，单位是什么，发生在什么时候，来自照片还是本人补充。照片看不清的地方要留白，不能靠一个完整的表格掩盖未知。</p>
+<p>这时，界面承担着与模型同样重要的工作。演示中的记忆卡将测量事实、个人偏好和生活约束分开，并提供“确认保存／修改／不保存”。待确认的记录与已经确认的记录有所区别，原图和提取结果能够对照；“保存到健康档案”和“允许主动提醒”应当是分别可理解的选择。用户确认一次信息，不意味着同意今后所有用途。</p>
+<p>长期记忆从这些小选择开始。“不喜欢跑步”可以影响活动候选，“本周出差”只能在一段时间内有效。陈晨要能查看、纠正和删除它们。个性化并不取决于系统收集了多少信息，而在于它是否记住了合适的信息，并知道什么时候不该继续使用。</p>
+<h2 id="section-2">二、2 月：从看懂菜单，到记住真正吃下去的那一餐</h2>
+<p>二月的场景最日常，也最能看出多模态 Agent 与单次识图的差别。早餐已有记录，中午陈晨拍下食堂菜单，系统需要把“今天有哪些菜”与“这个人今天已经吃了什么”放在一起理解。</p>
+<p>菜单解决候选是什么，餐盘照片帮助理解搭配，语音补充图片没有的信息。演示中，系统结合早餐记录和“不爱西兰花”的已确认偏好，给出番茄炒蛋、清炒青菜与小份米饭的组合。输出的价值在于帮助陈晨完成眼前这一餐的选择，说明依据，并保留调整空间。</p>
+<p>份量、烹调方式和实际吃下去的比例，往往无法从照片可靠确定。因此，界面里的估算应显示依据与不确定性；信息不足时，问一个有用的问题，比给出精确到个位的热量数字更诚实。记录也应允许用户修改份量，而不要求他接受系统的第一次判断。</p>
+<p>吃完后，陈晨补充：“米饭只吃了一半。”这句话应该回到原来的午餐记录，修正主食的实际摄入；其他菜吃了多少仍按已有证据记录，不能把整餐统一折半。反馈不能只在聊天末尾留下一个孤立备注。晚餐的下一次建议，应当基于修正后的状态。多模态负责把输入看懂，长期记忆负责把事实接上，反馈闭环负责让下一步真的发生变化。</p>
+<p>这也是一个具体的产品验收点：同一餐能不能从“候选”进入“已选择”，再进入“实际吃了多少”；用户能否看出哪些信息是照片识别的，哪些是自己确认的。若这些状态混在一起，再流畅的对话也可能把计划误当成事实。</p>
+<h2 id="section-3">三、4 月：到了陌生城市，帮助也要跟着处境改变</h2>
+<p>四月，陈晨出差住进酒店，晚上九点还没吃饭，也不想运动。此时继续催他完成原来的活动计划，没有多少实际意义。Agent 先处理眼前的需要：安排一顿方便吃上的晚饭，再考虑当晚休息与第二天的行程。</p>
+<p>演示先呈现位置授权，再依次展示两张示意餐厅卡，说明授权、选择和行动确认怎样衔接。接入真实检索时，候选还需要标明查询时间、距离、价格与营业信息；商家页面里的“健康餐”不能直接变成医学结论，营业状态也要按当时情况核实。</p>
+<p>餐厅卡让陈晨逐一查看候选，再自行选择。界面上的距离和营业信息在真实服务中会影响取舍，也应能回到对应来源核对。用户选择之后，计划再随之更新。展示候选不等于替用户下单，获得位置权限也不等于获得交易权限。</p>
+<p>这里的个性化不是在餐厅名称旁加上“为你推荐”，而是让帮助随情境改变。陈晨补充“明早七点要出门”，早餐计划便改成便于提前准备的安排；当晚休息，不用补做运动。新的时间约束直接改变了下一步。建议必须能落进日程，才有机会变成行动。</p>
+<h2 id="section-4">四、6 月：用户纠正系统，是持续服务最有价值的输入</h2>
+<p>到了六月，系统已经积累了一些历史，但历史不能成为替用户做决定的理由。六月复盘呈现晚餐时间、已有睡眠记录和未完成的活动计划，缺少记录的日子保持未知。陈晨解释：“下班太晚，真的累了。”这是对原计划可行性的纠正，也是在更新当前的生活约束，不能被固化成一个永久标签。</p>
+<p>好的体验应当让纠错产生可见的后果：后续候选避开不喜欢的活动，近期计划降低安排密度，提醒时间随授权设置调整。原来晚饭后的活动屡次被加班打断，新的午休十分钟安排进入“记忆更新·待确认”卡片，经本人确认后再替换旧计划；这里的十分钟是日程示例，并非通用运动处方。用户不必靠连续拒绝来训练一个不肯改变的助手，也不需要为没有完成上次计划作出解释。</p>
+<p>重规划不只是换一句鼓励的话。系统应保留原计划与新计划的关系，告诉陈晨“因为什么改了什么”，并允许他进一步修改。若反馈来得较晚，也要对应到当时的事件，不能误算成今天完成了一次活动。</p>
+<p>这一段强调的闭环很朴素：看到了新情况，就更新事实；约束变了，就重新安排；用户说停，就停止主动推进。长期陪伴的稳定性，不在于每天都坚持发消息，而在于经历中断、纠正和变化之后，系统仍能准确地接着往下做。</p>
+<h2 id="section-5">五、9 月：复查时，把一年中的零散记录交成一份可核对的材料</h2>
+<p>九月的复查把视角从日常选择转向信息交接。新的报告到来后，多模态模型可以帮助定位项目、提取数值和单位，再与已有记录建立联系。但名称相似的项目不一定能直接比较，不同时间、单位、检测条件和来源也可能影响解释。</p>
+<p>因此，面向医生的交接材料不应只剩一张漂亮趋势图。每个关键结果都需要保留日期、来源和原始报告入口；缺失、冲突或未经确认的记录要明确标出。陈晨的自述、设备测量与模型估算也应能区分，不能被压成同一种确定事实。</p>
+<p>这一步真正减轻的是整理负担：把需要带去沟通的材料组织好，把陈晨想问的问题列出来，把相关生活变化放在可读的时间线上。最终的医学解释和处置仍需要专业人员判断，Agent 不应根据一条趋势自行调整药物或承诺风险已经下降。</p>
+<p>分享本身也是一次行动。陈晨应当能够预览内容、选择范围，并决定是否交给指定对象。曾经允许系统保存报告，并不自动包含对外发送报告的授权。理解信息、整理信息和分享信息，是相互衔接、权限却不同的三件事。</p>
+<h2 id="section-6">六、12 月：年度总结，应当总结发生了什么</h2>
+<p>到年末，最值得呈现的未必是一个总分，而是这一年可被说明的变化：哪些习惯反复被选择，哪些计划做了调整，哪些提醒被关闭，哪些记录得到纠正，还有哪些问题需要在下次沟通时继续确认。</p>
+<p>年度回顾应该允许陈晨回到具体事件，而不是把有记录的日子等同于健康改善、把没有记录的日子等同于没有行动。报告里可以看到数据覆盖了哪些时段，也应该能看出空白在哪里。缺失本身是一种信息，不应被补成一条平滑的进步曲线。</p>
+<p>即使某个指标发生变化，也不能仅凭同时使用了 Agent，就把变化归因为产品效果。年度总结应分开呈现记录覆盖、计划执行与健康结果，并分别核验：帮助是否更容易理解，信息是否更容易核对，计划是否更能适应生活，用户是否始终保有决定权。</p>
+<h2 id="section-7">七、真正需要连起来的，是理解、记忆和下一步行动</h2>
+<p>回看这一年，单个模型能力都不陌生：识图、语音理解、检索、生成与工具调用。难的是让它们围绕同一个人协作，又不把识别结果当成事实、把偏好当成永久规则、把建议当成已经完成的行动。</p>
+<p>多模态让陈晨用自然的方式表达处境；个性化让系统少重复无关建议；长期记忆让过去的信息在恰当的时候被找回；执行反馈让今天的结果改变明天的安排。任何一层断开，产品都容易退回到“每次聊得不错，每次又从头开始”。</p>
+<p>持续的帮助，需要把每次输入纳入下一步行动的判断。技术上怎样保存有来源的事件，怎样处理记忆修正、证据检索、计划版本和授权执行，可以继续阅读<a href="https://leo528-ai.github.io/medwork-deck/articles/medwork-personal-health-agent-implementation.html" rel="noopener noreferrer">《MedWork 健康管理 Personal Agent 的实现》</a>。应用体验与工程设计，应当在同一条闭环上互相验证。</p></article></main>
+<footer class="page-footer"><a href="../blog/">返回博客</a><a href="index.html">系列目录</a><a href="#top">回到顶部 ↑</a></footer>
+</div><script>(() => {
+  const video = document.getElementById('demo-video');
+  const status = document.getElementById('video-status');
+  let pending = null;
+  let currentLabel = '';
+  const seek = () => {
+    if (!pending || video.readyState < 1) return;
+    currentLabel = pending.label;
+    video.currentTime = pending.seconds;
+    pending = null;
+    video.focus({preventScroll: true});
+    video.scrollIntoView({block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+  };
+  document.querySelectorAll('.chapter-button').forEach(button => {
+    button.addEventListener('click', () => {
+      pending = {seconds: Number(button.dataset.start), label: button.querySelector('.chapter-time').textContent};
+      if (video.readyState >= 1) seek();
+      else {
+        status.textContent = '正在读取视频…';
+        if (video.networkState === HTMLMediaElement.NETWORK_EMPTY) video.load();
+      }
+    });
+  });
+  video.addEventListener('loadedmetadata', seek);
+  video.addEventListener('seeked', () => {
+    if (currentLabel) status.textContent = '已定位至 ' + currentLabel + (video.paused ? '，按播放继续观看。' : '，正在播放。');
+    currentLabel = '';
+  });
+  const loadError = () => {
+    pending = null;
+    status.textContent = '视频暂时无法加载，可使用下载链接在设备播放器中观看。';
+  };
+  video.addEventListener('error', loadError);
+  video.querySelector('source').addEventListener('error', loadError);
+})();</script></body></html>
