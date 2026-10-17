@@ -52,7 +52,7 @@ table{min-width:610px}tbody th{width:26%}td{width:37%}
 <header><p class="eyebrow">MedWork / Engineering Notes</p><h1>MedWork 健康管理 Personal Agent 的实现</h1><p class="subtitle">从一张午餐照片，到一整年可追溯、可调整的个人健康陪伴</p><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-10-17">2026 年 10 月 17 日</time></p></header>
 <details class="contents"><summary>文章目录</summary><nav aria-label="文章目录"><ol><li><a href="#section-1">一、先定义一个具体的人，再定义系统要承担什么</a></li><li><a href="#section-2">二、架构要把理解、决策和行动分开</a></li><li><a href="#section-3">三、多模态输入首先变成事件，不直接变成事实</a></li><li><a href="#section-4">四、长期记忆必须分层，并允许真正忘记</a></li><li><a href="#section-5">五、结构化档案保存数据，检索负责带回证据</a></li><li><a href="#section-6">六、Rubrics、MedGuide、MedCode 各自承担一件事</a></li><li><a href="#section-7">七、规划不是一次排满日历，而是滚动选择下一步</a></li><li><a href="#section-8">八、Harness 管好状态、幂等与恢复，才谈得上跨天执行</a></li><li><a href="#section-9">九、主动服务要有同意、节制和退出机制</a></li><li><a href="#section-10">十、把陈晨的一周跑通，尤其要跑通出错的那一周</a></li><li><a href="#section-11">十一、长程回放要测状态与行动，不能只评分回答好不好</a></li><li><a href="#section-12">十二、MVP 按完整闭环切分，研发按契约交付</a></li><li><a href="#references">公开资料与阅读说明</a></li></ol></nav></details>
 <main id="main"><article>
-<blockquote><p>本文是一份面向研发协作的架构设计，沿用 MedWork 及 Rubrics、MedGuide、MedCode 的既有能力命名，讨论它们在 Personal Agent 中的组合方案，不披露或确认具体生产部署，也不构成疗效、临床安全性或合规声明。陈晨及全部事件、数值、对话均为虚构示例；方案仅依据公开官方资料、上述能力定位与工程推演。</p></blockquote>
+<blockquote><p>架构设计围绕 MedWork、Rubrics、MedGuide 和 MedCode 的组合展开，供研发协作与评审。陈晨及相关事件、数值和对话均为虚构示例。</p></blockquote>
 <p>个人健康 Agent 最难的工作，往往不在回答“今天吃什么”，而在一个月之后仍能解释：为什么当时这样建议，用户实际做了什么，哪条信息后来被纠正，以及现在是否还应该继续。</p>
 <p>一年不是一次超长对话。它由照片、语音、设备记录、报告、计划和失约组成。系统需要把这些零散输入转成有来源的状态，再把状态转成范围明确的行动。多模态理解负责提出候选解释，长期记忆保存经确认的事实与约束，搜索补足证据，规划选择下一步，执行反馈再改变状态。任何一环失去来源、时间或权限，后面都可能认真地做错事。</p>
 <p>我希望实现的 Personal Agent，是一个用户能检查、纠正、暂停和撤回授权的长期协作系统。它可以帮助组织健康生活与就医资料，但不能把持续陪伴包装成持续诊断。</p>
@@ -65,11 +65,11 @@ table{min-width:610px}tbody th{width:26%}td{width:37%}
 <p>建议先用一个主协调器，配合职责清楚的服务，而不是让多个角色自由讨论。多模态解析可以并行，权限判断与状态提交必须收口。图中的箭头代表数据与状态转换，不意味着每一步都要调用一个大模型。</p>
 <figure class="architecture" aria-label="健康 Personal Agent 六层架构"><ol class="flow"><li>多模态接入｜照片、语音、菜单、设备记录</li><li>事件理解｜抽取候选、识别未知、请求核对</li><li>档案与记忆｜结构化事实、偏好、情境、计划</li><li>证据检索｜个人证据、官方知识、获准外部搜索</li><li>规划与验收｜MedGuide 条件、Rubrics 检查</li><li>执行与反馈｜Harness 执行、回执、MedCode 修订</li></ol></figure>
 <p>贯穿六层的是 Harness：它维护持久任务状态、权限、预算、重试和审计。旁路还有隐私控制、临床规则审核与离线评测。模型可以建议调用工具，执行服务决定这个动作此刻是否允许；模型可以说“完成”，验收服务必须拿到相应证据。</p>
-<p>数据上保留三种对象。原始证据对象保存用户提供的文件及其访问控制；事件记录保存发生了什么以及何时被系统知道；派生视图保存当前档案和计划。模型上下文只是其中一部分的临时装配，不是唯一数据库。Anthropic 的上下文工程文章强调有限上下文与按需取回信息；本文据此选择保留证据引用、按任务加载的方式，不把一年聊天全文反复塞给模型。<a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" rel="noopener noreferrer">1</a></p>
+<p>数据上保留三种对象。原始证据对象保存用户提供的文件及其访问控制；事件记录保存发生了什么以及何时被系统知道；派生视图保存当前档案和计划。模型上下文只是其中一部分的临时装配，不是唯一数据库。Anthropic 的上下文工程文章强调有限上下文与按需取回信息；系统保留证据引用，按任务加载上下文，不把一年聊天全文反复塞给模型。<a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" rel="noopener noreferrer">1</a></p>
 <p>服务接口应返回结构化结果：输入版本、结论状态、证据引用、未知项和下一步候选。单独返回一段流畅文字，不足以让其他模块安全接续。展示文案可以自然，内部交接必须能校验。</p>
 <h2 id="section-3">三、多模态输入首先变成事件，不直接变成事实</h2>
 <p>一张体脂秤照片至少经过文件校验、图像质量检查、区域定位、文字与数值抽取、单位识别、归属核对。语音先转写，再区分事实、偏好、临时约束与指令。“今晚不运动”可能是今天的约束，不等于永久讨厌运动；“上次那个数看错了”则必须关联到旧事件。</p>
-<p>下面是内部事件协议示意，不是完整 FHIR 资源。示例中体重读数可以辨认，但测量时间和体脂率尚不清楚；置信分数没有经过校准，因而不伪造一个小数。<code>unknown</code> 是需要处理的业务状态，不用零、空字符串或模型猜测代替。</p>
+<p>事件协议统一记录读数、时间和来源，缺失字段以空值存储，不参与依赖该字段的计算。</p>
 <div class="code-block"><p class="code-label">JSON</p><pre tabindex="0" aria-label="json 示例代码"><code>{
   &quot;schema_version&quot;: &quot;health-event.v1&quot;,
   &quot;event_id&quot;: &quot;evt_demo_001&quot;,
@@ -110,13 +110,13 @@ table{min-width:610px}tbody th{width:26%}td{width:37%}
 <p>审计可以保留完成删除所必需的最小操作元数据，但不能以“日志不可变”为理由无限保留健康正文。保留什么、多久、谁能查看，要按明确适用要求设计并向用户说明。删除后缺失的事实重新变为未知，Agent 不能从旧摘要里偷偷补回来。</p>
 <h2 id="section-5">五、结构化档案保存数据，检索负责带回证据</h2>
 <p>档案中的测量条目需要值、原始单位、标准单位编码、比较符、测量方法、设备、时间和来源。不同设备、测量条件或分析方法的数据不能无条件拼成同一趋势。原始值始终可追溯，单位换算单独记录规则及版本；单位、项目或样本类型不明确，就先阻止比较。</p>
-<p>FHIR R4 的 Observation 为测量提供结构参照，Quantity 区分显示单位与机器可处理的编码；Observation 的生理相关时间、结果版本发布时间也各有含义，不能直接替换平台接收时间。结果缺失的 <code>dataAbsentReason</code> 只在对应值不存在时使用，不是所有“未知”的通用容器。本文的事件协议仍需单独校验与映射，不能自称已经通过 FHIR 互操作验证。<a href="https://hl7.org/fhir/R4/observation.html" rel="noopener noreferrer">2</a> <a href="https://hl7.org/fhir/R4/datatypes.html#Quantity" rel="noopener noreferrer">3</a></p>
+<p>FHIR R4 的 Observation 为测量提供结构参照，Quantity 区分显示单位与机器可处理的编码；Observation 的生理相关时间、结果版本发布时间也各有含义，不能直接替换平台接收时间。结果缺失的 <code>dataAbsentReason</code> 只在对应值不存在时使用，不是所有“未知”的通用容器。事件协议对接 FHIR 时，需要完成字段映射、资源校验和互操作测试。<a href="https://hl7.org/fhir/R4/observation.html" rel="noopener noreferrer">2</a> <a href="https://hl7.org/fhir/R4/datatypes.html#Quantity" rel="noopener noreferrer">3</a></p>
 <p>个人证据检索与公共知识检索分开。前者回答“陈晨上次的结果是什么，来自哪份报告”；后者回答“解释这类信息时有哪些可采用的官方知识”。餐厅搜索则属于第三类实时服务信息。每个检索结果附来源、时间、适用条件和失效时间，不把搜索排名当成证据等级。</p>
 <p>权限过滤必须在检索前就限定用户与数据范围，向量搜索不能先跨用户取回，再指望模型忽略不该看的内容。个人材料在内部索引查询，不把姓名、报告全文、病史连同关键词发送给外部搜索。查餐厅只提交本次许可需要的位置粒度与筛选条件。</p>
 <p>返回上下文采用受限证据包，例如最多二十条片段、明确总长度上限，并优先保留冲突和未知项。这些是建议起始配置，需要用召回率与成本评估调整。摘要只帮助导航，不替代原件。FHIR Provenance 可为来源与修订链提供参考，但有溯源记录不等于内容一定正确。<a href="https://hl7.org/fhir/R4/provenance.html" rel="noopener noreferrer">4</a></p>
 <h2 id="section-6">六、Rubrics、MedGuide、MedCode 各自承担一件事</h2>
 <p>沿用既有能力定位，本方案让 Rubrics 承担验收、MedGuide 提供经审核的条件规则、MedCode 参与代码与执行级推理。组合关系需要明确，不能把它们都做成不同名字的提示词，也不能把模型与运行环境混为一层。</p>
-<p>Rubrics 判断这次结果是否够格。午餐建议至少检查：是否使用了已确认的早餐信息，是否遵守已知禁忌与偏好，是否把照片估计写成确定值，是否提供可在食堂执行的选项，是否标明未知与证据。结果为通过、不通过、待补充或需人工复核，关键安全项不能被其他项目的高分抵消。</p>
+<p>Rubrics 判断这次结果是否够格。午餐建议至少检查：是否使用了已确认的早餐信息，是否遵守已知禁忌与偏好，是否把照片估计写成确定值，是否提供可在食堂执行的选项，是否标明未知与证据。结果为通过、不通过、信息不足或需人工复核，关键安全项不能被其他项目的高分抵消。</p>
 <p>MedGuide 表达有适用条件、版本和责任人的规则。临床相关内容由有资格的专业团队审核，不让模型临时编写诊断阈值。它可以先从非诊疗的确定规则开始：单位未核对就不做趋势比较；用户没有确认实际摄入就不把建议餐食计为已吃；外发许可缺失就不生成可执行发送动作。</p>
 <div class="table-wrap" role="region" tabindex="0" aria-label="条件对照表"><table><thead><tr><th scope="col">条件</th><th scope="col">决策</th><th scope="col">必须留下的记录</th></tr></thead><tbody><tr><th scope="row">报告数值存在，单位未知</th><td>暂停数值比较，要求核对</td><td>未知字段、原件位置、阻断规则版本</td></tr><tr><th scope="row">用户明确说只吃了半份</th><td>更新该餐实际摄入描述</td><td>关联餐次、反馈时间、原估计失效标记</td></tr><tr><th scope="row">餐厅搜索有位置许可，无交易许可</th><td>可搜索并展示候选</td><td>查询范围、结果时间、禁止下单的动作边界</td></tr><tr><th scope="row">命中经审核的紧急风险条件</th><td>中止日常规划，给出就医升级提示</td><td>触发依据、提示回执、人工接续状态</td></tr></tbody></table></div>
 <p>MedCode 是代码／执行级医疗大模型。在这个组合中，它理解并拆解任务，生成程序或动作提案，再利用真实工具结果修订下一步。例如“出差找午餐”可以拆成补全约束、查询候选、检查结果时效、比较选项和等待选择；搜索失败或菜单不匹配时，模型根据反馈调整提案，而不是假装完成。它不是静态规则引擎，也不等同于流程封装。</p>
@@ -135,7 +135,7 @@ RUNNING → SUCCEEDED / FAILED / RECONCILING
 任意未完成状态 → PAUSED / CANCELLED
 RECONCILING → SUCCEEDED / FAILED / 人工核对</code></pre></div>
 <p>每个任务固定输入快照和流程版本，携带档案版本、记忆版本、计划版本、授权版本与逻辑动作标识。执行前重新核对当前授权和适用安全规则；快照过期、计划被暂停或关键事实纠正后，旧任务不能照常跑完。模型窗口结束时保存的是外部状态与证据引用，不依赖下一轮模型记住上一轮全部文本。Anthropic 的长任务文章提供了进度记录、增量推进和验收的工程启发，但其开发场景结果不能直接当成健康服务验证。<a href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents" rel="noopener noreferrer">5</a></p>
-<p>下面是接近实现结构的 Python 伪代码，<code>db</code>、<code>policy</code>、<code>gateway</code> 等是待实现接口，并非可直接部署的完整程序。关键是把接收去重、事务写入、授权关口和结果不明拆开。</p>
+<p>以下伪代码展示接收去重、事务写入、授权校验和结果核对。<code>db</code>、<code>policy</code>、<code>gateway</code> 分别表示持久化、授权与执行接口。</p>
 <div class="code-block"><p class="code-label">PYTHON</p><pre tabindex="0" aria-label="python 示例代码"><code>def receive(event):
     # 多模态解析在事务外完成；此处只做轻量 schema 校验
     checked = validate_event(event)
@@ -213,7 +213,7 @@ def execute(intent):
 <div class="table-wrap" role="region" tabindex="0" aria-label="回放故障对照表"><table><thead><tr><th scope="col">回放故障</th><th scope="col">应观察的结果</th><th scope="col">发布前的硬性检查</th></tr></thead><tbody><tr><th scope="row">同一午餐事件重复到达</th><td>同一事件只生效一次</td><td>不生成重复计划或提醒</td></tr><tr><th scope="row">单位缺失或项目不一致</th><td>比较被阻断，保留原件</td><td>不输出确定数值趋势</td></tr><tr><th scope="row">外发超时，回执迟到</th><td>进入核对并收敛到真实状态</td><td>不盲目重复发送</td></tr><tr><th scope="row">撤回许可与任务执行并发</th><td>未准入动作被拦截，在途动作核对结果</td><td>不得新增准入或伪称外部影响已撤销</td></tr><tr><th scope="row">删除报告后恢复备份</th><td>删除策略继续生效</td><td>不从索引或摘要复活正文</td></tr><tr><th scope="row">跨用户相似记录检索</th><td>仅返回本人的许可范围</td><td>不出现他人证据片段</td></tr></tbody></table></div>
 <p>Rubrics 的文本评价只是一部分，还要检查证据引用是否真的支持结论、未知项是否保留、计划改变是否有原因，以及医生升级条件是否正确触发。模型评分器可以辅助发现问题，但关键状态应由确定性断言和人工抽查核验。对单条成功回答的奖励，不能抵消一次错误外发。</p>
 <p>长程指标可包括事件归档准确率、修订传播完整率、重复动作率、授权违规次数、证据可追溯率、无依据断言率和恢复收敛时间，同时观察不同输入质量、设备和语言条件下的差异。阈值由风险评估确定，不能先挑容易达标的平均分。任何“零错误”都只描述给定测试覆盖，不能当成未来绝对保证。</p>
-<p>Anthropic 的 Agent 评测文章区分轨迹与最终结果，并讨论组合使用不同评分方式；这里将其用于设计测试框架，不据此证明健康服务有效。<a href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents" rel="noopener noreferrer">8</a> 真实用户阶段还需要独立的隐私、安全与专业评估。长期依从性、生活质量或临床结果属于另外的研究问题，不能由技术回放替代。</p>
+<p>Anthropic 的 Agent 评测文章区分轨迹与最终结果，并讨论组合使用不同评分方式；技术测试分别检查执行轨迹与最终结果。<a href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents" rel="noopener noreferrer">8</a> 真实用户阶段还需要独立的隐私、安全与专业评估。长期依从性、生活质量或临床结果属于另外的研究问题，不能由技术回放替代。</p>
 <h2 id="section-12">十二、MVP 按完整闭环切分，研发按契约交付</h2>
 <p>第一阶段只做用户主动输入的记录整理与本人可见的建议，不接外发和自动执行。必须先跑通照片或语音进入事件、未知澄清、档案修订、来源展示和删除。验收不是页面能聊天，而是陈晨能指出一条错误并看到所有依赖结果正确更新。</p>
 <p>第二阶段加入餐次规划与反馈，只覆盖少量清晰场景，再引入用户明确选择的提醒。第三阶段才接获准位置搜索和医生资料包；发送、预约、购买等副作用分别立项。每一阶段有独立开关与回退路径，出现问题时可以暂停动作服务，而保留用户查阅和导出自己的记录的能力。</p>
@@ -224,7 +224,7 @@ def execute(intent):
 <hr>
 <h2 class="source-heading" id="references">公开资料与阅读说明</h2>
 <ol class="references-list"><li>Anthropic，Effective context engineering for AI agents，2025 年 9 月 29 日。<a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" rel="noopener noreferrer">https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents</a></li><li>HL7，FHIR R4 Observation 及字段定义，版本 4.0.1。<a href="https://hl7.org/fhir/R4/observation.html" rel="noopener noreferrer">https://hl7.org/fhir/R4/observation.html</a> ；<a href="https://hl7.org/fhir/R4/observation-definitions.html" rel="noopener noreferrer">https://hl7.org/fhir/R4/observation-definitions.html</a></li><li>HL7，FHIR R4 Quantity 数据类型。<a href="https://hl7.org/fhir/R4/datatypes.html#Quantity" rel="noopener noreferrer">https://hl7.org/fhir/R4/datatypes.html#Quantity</a></li><li>HL7，FHIR R4 Provenance。<a href="https://hl7.org/fhir/R4/provenance.html" rel="noopener noreferrer">https://hl7.org/fhir/R4/provenance.html</a></li><li>Anthropic，Effective harnesses for long-running agents，2025 年 11 月 26 日。<a href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents" rel="noopener noreferrer">https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents</a></li><li>HL7，FHIR R4 Consent。<a href="https://hl7.org/fhir/R4/consent.html" rel="noopener noreferrer">https://hl7.org/fhir/R4/consent.html</a></li><li>WHO，健康 AI 六项指导原则官方摘要，2021 年 6 月 28 日。<a href="https://www.who.int/news/item/28-06-2021-who-issues-first-global-report-on-ai-in-health-and-six-guiding-principles-for-its-design-and-use" rel="noopener noreferrer">https://www.who.int/news/item/28-06-2021-who-issues-first-global-report-on-ai-in-health-and-six-guiding-principles-for-its-design-and-use</a></li><li>Anthropic，Demystifying evals for AI agents。<a href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents" rel="noopener noreferrer">https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents</a></li><li>Temporal，Workflow Execution。<a href="https://docs.temporal.io/workflow-execution" rel="noopener noreferrer">https://docs.temporal.io/workflow-execution</a></li><li>Temporal，Activity Definition。<a href="https://docs.temporal.io/activity-definition" rel="noopener noreferrer">https://docs.temporal.io/activity-definition</a></li></ol>
-<p>以上公开官方网页于 2026 年 10 月 17 日实际读取核对。本文选择 FHIR R4 作为结构参照，不声称它是所有机构当前使用的版本；工程博客与伦理原则也不构成本文方案的临床验证。架构、接口、示例、角色划分和实施阶段均为作者提出的设计方案，待研发、专业团队和适用治理流程进一步评审。</p>
+<p>资料查阅日期：2026 年 10 月 17 日。结构参照采用 FHIR R4，实际对接需核对目标系统的版本和实施规范。架构、接口与实施阶段需经过研发和专业团队评审；健康服务效果与临床结果需另行验证。</p>
 </article></main>
 <footer class="page-footer"><a href="../blog/">返回博客</a><a href="index.html">系列目录</a><a href="#top">回到顶部 ↑</a></footer>
 </div></body></html>
