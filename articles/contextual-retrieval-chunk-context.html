@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<title>一段财报为什么检索不到：重读 Anthropic 的 Contextual Retrieval｜胡浩源</title>
+<meta name="description" content="重读 Anthropic Contextual Retrieval：切块为何丢失身份，针对性上下文如何改善向量与 BM25 检索，以及 49%、67% 和重排背后的实验条件。">
+<meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人">
+<meta name="color-scheme" content="light">
+<link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/contextual-retrieval-chunk-context.html">
+<style>
+:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:3px solid var(--clay);outline-offset:5px}
+.skip{position:absolute;left:1rem;top:-5rem;background:var(--surface);padding:.5rem 1rem;z-index:5}.skip:focus{top:1rem}
+.shell{width:min(100% - 40px,760px);margin:0 auto}
+.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.masthead a{color:var(--muted)}header{padding:52px 0 26px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);font-weight:700;margin:0 0 20px}
+h1{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif;font-size:clamp(32px,5.8vw,46px);line-height:1.35;font-weight:700;letter-spacing:-.035em;margin:0 0 25px}
+.byline{font-size:14px;margin:0;color:var(--muted)}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}
+.contents{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px;color:var(--muted)}
+.contents summary{cursor:pointer;font-weight:600;color:var(--ink)}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}
+article p{margin:0 0 22px}blockquote{margin:0 0 34px;padding:6px 0 6px 20px;border-left:3px solid var(--clay);font-size:18px;color:var(--muted)}blockquote p:last-child{margin-bottom:0}
+h2{font-size:26px;line-height:1.5;font-weight:700;margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}
+h3{font-size:20px;line-height:1.55;margin:32px 0 18px}strong{font-weight:700}code{font:0.88em/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#EBE5D9;border-radius:3px;padding:.1em .3em;overflow-wrap:anywhere}
+ul,ol{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}
+.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650;color:var(--ink)}tbody th{font-weight:500;width:36%}tr:last-child th,tr:last-child td{border-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:14px;line-height:1.95;color:var(--muted)}hr~h3{font-size:17px;margin-top:0}
+.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){body{font-size:16px;line-height:1.95}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px}header{padding:36px 0 24px}h2{font-size:23px;margin-top:42px}h3{font-size:19px}blockquote{font-size:17px;padding-left:16px}.table-wrap{margin-left:-2px;margin-right:-2px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}h3{font-size:13pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}blockquote{font-size:12pt}}
+
+.subtitle{font-family:ui-serif,"Songti SC","STSong",serif;font-size:21px;line-height:1.65;color:var(--muted);margin:0 0 24px}article a{overflow-wrap:anywhere}.source-heading{font-size:19px;border-top:0;padding-top:0;margin-top:0}#source-notes+ul{font-size:14px;color:var(--muted)}@media(max-width:600px){.subtitle{font-size:19px}.masthead{gap:12px;letter-spacing:.03em}.page-footer{flex-wrap:wrap}}
+
+h1{text-wrap:balance}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{background:none;padding:0;border-radius:0;font:inherit;overflow-wrap:normal}pre:focus-visible{outline:3px solid var(--clay);outline-offset:3px}#source-notes+ul{line-height:1.9}#source-notes+ul a{display:block}table{min-width:610px}table th:first-child{width:44%}
+@media(max-width:600px){pre{font-size:12px;padding:14px 12px}.masthead{font-size:12px}}
+@media print{pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}table{min-width:0}}
+</style>
+</head>
+<body id="top">
+<a class="skip" href="#main">跳至正文</a>
+<div class="shell">
+<nav class="masthead" aria-label="站点导航"><span>工程解读 · 上下文与知识</span><a href="../blog/">返回博客</a></nav>
+<header>
+<p class="eyebrow">MedWork / Engineering Notes</p>
+<h1>一段财报为什么检索不到：重读 Anthropic 的 Contextual Retrieval</h1>
+<p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p>
+<p class="dateline"><time datetime="2026-10-18">2026 年 10 月 18 日</time></p>
+</header>
+<details class="contents"><summary>文章目录</summary><nav aria-label="文章目录"><ol><li><a href="#section-1">1. 切块的时候，究竟丢掉了什么</a></li><li><a href="#section-2">2. 给每一块补一段针对它的说明</a></li><li><a href="#section-3">3. 为什么还需要 BM25</a></li><li><a href="#section-4">4. 49% 和 67%，实际测量的是什么</a></li><li><a href="#section-5">5. 重排能筛选候选，但救不了没有召回的证据</a></li><li><a href="#section-6">6. 每百万 tokens 1.02 美元，不能脱离条件引用</a></li><li><a href="#section-7">7. 真正上线时，需要保留哪些东西</a></li><li><a href="#section-8">8. 怎样判断这次改造有没有用</a></li><li><a href="#section-9">9. 先检查送进索引的那一小段文字</a></li><li><a href="#source-notes">原文与实验资料</a></li></ol></nav></details>
+<main id="main"><article>
+<p>用户问某家公司一个季度的收入增长情况，知识库里恰好有答案。检索系统却没有找到。</p>
+<p>这类问题很容易让人先怀疑 embedding：是不是模型太小，向量维度不够，或者应该再训练一个行业模型？Anthropic 在 2024 年发表的《Introducing Contextual Retrieval》中举了一个更直接的例子。被切出来的段落只剩下“公司收入较上季度增长 3%”，公司名和季度都留在了别处。模型面对的是一句失去身份的信息。</p>
+<p>只看这句话，谁也无法可靠地知道它属于哪家公司、哪个报告期。换一个更强的 embedding，未必能补回输入里根本没有的内容。</p>
+<p>这篇文章值得重读：它把故障定位到了数据加工环节，并分别测试了向量检索、关键词检索、重排和候选数量，让人能看清每一步的作用。</p>
+<h2 id="section-1">1. 切块的时候，究竟丢掉了什么</h2>
+<p>RAG 的常见实现并不复杂。文档被拆成几百个 token 的小块，每块转成向量，查询时找最相似的若干块，再让语言模型据此作答。这样做节省上下文，也让很大的知识库能够被使用。</p>
+<p>问题在于，文档里的意义并不总是局限在一个块里。</p>
+<p>章节标题可能在前一页；表格的单位写在表头；“上述方法”指向几段以前；公司、年份和产品名称只在文档开头出现。人连续阅读时会把这些信息带过来，切块后的检索系统却未必保留了这种关系。</p>
+<p>Anthropic 的财报示例里，问题带着公司名 ACME 和时间 Q2 2023，答案片段只包含收入环比增长 3%。两者应当匹配，但负责区分它与其他公司、其他季度的词已经消失了。</p>
+<p>这个例子里至少有两种损失。第一种影响召回：查询包含的实体和时间，在候选文本中找不到。第二种影响回答：即使片段碰巧被找出来，生成模型仍要判断它究竟回答了哪个问题。错误有可能发生在检索之前，也可能发生在检索之后。</p>
+<p>我的看法是，排查这类系统时，应当先把查询和实际入库的块放在一起看。如果排查时只检查原始 PDF，看到“材料明明写了”，就可能误以为知识库已经具备回答条件。原始文档有答案，不等于进入索引的检索单元保留了足够的信息。</p>
+<h2 id="section-2">2. 给每一块补一段针对它的说明</h2>
+<p>Contextual Retrieval 在文档入库阶段增加了一步：让模型同时看到完整文档和当前块，为当前块写一小段解释，再把解释放到块前面。</p>
+<p>如果给一份几十页财报中的每个块都加上同一段公司简介，确实补回了公司名，但营收、现金流、风险披露等段落还是缺少各自的定位。原文提到，他们也试过通用文档摘要，收益很有限；摘要索引的测试表现同样不佳。这是作者在其设置中的观察，不足以否定所有摘要检索方法，但能说明这次设计为什么选择了更细的粒度。</p>
+<p>一个针对收入段落的说明，应当让检索器知道它属于哪个主体、哪个时间范围，以及涉及哪类指标。它不需要重新概括整份文档，更不应该抢着回答未来所有可能出现的问题。</p>
+<p>原文使用 Claude 3 Haiku 生成这段上下文，通常为 50—100 tokens。输入包括完整文档和目标片段，要求模型只输出简短的定位说明。随后，对“说明＋原始片段”建立向量索引和 BM25 索引。</p>
+<p>可以把流程理解为：</p>
+<pre aria-label="上下文生成与索引流程" class="text" tabindex="0"><code>原始文档
+  ├─ 文档切块
+  └─ 完整文档 + 当前块
+             ↓
+       生成当前块的定位说明
+             ↓
+       定位说明 + 原始块
+          ├─ 向量索引
+          └─ BM25 索引</code></pre>
+<p>这个设计把额外的语言模型调用放在入库时。文档没有变化，就不需要为每次用户提问重新生成说明。对于重复查询较多的知识库，这种计算位置的选择很重要。</p>
+<p>它也引入了一个新的责任：说明是模型生成的，可能写错。把错误时间、实体或范围补进索引，会让检索更积极地找到错误内容。原文没有给出这类上下文生成错误的独立发生率，不能把“加了上下文”理解成已获得事实保证。</p>
+<p>实际实现中，我会分别保存原始块、生成说明和来源位置，不把三者揉成一个不可拆分的字符串。检索可以使用合并文本；展示证据和核对事实时，应能回到原始内容。这样既能利用生成说明，也保留了检查它的办法。</p>
+<h2 id="section-3">3. 为什么还需要 BM25</h2>
+<p>上下文补全同时服务于两条检索路径。</p>
+<p>向量检索适合处理语义接近、表达不同的内容。用户的说法未必和文档一样，embedding 可以帮助跨过这层差异。BM25 则根据词项匹配打分，对标识符、错误码和特定技术名称尤其有用。</p>
+<p>原文举了错误码 <code>TS-999</code> 的例子。一个查询可能被向量系统理解为“关于错误代码的技术问题”，召回了一批讨论相近故障的材料，却漏掉真正包含这个编号的页面。词项匹配可以提供另一条路径。</p>
+<p>BM25 也不只是数一数单词出现次数。它考虑词在语料中的区分能力、文档长度，并对重复出现的词做饱和处理，避免一个常见词重复很多次就主导排序。</p>
+<p>在这套方法里，两条路径都用补过上下文的块：</p>
+<ul>
+<li>Contextual Embeddings：将补充说明与原始块一起编码为向量。</li>
+<li>Contextual BM25：对相同的补充文本建立词项索引。</li>
+<li>查询时各自产生候选，再通过排序融合、去重得到候选集合。</li>
+</ul>
+<p>为什么 BM25 也能从上下文中获益？仍然看财报例子：原块没有公司名，精确词项匹配再好也无从命中。把公司名和报告期补回后，词法检索才有了可匹配的内容。</p>
+<p>混合检索的效果仍然取决于入库文本保留了哪些信息。融合之后还需要去重，否则同一块被两条路径找到，可能占掉两个上下文位置。</p>
+<h2 id="section-4">4. 49% 和 67%，实际测量的是什么</h2>
+<p>这篇文章最容易被记住的数字是：加入上下文与 BM25 后，检索失败率相对降低 49%；再加入重排，降低 67%。</p>
+<p>实验覆盖代码库、小说、ArXiv 论文和科学论文等知识域。主文展示的是采用表现最好的 embedding 配置 Gemini Text 004、取前 20 个块时，各知识域的平均表现。指标是 <strong>1 − recall@20</strong>，用于描述相关内容未能进入前 20 个检索结果的比例。</p>
+<p>主文给出的比较如下：</p>
+<div aria-label="检索失败率对照，降幅均相对 5.7% 纯向量基线" class="table-wrap" role="region" tabindex="0"><table><caption class="sr-only">检索失败率对照，降幅均相对 5.7% 纯向量基线</caption>
+<thead>
+<tr>
+<th scope="col">方案</th>
+<th scope="col" style="text-align: right;">前 20 个块的检索失败率</th>
+<th scope="col" style="text-align: right;">相对 5.7% 纯向量基线的降幅</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>仅向量检索（原始块）</td>
+<td style="text-align: right;">5.7%</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
+<td>原始块向量检索 + BM25</td>
+<td style="text-align: right;">5.0%</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
+<td>Contextual Embeddings</td>
+<td style="text-align: right;">3.7%</td>
+<td style="text-align: right;">35%</td>
+</tr>
+<tr>
+<td>Contextual Embeddings + Contextual BM25</td>
+<td style="text-align: right;">2.9%</td>
+<td style="text-align: right;">49%</td>
+</tr>
+<tr>
+<td>再加入 reranking</td>
+<td style="text-align: right;">1.9%</td>
+<td style="text-align: right;">67%</td>
+</tr>
+</tbody>
+</table></div>
+<p>百分比经过取整，适合看趋势，不应拿来反推未经披露的精确样本计数。</p>
+<p>“降低 49%”也不是降低了 49 个百分点。从 5.7% 降到 2.9%，绝对变化是 2.8 个百分点；49% 描述的是相对于原来失败量的降幅。这种改进仍然很有价值，尤其是在大量请求中，但两种说法不能混用。</p>
+<p>另一个需要分开的概念是检索质量和回答质量。这个实验直接测量相关材料有没有被召回，不能直接读成“幻觉降低 67%”，更不能读成“任务成功率提升 67%”。</p>
+<p>即使所有必要材料都已经进入上下文，生成模型仍可能误读表格、混淆时间、忽略限制条件，或者作出材料没有支持的推断。检索指标解释了错误链条中的一部分，没有覆盖整条链条。</p>
+<p>在自己的系统里，我会把这组结果当作值得复现的假设，而不是可直接写进产品承诺的收益。所用模型、切块方式、查询分布以及答案需要多少段证据，都会影响最终结果。这里采用的是 2024 年的实验配置，也不代表今天各 embedding 服务的排名。</p>
+<h2 id="section-5">5. 重排能筛选候选，但救不了没有召回的证据</h2>
+<p>原文的重排流程先取前 150 个候选块，再将查询和候选送给 reranker，最后保留 20 个块作为上下文。实际测试使用了 Cohere reranker；文章提到 Voyage 也提供重排服务，但当时没有测试。</p>
+<p>这里实际上分配了两种不同的预算。</p>
+<p>第一轮检索愿意多拿一些候选，减少过早遗漏。第二轮排序再投入更多计算，比较这些候选与问题的关系。最终送入生成模型的数量受到控制，不必把全部 150 个块都塞进去。</p>
+<p>这比“找最相似的 20 块就结束”多了一个判断环节，也带来了额外延迟和费用。减少生成模型处理的内容有机会节省后续成本，但不能据此保证整条请求链一定更快、更便宜；重排本身也要消耗资源。</p>
+<p>如果要决定这个步骤值不值得，我会先检查两组失败：</p>
+<p>第一组，答案根本不在最初的 150 个候选里。提高重排模型能力解决不了这个问题，应该回到切块、索引、查询和召回阶段。</p>
+<p>第二组，答案已在候选中，却没进入最终 20 个块。这才是重排直接负责的部分。</p>
+<p>还可能出现第三种情况：相关块确实进入了最终上下文，但它缺少理解所必需的相邻内容。例如只召回结论而没有适用条件。这个问题不一定能通过更精细的单块相关性排序解决，可能需要补回父章节、相邻块或者文档结构。</p>
+<p>这些是基于该流程进一步做的工程分析，不能算作 Anthropic 本文已经验证过的全部改进。</p>
+<h2 id="section-6">6. 每百万 tokens 1.02 美元，不能脱离条件引用</h2>
+<p>为每个块提供完整文档，会产生明显的重复输入。原文利用 prompt caching 复用同一文档的前缀，从而降低上下文生成的成本。</p>
+<p>文章给出的估算是：在 800-token 块、8,000-token 文档、50-token 上下文指令、每块生成 100-token 说明的条件下，生成上下文化块的一次性成本为每百万文档 tokens <strong>1.02 美元</strong>。</p>
+<p>这是当时模型价格与上述假设下的估算，不是今天的报价，也不是整套 RAG 的总成本。向量化、索引存储、重排、回答生成和后续更新都应另算。</p>
+<p>这组假设还有一个很实用的含义：生成工作最好按文档组织，让同一文档的多个块能够复用相同前缀。如果把任务完全打散，缓存命中情况可能改变，实际成本也会偏离估算。</p>
+<p>知识库更新频率同样会影响账单。一份更新不频繁、每天被查询很多次的文档，适合在入库时多做一点工作；频繁变化但很少被访问的内容，预处理投入未必划算。某个章节发生变化后，哪些块的说明需要重新生成，也需要有明确的依赖关系。</p>
+<p>原文还给出一个更简单的起点：知识库小于约 20 万 tokens 时，可以考虑将全部内容放入提示词，配合缓存使用，而不必立即搭建检索系统。文中提到的缓存延迟与成本收益属于当时的产品说明，不能自动套用到任何任务。</p>
+<p>我赞同先比较这个简单基线。小知识库如果内容稳定、访问权限一致，全量上下文可能已经足够。随着文档数量、更新频率和权限差异增长，再引入检索，理由会更清楚。系统复杂度应当对应实际遇到的问题。</p>
+<h2 id="section-7">7. 真正上线时，需要保留哪些东西</h2>
+<p>如果据此实现一个知识库，我会让每个检索单元至少能够追溯到以下信息：</p>
+<pre aria-label="建议保存的检索单元字段" class="text" tabindex="0"><code>chunk_id
+document_id
+document_version
+source_location
+original_text
+generated_context
+context_generator_version
+index_version</code></pre>
+<p>这是我的实现建议，并非原文规定的数据结构。</p>
+<p><code>original_text</code> 和 <code>generated_context</code> 分开，是为了区分证据与帮助检索的说明。<code>source_location</code> 让人能定位到原文页码、章节或代码行。文档、生成器和索引分别记录版本，则是为了回答一个日常排障问题：为什么昨天能找到，今天找不到了？</p>
+<p>如果知识库存在访问控制，权限约束也必须跟随索引单元，并在内容返回给模型以前生效。生成说明可能复述原文中的信息，因此不能因为它是“摘要”就放宽权限。本文的公开实验没有测试企业权限系统，这一点需要实现者自行设计。</p>
+<p>对于医学资料，这种区分尤其重要。某段推荐可能受人群、疾病阶段、指南版本或排除条件约束。如果只把一个结论切出来，再由模型补出它“可能适用于谁”，风险会被提前写进索引。</p>
+<p>更稳妥的做法是优先保留文档中可以直接定位的标题、版本和适用范围，再让生成说明帮助连接上下文。需要据此执行规则或作出临床判断时，还要回到经过核对的依据。检索优化能够帮助找到材料，不能替代适用性审查。</p>
+<h2 id="section-8">8. 怎样判断这次改造有没有用</h2>
+<p>原文提醒读者关注块大小、边界、重叠比例、embedding 选择和上下文生成提示，并建议实际评测。它比较过返回 5、10、20 个块，所报告的设置中 20 个表现最好。</p>
+<p>这个结果并不意味着所有应用都应该固定取 20。更多块提高覆盖机会，也可能带入重复内容、干扰信息或相互冲突的版本。如果问题只需一个短事实，20 块可能太多；如果问题必须综合多个章节，20 块也未必够。</p>
+<p>要检查自己的系统，我会先固定文档版本和一批有明确证据位置的查询，跑几个可区分贡献的配置：</p>
+<div aria-label="检索改造的对照评测配置" class="table-wrap" role="region" tabindex="0"><table><caption class="sr-only">检索改造的对照评测配置</caption>
+<thead>
+<tr>
+<th scope="col">配置变化</th>
+<th scope="col">想回答的问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>原始块 → 增加针对性上下文</td>
+<td>丢失的上下文是否确实影响召回？</td>
+</tr>
+<tr>
+<td>纯向量 → 向量与 BM25 混合</td>
+<td>错误是否集中在编号、实体或术语匹配？</td>
+</tr>
+<tr>
+<td>无重排 → 有重排</td>
+<td>相关材料是否已召回但排名不够靠前？</td>
+</tr>
+<tr>
+<td>调整最终块数</td>
+<td>覆盖增加是否抵得过噪声和处理成本？</td>
+</tr>
+</tbody>
+</table></div>
+<p>除了汇总 recall，还要保留每条失败查询的检索轨迹。平均值告诉我们整体变好没有，具体失败才能告诉我们下一步该改哪里。对标识符、跨段指代、时间限定和多证据问题分别观察，通常比继续追一个总分更有帮助。</p>
+<p>我还会把检索评测与回答评测分开记录。前者检查证据有没有进入候选；后者检查答案是否忠实使用证据、引用能否支持对应结论。这样才能区分“找不到”和“找到了却用错了”。</p>
+<p>这篇文章没有公布足以直接套用于所有场景的阈值，也没有在主文里给出临床任务或整个 Agent 的端到端效果。读者拿走的应当是一套可验证的改造路径，而不是一张保证收益的清单。</p>
+<h2 id="section-9">9. 先检查送进索引的那一小段文字</h2>
+<p>Contextual Retrieval 最有启发的地方，是把一部分模型计算用在了文档准备阶段。原本需要每次查询时重新猜测的关系，可以先在入库时解释清楚，再接受检索评测。</p>
+<p>这条路径也有代价：索引更大，入库更慢，生成说明需要质量控制，文档更新时还要维护一致性。对知识库做一次版本更新，其影响因此不再只是替换文件。</p>
+<p>但在升级整套模型之前，有一个成本很低的检查值得先做：拿一条失败的问题，找到它本应命中的原文，然后看看实际入库的块。</p>
+<p>如果那个块连自己属于谁、说的是哪一年、适用于什么范围都没有交代清楚，那么问题已经出现在检索模型接手之前。</p>
+<hr/>
+<h3 class="source-heading" id="source-notes">原文与实验资料</h3>
+<ul>
+<li>Daniel Ford，<strong>Introducing Contextual Retrieval</strong>，Anthropic，2024 年 9 月 19 日。 <a href="https://www.anthropic.com/engineering/contextual-retrieval">https://www.anthropic.com/engineering/contextual-retrieval</a></li>
+<li>官方实验附录 <strong>Contextual Retrieval Appendix II</strong>： <a href="https://assets.anthropic.com/m/1632cded0a125333/original/Contextual-Retrieval-Appendix-2.pdf">https://assets.anthropic.com/m/1632cded0a125333/original/Contextual-Retrieval-Appendix-2.pdf</a></li>
+<li>原文链接的官方实现教程： <a href="https://platform.claude.com/cookbook/capabilities-contextual-embeddings-guide">https://platform.claude.com/cookbook/capabilities-contextual-embeddings-guide</a></li>
+</ul>
+
+</article></main>
+<footer class="page-footer"><a href="../blog/">返回博客</a><a href="index.html">系列目录</a><a href="#top">回到顶部 ↑</a></footer>
+</div>
+</body>
+</html>
