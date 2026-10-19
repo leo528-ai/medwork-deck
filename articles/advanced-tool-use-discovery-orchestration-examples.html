@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>工具越来越多，Agent 不该先背完整本说明书｜胡浩源</title><meta name="description" content="读 Anthropic advanced tool use：按需发现、程序化编排与参数示例的具体机制、代码路径与实验边界。">
+<meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人">
+<meta name="color-scheme" content="light">
+<link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/advanced-tool-use-discovery-orchestration-examples.html">
+<style>
+:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:3px solid var(--clay);outline-offset:5px}
+.skip{position:absolute;left:1rem;top:-5rem;background:var(--surface);padding:.5rem 1rem;z-index:5}.skip:focus{top:1rem}
+.shell{width:min(100% - 40px,760px);margin:0 auto}
+.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.masthead a{color:var(--muted)}header{padding:52px 0 26px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);font-weight:700;margin:0 0 20px}
+h1{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif;font-size:clamp(32px,5.8vw,46px);line-height:1.35;font-weight:700;letter-spacing:-.035em;margin:0 0 25px}
+.byline{font-size:14px;margin:0;color:var(--muted)}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}
+.contents{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px;color:var(--muted)}
+.contents summary{cursor:pointer;font-weight:600;color:var(--ink)}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}
+article p{margin:0 0 22px}blockquote{margin:0 0 34px;padding:6px 0 6px 20px;border-left:3px solid var(--clay);font-size:18px;color:var(--muted)}blockquote p:last-child{margin-bottom:0}
+h2{font-size:26px;line-height:1.5;font-weight:700;margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}
+h3{font-size:20px;line-height:1.55;margin:32px 0 18px}strong{font-weight:700}code{font:0.88em/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#EBE5D9;border-radius:3px;padding:.1em .3em;overflow-wrap:anywhere}
+ul,ol{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}
+.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650;color:var(--ink)}tbody th{font-weight:500;width:36%}tr:last-child th,tr:last-child td{border-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:14px;line-height:1.95;color:var(--muted)}hr~h3{font-size:17px;margin-top:0}
+.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){body{font-size:16px;line-height:1.95}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px}header{padding:36px 0 24px}h2{font-size:23px;margin-top:42px}h3{font-size:19px}blockquote{font-size:17px;padding-left:16px}.table-wrap{margin-left:-2px;margin-right:-2px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}h3{font-size:13pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}blockquote{font-size:12pt}}
+
+.subtitle{font-family:ui-serif,"Songti SC","STSong",serif;font-size:21px;line-height:1.65;color:var(--muted);margin:0 0 24px}article a{overflow-wrap:anywhere}.source-heading{font-size:19px;border-top:0;padding-top:0;margin-top:0}#source-notes+ul{font-size:14px;color:var(--muted)}@media(max-width:600px){.subtitle{font-size:19px}.masthead{gap:12px;letter-spacing:.03em}.page-footer{flex-wrap:wrap}}
+
+h1{text-wrap:balance}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{background:none;padding:0;border-radius:0;font:inherit;overflow-wrap:normal}pre:focus-visible{outline:3px solid var(--clay);outline-offset:3px}#source-notes+ul{line-height:1.9}#source-notes+ul a{display:block}table{min-width:610px}table th:first-child{width:44%}
+@media(max-width:600px){pre{font-size:12px;padding:14px 12px}.masthead{font-size:12px}}
+@media print{pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}table{min-width:0}}
+
+aside{border-top:1px solid var(--line);margin-top:40px;padding-top:24px;font-size:14px;color:var(--muted)}aside p:last-child{margin-bottom:0}.table-wrap table{min-width:650px}.table-wrap th:first-child{width:37%}.byline{line-height:1.9}
+</style></head><body id="top"><a class="skip" href="#main">跳至正文</a>
+<main class="shell" id="main">
+<nav class="masthead" aria-label="导航"><a href="../blog/">个人博客</a> · <a href="index.html">系列目录</a></nav>
+<article>
+<header>
+<h1>工具越来越多，Agent 不该先背完整本说明书</h1>
+<p class="subtitle">读 Anthropic 的 advanced tool use：把工具发现、程序化执行与参数示例分开设计</p>
+<p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人<br><time datetime="2026-10-19">2026 年 10 月 19 日</time> · 工具与协作</p></header>
+<p>一个 Agent 接入了几十种工具，为什么反而更容易选错？直觉上，能力更多，应该更容易办事。但模型真正面对的，并不是一排整齐的按钮，而是一段段名称、描述、参数定义，以及调用之后不断涌入的结果。工具增加，首先增加的可能不是能力，而是辨认和组织能力的负担。</p>
+<p>Anthropic 在 2025 年 11 月 24 日发表的 <a href="https://www.anthropic.com/engineering/advanced-tool-use">《Introducing advanced tool use on the Claude Developer Platform》</a>，把这个问题拆成了三个部分：如何找到合适的工具，如何组织多次调用，如何把参数填对。我更愿意把它看成一篇接口架构文章，而不只是三个功能的发布说明。</p>
+<p>原文以 beta 形式介绍这些功能。下文保留其机制和实验条件；版本化接口仅用于解释当时的设计，实施时应核对最新文档。</p>
+<details class="contents"><summary>本文目录</summary>
+<nav aria-label="文章目录"><ol><li><a href="#section-1">一、先占满上下文的，可能是工具说明</a></li><li><a href="#section-2">二、发现了工具，不代表模型需要阅读每一条返回</a></li><li><a href="#section-3">三、JSON 合法，只是填对参数的第一步</a></li><li><a href="#section-4">四、几个漂亮数字，分别说明了什么</a></li><li><a href="#section-5">五、先找瓶颈，不要一次打开所有开关</a></li><li><a href="#section-6">结语：把接口设计成一条可理解的路径</a></li></ol></nav></details>
+<h2 id="section-1">一、先占满上下文的，可能是工具说明</h2>
+<p>原文给了一个很具体的配置：GitHub 的 35 个工具约占 26K tokens，Slack 的 11 个工具约占 21K，另外还有 Sentry、Grafana 和 Splunk。五个服务、58 个工具，定义本身就约占 55K tokens。用户还没提出问题，系统已经携带了相当厚的一本使用手册。</p>
+<p>这和“资料太多”还不完全一样。工具说明既要描述能力，也要帮助模型区分行动。原文举出的 <code>notification-send-user</code> 与 <code>notification-send-channel</code>，名称很接近，实际接收范围却不同。把更多说明放进窗口，不等于模型更容易辨认边界。</p>
+<p>Tool Search Tool 的办法，不是删掉能力，而是推迟装载。开发者仍向 API 提供完整的工具定义，但把适合按需发现的工具标记为 <code>defer_loading: true</code>。最初进入模型上下文的，是搜索工具和少量不延迟加载的常用工具。需要某项能力时，模型先搜索；搜索结果返回工具引用，再展开为完整定义。</p>
+<p>这是一种两阶段接口：先找到能力，再理解如何调用。比如任务涉及 GitHub，就先找相关工具，不必连 Slack、Drive 和其他服务的说明一起阅读。原文介绍了正则、BM25 两种内置搜索，也允许实现自定义搜索。名称与描述因此不再只是文档，它们还是发现入口；“查询订单”这样的模糊描述，通常不如写清按日期、状态、金额检索订单，以及返回哪些字段。</p>
+<p>原文还指出，延迟工具没有进入初始提示，因此不破坏系统提示与核心工具定义的提示缓存。这是一个容易忽略的细节：按需加载不必以放弃稳定前缀为代价。</p>
+<p>但多一步搜索就是多一步延迟。文章建议在定义超过 10K tokens、工具选择出错、多 MCP 服务或工具较多时考虑使用；工具少、定义短、每次都会用到全部工具时，收益就不明显。保留三到五个最常用工具直接可见，其余按需发现，是原文给出的实践建议，不是所有系统都必须照搬的配置。</p>
+<h3>配置的关键：提供给 API，不等于立即提供给模型</h3>
+<p>下面是一段删减后的结构示意，不是可直接发送的完整请求。它保留了原文最重要的区分：搜索工具直接可见；常用工具不延迟；其他定义仍注册在系统里，只是不立即进入上下文。</p>
+<pre tabindex="0" aria-label="工具按需发现配置示意"><code class="language-json">{
+  "tools": [
+    {
+      "type": "tool_search_tool_regex_20251119",
+      "name": "tool_search_tool_regex"
+    },
+    {
+      "name": "get_current_user",
+      "description": "获取当前账户的用户标识",
+      "input_schema": {"type": "object", "properties": {}},
+      "defer_loading": false
+    },
+    {
+      "name": "search_customer_orders",
+      "description": "按客户标识检索订单，返回该客户的订单列表",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "customer_id": {"type": "string"}
+        },
+        "required": ["customer_id"]
+      },
+      "defer_loading": true
+    }
+  ]
+}</code></pre>
+<p>一次调用因此可以拆成四步：模型从系统提示知道存在订单管理能力；搜索相关名称与描述；系统返回匹配工具的引用并展开定义；模型在读到参数约束后才发起正式调用。搜索结果不是业务结果，更不是已经执行过工具的证明。</p>
+<p>对 MCP 服务，原文还展示了更实用的配置层级：<code>default_config</code> 可以把整台服务设为延迟加载，再用 <code>configs</code> 为某个高频工具覆盖设置。这样不需要把一百个工具逐个写成同样的配置，也不会为了常用的一两个入口把整个服务的定义提前装入。</p>
+<p>这里存在一个系统设计上的张力：工具藏得越彻底，初始上下文越干净，但模型越需要知道“应该去找什么”。因此，原文建议在系统提示里简要说明可用能力范围，例如消息、文件、工单与代码仓库，而不是把完整参数手册再次复制进去。能力地图与调用说明，是两种不同粒度的信息。</p>
+<h2 id="section-2">二、发现了工具，不代表模型需要阅读每一条返回</h2>
+<p>第二个问题发生在调用之后。此前我在“不要让模型当数据搬运工”中讨论过 MCP 与代码执行的职责划分。这篇文章进一步把它具体化为 Programmatic Tool Calling：模型写一段编排代码，工具结果先交给代码处理，而不是每调用一次，就让模型重新阅读一次完整结果。</p>
+<p>原文的预算核查例子很适合说明差别。问题是：“哪些团队成员超过了第三季度差旅预算？”已有三个工具，分别获取团队成员、个人支出和职级预算。原文设定团队有 20 人，每人有 50 至 100 条支出，按这个范围计算是 1,000 至 2,000 条明细；正文随后又概括为“2,000+”。不必把这一近似示例当成精确数据集：问题在于逐次调用会把大量明细送入上下文，再让模型做求和、匹配与比较。</p>
+<p>程序化路线则先获取成员，提取不重复的职级，查询相应预算；随后并行查询各人的支出，在代码里求和、查表和比较，最后只输出超预算人员及其金额、额度。模型需要解释的是结果，而不是逐行搬运发票。</p>
+<p>关键不只是“让模型写 Python”。原文给出的执行链路是：注册代码执行工具，把允许程序化调用的工具通过 <code>allowed_callers</code> 显式加入；API 将工具定义转换成可调用函数；代码遇到外部工具请求时暂停，客户端收到带有 <code>caller</code> 字段的请求并返回结果；结果回到代码执行环境，脚本继续运行；最后代码输出进入模型上下文。</p>
+<p>所以，外部调用并没有凭空消失。减少的是反复回到模型进行推理、阅读中间结果的开销。服务端仍要执行真实请求，仍可能遇到超时、限流和失败。并行也只能用于相互独立的操作，不能把有因果依赖的步骤强行同时执行。</p>
+<p>这套设计对返回格式提出了更高要求。模型要生成正确解析逻辑，必须知道返回的是列表还是对象，金额是什么类型，状态有哪些取值，时间是什么格式。原文因此要求清楚记录返回结构，并建议优先选择适合并行、能够安全重试的幂等操作。</p>
+<h3>预算例子里的计算路径</h3>
+<p>下面按原文的任务重新整理一段简化伪代码。工具返回结构采用示意字段，目的是展示数据依赖，不是给出可直接接入真实财务系统的 SDK 程序。</p>
+<pre tabindex="0" aria-label="预算核查程序化编排伪代码"><code class="language-python">members = await get_team_members(department="engineering")
+
+# 预算取决于职级；同一职级只查询一次。
+levels = sorted({person["level"] for person in members})
+limits = await asyncio.gather(*[
+    get_budget_by_level(level=level) for level in levels
+])
+budget_by_level = dict(zip(levels, limits))
+
+# 各成员的支出查询相互独立，可以并行。
+expense_lists = await asyncio.gather(*[
+    get_expenses(user_id=person["id"], quarter="Q3")
+    for person in members
+])
+
+over_budget = []
+for person, rows in zip(members, expense_lists):
+    spent = sum(row["amount"] for row in rows)
+    limit = budget_by_level[person["level"]]["travel_limit"]
+    if spent &gt; limit:
+        over_budget.append({
+            "name": person["name"],
+            "spent": spent,
+            "limit": limit
+        })
+
+print(json.dumps(over_budget))</code></pre>
+<p>这里有三层依赖。成员名单必须先回来，才能知道有哪些职级和人员；相同职级的预算可以去重；不同成员的支出可以并行获取。随后才是本地的求和、查表与筛选。确定性计算被放进代码，不需要模型用自然语言逐条累计金额。</p>
+<p>不过，这个简化例子默认返回列表与成员一一对应、所有金额使用相同口径、所有查询成功。真实业务还应处理部分失败、币种、退款和重复明细。它们不应被悄悄折算成零支出。原文展示的是编排机制，不能替代具体业务的数据契约。</p>
+<h3>为什么它不是“在沙箱里直接获得所有系统权限”</h3>
+<p>开发者通过 <code>allowed_callers</code> 明确选择哪些工具允许从代码环境调用。原文当时使用的代码执行类型为 <code>code_execution_20250825</code>。一个工具请求大致携带下面的关联结构：</p>
+<pre tabindex="0" aria-label="程序化工具请求关联结构"><code class="language-json">{
+  "type": "tool_use",
+  "id": "toolu_expense_request",
+  "name": "get_expenses",
+  "input": {"user_id": "emp_123", "quarter": "Q3"},
+  "caller": {
+    "type": "code_execution_20250825",
+    "tool_id": "srvtoolu_budget_script"
+  }
+}</code></pre>
+<p><code>id</code> 标识这次具体工具请求，<code>caller.tool_id</code> 指向发起它的代码执行调用。开发者返回结果后，继续运行的是等待结果的脚本，而不是让模型立刻重新解释全部明细。文章中的完成结果则是 <code>code_execution_tool_result</code>，通过 <code>tool_use_id</code> 对应代码执行调用，<code>content.stdout</code> 承载脚本最终打印的内容。</p>
+<p>因此，“模型只看最终输出”是数据进入模型的路径选择，不意味着没有客户端协议，也不意味着可以省掉工具侧的鉴权、参数验证或请求追踪。若脚本把全部原始数据打印出来，上下文收益仍会消失。编排层必须主动决定哪些内容值得返回。</p>
+<p>文章把最适合的场景概括为：大量数据只需要聚合结果，至少三次相互依赖的工具调用，结果需要先过滤或转换，以及多个对象上的独立并行操作。反过来，一次小查询，或者必须让模型逐步判断每个中间结果的任务，就未必值得增加代码执行步骤。</p>
+<h2 id="section-3">三、JSON 合法，只是填对参数的第一步</h2>
+<p>第三个机制看起来最小，却触及工具使用中很常见的落差：参数通过校验，不代表调用符合业务习惯。</p>
+<p>原文使用一个创建工单的接口。标题必填，优先级、标签、报告人、联系方式、截止日期和升级处理信息都可以选填。一个普通的 JSON Schema 能告诉模型哪些字段是字符串、哪些值属于枚举，却未必告诉它：日期究竟采用什么格式，用户编号长什么样，什么情况应该补齐联系方式，什么优先级需要怎样的升级处理。</p>
+<p>Tool Use Examples 把例子直接写入工具定义的 <code>input_examples</code>。文章不是给同一份完整请求换三个名字，而是展示三种不同的填写密度：严重线上故障带完整联系方式和紧迫的升级安排；功能需求有报告人，却没有同样的升级信息；内部文档任务只需要标题。</p>
+<p>这些例子示范的，是字段之间的关系，以及什么时候应当省略字段。对模型来说，“不填”也需要学习。很多错误并不是少填，而是把一份看起来专业、完整的表单不加区分地套到所有任务上。</p>
+<p>不过，我不赞成把示例理解为对 Schema 的替代。能用类型、枚举、必填项、格式约束或业务校验明确表达的规则，仍应尽量让程序强制检查。示例负责解释剩余的使用歧义，而不是成为唯一的执行规则。原文也明确指出，如果问题更适合交给 JSON Schema 约束，就不应主要依赖示例。</p>
+<p>例子本身同样占用 tokens。文章建议每个工具保留一到五个简洁、真实感足够的例子，覆盖最小、部分和完整参数形式，聚焦真正不明显的地方。这里的重点不是“多给几个 few-shot”，而是让有限样例覆盖不同的使用决策。</p>
+<h3>让样例体现“什么时候不需要填”</h3>
+<p>把原文工单例子压缩为三个输入，差别可以看得更清楚。这里沿用相同的业务模式，改写为简短示意数据：</p>
+<pre tabindex="0" aria-label="工单输入样例"><code class="language-json">{
+  "name": "create_ticket",
+  "input_examples": [
+    {
+      "title": "生产登录接口返回错误",
+      "priority": "critical",
+      "reporter": {
+        "id": "USR-24680",
+        "name": "Lin",
+        "contact": {"email": "lin@example.com"}
+      },
+      "due_date": "2025-11-25",
+      "escalation": {
+        "level": 2,
+        "notify_manager": true,
+        "sla_hours": 4
+      }
+    },
+    {
+      "title": "增加导出功能",
+      "labels": ["feature-request"],
+      "reporter": {"id": "USR-13579", "name": "Wei"}
+    },
+    {"title": "更新接口说明"}
+  ]
+}</code></pre>
+<p>第一条示范复杂嵌套对象与升级参数怎样配合；第二条示范无需完整联系方式和升级安排的部分输入；第三条示范最小输入。日期形式、用户编号、标签习惯，以及可选字段之间的相关性，都被放在具体调用里表达，而不是依赖模型从字段名称自行猜测。</p>
+<p>但“严重故障通常带升级信息”与“凡是严重故障都必须带升级信息”仍不是同一句话。前者可以通过样例帮助模型理解，后者若是业务硬规则，就应由可执行校验保证。样例是行为引导，不是权限系统，也不是强约束的替身。</p>
+<h2 id="section-4">四、几个漂亮数字，分别说明了什么</h2>
+<p>下面把原文的结果放在同一张表里，但不把它们当成同一场实验。每一行都对应不同的任务或模型，衡量的也不是同一种收益。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="原文实验结果对照表"><table><thead><tr><th scope="col">机制与评测</th><th scope="col">原文结果</th><th scope="col">应怎样阅读</th></tr></thead><tbody><tr><td>Tool Search；Opus 4；内部 MCP 评测</td><td>49% → 74%</td><td>提高 25 个百分点</td></tr><tr><td>Tool Search；Opus 4.5；内部 MCP 评测</td><td>79.5% → 88.1%</td><td>提高 8.6 个百分点</td></tr><tr><td>程序化调用；复杂研究任务</td><td>平均 43,588 → 27,297 tokens</td><td>约减少 37%；不是成功率</td></tr><tr><td>程序化调用；内部知识检索</td><td>25.6% → 28.5%</td><td>提高 2.9 个百分点</td></tr><tr><td>程序化调用；原文标作 GIA 的 benchmark</td><td>46.5% → 51.2%</td><td>提高 4.7 个百分点；保留原文名称</td></tr><tr><td>Tool Use Examples；内部复杂参数处理测试</td><td>72% → 90%</td><td>提高 18 个百分点</td></tr></tbody></table></div>
+<p>这些数字不能相乘得到“整体 Agent 提升”，也不能把省 token 与成功率提升混成一个指标。文章没有在正文中提供足以独立复现所有数字的完整任务集、样本规模和统计区间，因此更适合作为架构方向的证据，而不是我们项目的效果预测。</p>
+<p>工具搜索的上下文示例还需要单独看：原文列出传统方式约 72K 的工具定义、约 77K 的总起始开销，以及按需方式约 500 tokens 的搜索工具、约 3K 的相关工具定义和约 8.7K 的总开销，并概括为 85% 的 token 减少。这些量级的统计范围并不完全相同；若直接以总量 77K 与 8.7K 计算，减少约 88.7%，不是恰好 85%。因此，我把它理解为带有近似数与不同口径的示意，而不是一份可以据以预测账单的精确对照表。</p>
+<p>预算例子同样在不同位置使用“50 KB+”和“200 KB 到 1 KB”的描述。可复用的结论是：明细留在程序里，只向模型返回需要解释的结果。具体可以节省多少，要重新量测自己的输入、输出和业务要求。</p>
+<h2 id="section-5">五、先找瓶颈，不要一次打开所有开关</h2>
+<p>原文最后的组合建议其实很克制：定义太多，先处理工具发现；中间结果太大，先处理程序化执行；参数总填错，先处理样例。三个机制可以互补，但没有必要让所有任务都经过同样复杂的链路。一个简单查找任务，也许直接调用一次工具就够了。</p>
+<p>落到医疗科研场景，我会从一个只读、口径明确、可复核的任务开始，保持模型与数据不变，分别改变工具装载、结果编排和参数示例，记录任务成功率、工具误选、业务参数错误、延迟及 token 消耗。聚合输出必须仍能追溯到原始记录、筛选条件和失败清单；真正需要专业判断的中间证据不能为省上下文而消失。涉及写入或对外发送的动作另行验证授权与审计。这是我的工程判断，不是原文报告的医疗验证结果。</p>
+<h2 id="section-6">结语：把接口设计成一条可理解的路径</h2>
+<p>这篇文章给我的启发，不是 Agent 又多了三种开关，而是工具接口可以分层：先知道有哪些能力，再取得相关说明；先用程序整理确定性的中间数据，再让模型判断需要判断的内容；先用约束划定合法范围，再用例子解释使用方式。</p>
+<p>工具越多，越不应该要求模型在每一步都背着完整说明书、原始流水和所有业务习惯一起思考。我们要做的，是把能力的入口、数据的路径和行动的条件分别设计清楚。</p>
+<p>对于医疗 Agent，我更关心的也不是一次调用少了多少 tokens，而是这种分工之后，错误是否更容易发现，证据是否仍然完整，授权是否依然清楚。只有这些问题能被回答，效率提升才值得进入真正的工作流程。</p>
+<aside>
+<p><strong>原文：</strong>Anthropic，Bin Wu，<a href="https://www.anthropic.com/engineering/advanced-tool-use">Introducing advanced tool use on the Claude Developer Platform</a>，2025 年 11 月 24 日。医疗场景讨论不构成诊疗建议，也不等同于临床有效性或安全性证明。</p></aside></article>
+<footer class="page-footer"><a href="../blog/">返回博客</a><a href="index.html">系列目录</a><a href="#top">回到顶部</a></footer></main></body></html>
