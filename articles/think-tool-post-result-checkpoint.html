@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>工具返回之后，Agent 还缺一次停顿｜胡浩源</title><meta name="description" content="重读 Anthropic 的 think tool：把新证据、规则与下一步行动重新对齐"><meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人"><meta name="color-scheme" content="light"><meta name="theme-color" content="#F5F1E8"><link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/think-tool-post-result-checkpoint.html"><style>:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2;--serif:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}a:focus-visible,summary:focus-visible,.table-wrap:focus-visible,pre:focus-visible{outline:3px solid var(--clay);outline-offset:5px}.shell{width:min(100% - 40px,760px);margin:auto}.skip{position:absolute;top:-5rem;left:1rem;background:var(--surface);padding:.5rem 1rem}.skip:focus{top:1rem}.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;color:var(--muted)}.masthead a{color:var(--muted)}header{padding:52px 0 26px}h1{font:700 clamp(32px,5.8vw,46px)/1.35 var(--serif);letter-spacing:-.035em;margin:0 0 25px;text-wrap:balance}.subtitle{font:21px/1.65 var(--serif);color:var(--muted);margin:0 0 24px}.byline{font-size:14px;color:var(--muted);margin:0}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}.contents{border-block:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px}.contents summary{cursor:pointer;font-weight:600}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents li{margin:0}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}article p{margin:0 0 22px}h2{font:700 26px/1.5 var(--serif);margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}ul{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{font:inherit;white-space:pre}.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}table{border-collapse:collapse;width:100%;min-width:650px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650}tbody th{font-weight:500;min-width:190px}tr:last-child th,tr:last-child td{border-bottom:0}#sources{font-size:14px;color:var(--muted)}#sources h2{font-size:20px}.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}@media(max-width:600px){body{font-size:16px}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px;gap:12px;font-size:12px}header{padding:36px 0 24px}.subtitle{font-size:19px}h2{font-size:23px;margin-top:42px}pre{font-size:12px;padding:14px 12px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px;flex-wrap:wrap}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}pre,pre code{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}a{color:inherit}}</style></head>
+<body id="top"><a class="skip" href="#main">跳至正文</a><main class="shell" id="main"><nav class="masthead" aria-label="导航"><a href="https://leo528-ai.github.io/medwork-deck/blog/">个人博客</a><a href="https://leo528-ai.github.io/medwork-deck/articles/index.html">系列目录</a></nav><article><header><h1>工具返回之后，Agent 还缺一次停顿</h1><p class="subtitle">重读 Anthropic 的 think tool：把新证据、规则与下一步行动重新对齐</p><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-10-20">2026 年 10 月 20 日</time> · 工具与协作</p></header><nav class="contents" aria-label="本文目录"><details open><summary>本文目录</summary><ol><li><a href="#not-a-new-tool">01｜先读更新，再读实验</a></li><li><a href="#where-to-pause">02｜它改变的是推理发生的位置</a></li><li><a href="#measure-reliability">03｜为什么要看 pass^k，而不只看一次成功</a></li><li><a href="#airline-results">04｜航空实验：真正拉开差距的是工具加示例</a></li><li><a href="#retail-results">05｜零售实验：简单一些的政策，收益也更温和</a></li><li><a href="#coding-evidence">06｜SWE-bench 的 0.623，不能全算在 think 头上</a></li><li><a href="#implementation">07｜真正该实现的，是决策检查点而非一个名字</a></li><li><a href="#test-and-cost">08｜怎么判断这次停顿值不值得</a></li><li><a href="#closing">09｜把“查到了”与“可以做”分开</a></li><li><a href="#sources">原文与核对说明</a></li></ol></details></nav>
+<section id="not-a-new-tool"><h2>01｜先读更新，再读实验</h2>
+<p>一位用户要求取消机票。Agent 已经查到了订单，也知道取消接口怎么调用。接下来应该做什么？</p>
+<p>最容易发生的错误，并不是不会调用接口，而是把“拿到了订单”当作“已经具备取消条件”：有没有飞过的航段，是否处在允许取消的时间范围，票种与保险如何影响规则，用户有没有明确确认，这些问题可能散落在不同的工具返回和对话轮次里。查到一条新信息以后，原有计划未必还成立。一个流畅的调用链，完全可能一路流畅地做错。</p>
+<p>Anthropic 在 2025 年 3 月 20 日发表的《The &quot;think&quot; tool: Enabling Claude to stop and think in complex tool use situations》，讨论的就是这个缝隙。它给 Claude 增加一个不查询外部信息、不修改业务数据库、只记录思考的工具，让模型在连续行动中有机会暂停，重新检查下一步。</p>
+<p>但今天读这篇文章，必须从页面顶部的更新开始：<strong>2025 年 12 月 15 日，Anthropic 已明确建议，多数场景优先使用改进后的 extended thinking，而不是专门配置 think 工具。</strong>理由是前者可以提供类似的推理空间，同时有更好的集成与性能。因此，这不是一份今天照抄就能获得历史增益的接入教程，更不能把 2025 年的 Claude 3.7 Sonnet 实验当成当前模型排行榜。</p>
+<p>它仍然值得读，因为实现形式可以过时，失败结构却没有消失：Agent 在得到新证据之后，是否真的重新核对了规则和计划？我们应该把什么交给模型推理，把什么留给程序强制执行？原文的小工具，恰好把这两件事分得很清楚。</p></section>
+<section id="where-to-pause"><h2>02｜它改变的是推理发生的位置</h2>
+<p>原文发表时，对两种能力作了一个时序上的区分：extended thinking 主要用于开始生成响应之前，对任务进行深入考虑和规划；think 工具则让模型在响应已经展开、工具已经调用之后，再插入一次聚焦于新信息的思考。这是理解当时实验的背景，不应直接视作此后所有模型的能力边界。</p>
+<p>关键不在“多想几句”，而在<strong>拿到什么以后再想</strong>。如果用户的问题本身已经提供了全部事实，模型可以在行动前完成主要推理；但订单状态、支付方式、仓库库存、失败测试结果都需要先查询。尚未返回的证据，无法靠更长的初始计划替代。</p>
+<p>可以把一个典型链条拆成两种：</p>
+<pre tabindex="0"><code class="language-text">容易滑过去的路径：
+用户请求 → 查询订单 → 依据原计划直接修改订单
+
+需要增加检查的位置：
+用户请求 → 查询订单 → 对照规则和新事实
+                         ├─ 信息缺失：继续查询
+                         ├─ 条件不成立：解释或改变方案
+                         ├─ 尚未授权：请求确认
+                         └─ 条件齐备：调用修改工具</code></pre>
+<p>think 工具本身并不会执行这些分支。它只是给模型一个显式入口，提醒模型在这里组织已有信息、发现缺口、调整计划。后续是否真的查缺补漏、是否遵守授权，仍然取决于整个系统。</p>
+<p>原文给出的通用定义来自 τ-bench，接口非常小：</p>
+<pre tabindex="0"><code class="language-json">{
+  &quot;name&quot;: &quot;think&quot;,
+  &quot;description&quot;: &quot;Use the tool to think about something. It will not obtain new information or change the database, but just append the thought to the log. Use it when complex reasoning or some cache memory is needed.&quot;,
+  &quot;input_schema&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;thought&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;description&quot;: &quot;A thought to think about.&quot;
+      }
+    },
+    &quot;required&quot;: [&quot;thought&quot;]
+  }
+}</code></pre>
+<p>这里只有一个字符串参数，没有搜索服务、计算引擎，也没有更强的模型藏在工具背后。把已有内容写入日志，并不会产生新的业务事实。这一限制反而解释了实验价值：如果成绩改变，不能简单归因为系统获得了额外知识或更丰富的业务操作能力。变化发生在已有信息如何被组织、什么时候被检查，以及后续行动如何受到影响。</p>
+<p>也要避免另一个误会：日志中的文本不是正确性的证明。模型可以列出一个规则，再错误理解它；可以声称信息齐全，却漏掉一项。思考记录有助于定位失败，不能替代数据库约束、权限检查和实际结果验证。</p></section>
+<section id="measure-reliability"><h2>03｜为什么要看 pass^k，而不只看一次成功</h2>
+<p>原文主要使用 τ-bench 测试。这个基准把 Agent 放进模拟客服环境：与模拟用户多轮交互，遵守一套客服政策，通过工具访问或修改环境数据库。它衡量的是约束下完成任务的能力，而不只是对政策文本回答一道选择题。</p>
+<p>实验比较了四类配置：不使用 think、也不启用 extended thinking 的基线；只启用 extended thinking；只提供 think 工具；以及 think 配合经过优化的提示词。最后一种配置出现在航空领域。模型是 Claude 3.7 Sonnet。</p>
+<p>这里最值得保留的是指标定义。pass@k 问的是：尝试 k 次，是否至少成功一次？pass^k 问的则是：对一个任务进行 k 次独立试验，是否全部成功，再跨任务汇总。这两个指标对应的产品问题不同。前者接近“能不能找到一个成功样例”，后者更接近“相同任务反复交给系统，能不能稳定做对”。</p>
+<p>举一个仅用于解释指标的例子：假设某个任务每次独立成功的概率是 0.8，那么五次至少成功一次的概率是 1 − 0.2⁵，五次全部成功的概率则是 0.8⁵，约 0.328。同一个系统，在“至少一次”和“每次都对”的视角下，会显得非常不同。</p>
+<p>但不能拿整个测试集的平均单次成功率，直接做 k 次方，来替代原文中的跨任务 pass^k。不同任务的难度不同，平均顺序也不同。上面的算式仅适用于一个假设成功概率固定的任务，不是对原表的反推。</p>
+<p>对真实业务而言，这个区别很实际。一次失败的工具操作，可能并不会因为另外四次成功就被抵消。只挑最好的一次演示，可以发现能力上限，却不能说明重复执行的可靠性。</p></section>
+<section id="airline-results"><h2>04｜航空实验：真正拉开差距的是工具加示例</h2>
+<p>下面保留原文航空领域表格的全部数值。每个数值都是比例，不是百分比变化。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="实验结果，可横向滚动"><table><thead><tr><th scope="col">配置</th><th scope="col">k = 1</th><th scope="col">k = 2</th><th scope="col">k = 3</th><th scope="col">k = 4</th><th scope="col">k = 5</th></tr></thead><tbody><tr><th scope="row">Think + 优化提示词</th><td>0.584</td><td>0.444</td><td>0.384</td><td>0.356</td><td>0.340</td></tr><tr><th scope="row">Think</th><td>0.404</td><td>0.254</td><td>0.186</td><td>0.140</td><td>0.100</td></tr><tr><th scope="row">Extended thinking</th><td>0.412</td><td>0.290</td><td>0.232</td><td>0.192</td><td>0.160</td></tr><tr><th scope="row">Baseline</th><td>0.332</td><td>0.206</td><td>0.148</td><td>0.116</td><td>0.100</td></tr></tbody></table></div>
+<p><strong>原文页面存在一处不能忽略的数据不一致。</strong>航空结果的说明段落写的是 0.570 对 0.370，并据此称相对提升 54%；紧接着的表格却给出 0.584 对 0.332。页面没有解释两组数字为什么不同。这里按表格呈现数据，同时保留这个冲突，不把段落的 54% 贴到表格上，也不自行猜测哪一组是“最终版本”。</p>
+<p>比宣传性增幅更重要的是配置之间的结构差异。仅增加 think，k = 1 从表中的 0.332 到 0.404；加上优化提示词后，达到 0.584。到 k = 5，仅有 think 的 0.100 与基线相同，而 think 配合提示词是 0.340。至少从这张表看，“放一个思考工具就能稳定改善所有重复试验指标”并不成立。</p>
+<p>提示词究竟增加了什么？原文并不是让模型泛泛地“认真思考”，而是要求它在得到工具结果后、行动或回复之前，对照当前请求列出适用规则，检查信息是否完整，验证计划是否符合政策，再检查工具结果。更重要的是，它给出了有业务结构的例子。</p>
+<p>第一个例子是取消航班 ABC123。它要求先确认用户身份、预订标识和取消理由，再区分是否处在预订后的 24 小时内；若不在，需要进一步检查票种与保险；还要确认没有已飞行或已经过去的航段。最后的计划不是直接取消，而是补齐信息、核验规则、取得确认。</p>
+<p>第二个例子是为三名旅客购买前往纽约的机票，每人托运两件行李。它把一个看似简单的订票请求拆出了两组相互关联的约束：</p>
+<ul><li>行李费用取决于会员等级。示例中的普通会员每人有一件免费额度，三人合计多出三件，费用为 150 美元；银卡会员每人两件免费，金卡会员每人三件免费，因此在这个请求里都不产生额外行李费。</li><li>支付不是“用户有钱就行”。示例要求支付方式存在于用户档案中，组合上最多使用一张旅行代金凭证、一张信用卡和三张礼品卡，并提醒旅行代金凭证未使用的余额会损失。</li><li>只有核查会员身份、支付工具与组合限制，计算机票加行李总价，并得到明确确认后，才进入预订动作。</li></ul>
+<p>这些数字与限制属于基准里的示例政策，不是真实航空公司的通用规则。它们的价值在于展示一种提示方式：把影响决策的变量、规则分支和下一步查询串起来，而不是给模型塞一份“请务必遵守所有政策”的笼统要求。</p>
+<p>我的理解是，航空领域的增益主要提示我们注意一个工程事实：困难场景里，模型缺的未必是一份规则文本，也可能是不知道该怎样把规则逐项应用到刚拿到的信息上。示例把抽象政策变成了检查路径。但这仍然是对结果的解释，不是原文已经隔离证明的唯一因果机制。</p></section>
+<section id="retail-results"><h2>05｜零售实验：简单一些的政策，收益也更温和</h2>
+<p>零售领域的表格如下。原文没有在这里给出“think 加优化提示词”这一行，因此不能拿航空的完整配置矩阵代替零售实验。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="实验结果，可横向滚动"><table><thead><tr><th scope="col">配置</th><th scope="col">k = 1</th><th scope="col">k = 2</th><th scope="col">k = 3</th><th scope="col">k = 4</th><th scope="col">k = 5</th></tr></thead><tbody><tr><th scope="row">Think，无额外提示词</th><td>0.812</td><td>0.735</td><td>0.685</td><td>0.650</td><td>0.626</td></tr><tr><th scope="row">Extended thinking</th><td>0.770</td><td>0.681</td><td>0.623</td><td>0.581</td><td>0.548</td></tr><tr><th scope="row">Baseline</th><td>0.783</td><td>0.695</td><td>0.643</td><td>0.607</td><td>0.583</td></tr></tbody></table></div>
+<p>原文认为零售政策比航空政策更容易处理，单独提供思考空间就有帮助。表中 k = 1 的差值是 0.029，也就是 2.9 个百分点；k = 5 的差值是 0.043，也就是 4.3 个百分点。这些是由表格计算出的绝对差值，不是对所有零售客服系统的收益承诺。</p>
+<p>还有一个容易被忽略的细节：在这一组历史配置下，extended thinking 的各列分数都低于基线。这不意味着“推理越少越好”，更不意味着应该忽略页面后来关于 extended thinking 的更新。它只说明，特定模型、提示、工具环境和评测设置中的结果，需要按配置来读，不能把一种机制永久贴上优劣标签。</p>
+<p>航空与零售放在一起，反而能帮助我们拒绝一个过度简单的解释：额外推理不是总有固定收益的开关。政策难度、示例是否切中任务、模型是否能把新证据纳入计划，都可能改变效果。对于一个本来就能单次查询完成的任务，再增加一次固定停顿，很可能只增加成本。</p></section>
+<section id="coding-evidence"><h2>06｜SWE-bench 的 0.623，不能全算在 think 头上</h2>
+<p>原文还提到，在评估 Claude 3.7 Sonnet 的 SWE-bench 设置中加入了类似的工具，整体取得 0.623 的分数。与客服版本相比，编码版本的描述更具体：工具不读取新信息，也不修改仓库；当模型已经定位到 bug 来源时，可以用它比较不同修复方案，考虑哪个最简单、最有效；收到测试结果之后，可以重新组织修复失败测试的方案。</p>
+<p>这和航空案例的共同点不是“写一段更长的分析”，而是<strong>在新证据进入之后，重新选择行动</strong>。测试失败意味着原方案需要更新，代码探索发现新的约束也一样。把最初的修复计划一路执行到底，并不是坚持，可能只是没有把反馈真正接入决策。</p>
+<p>这里有两层证据，必须分开：</p>
+<p>第一，0.623 是整个 SWE-bench 设置的成绩。原文说 think 对这一结果有所贡献，不能据此写成“think 工具让模型达到 62.3%”，仿佛其余配置没有作用。</p>
+<p>第二，原文另外报告了隔离该工具影响的实验：带 think 的样本数 n = 30，不带 think 的样本数 n = 144；平均性能改善写作 <strong>1.6%</strong>；Welch t 检验为 t(38.89) = 6.71，p &lt; .001，效应量 d = 1.47。</p>
+<p>这里保留原文的 1.6% 写法，不擅自改成“提升 1.6 个百分点”。页面没有在这句话中把百分比口径交代得足够清楚。n 也只是原文称呼的 samples，不能把它们改写成“30 道题对 144 道题”。显著性检验说明这组实验观测到的差异，不替我们补齐未披露的采样组织、延迟、token 预算或跨模型复现条件。</p>
+<p>对工程选型更有用的做法，是承认这条证据的边界：它说明一个很小的控制流程调整，在当时的编码评估中观察到了正向效果；它没有证明任意代码 Agent 接入同名工具都会复制这个增益。</p></section>
+<section id="implementation"><h2>07｜真正该实现的，是决策检查点而非一个名字</h2>
+<p>如果今天要从这篇文章中带走一个设计，我会保留“工具结果之后的决策检查点”，而不是先规定必须有一个叫 think 的函数。下面是一个控制流程示意，不是 Anthropic 发布的可直接运行 SDK 代码：</p>
+<pre tabindex="0"><code class="language-python">def propose_next_action(request, tool_results, policy):
+    # 由当前模型及其支持的推理机制生成结构化决策摘要
+    return model.propose(
+        request=request,
+        evidence=tool_results,
+        policy=policy,
+        output_fields=[
+            &quot;known_facts&quot;,
+            &quot;missing_information&quot;,
+            &quot;applicable_rules&quot;,
+            &quot;proposed_action&quot;,
+            &quot;requires_confirmation&quot;,
+        ],
+    )
+
+def handle_request(request, tool_results, policy, actor, current_state):
+    decision = propose_next_action(request, tool_results, policy)
+
+    if decision.missing_information:
+        return collect_missing_information(decision.missing_information)
+
+    # 模型给出的“符合规则”不是最终授权。
+    # 下列检查由业务代码独立实现，并重新核查当前状态。
+    validate_action_schema(decision.proposed_action)
+    check_permission(actor, decision.proposed_action)
+    check_business_constraints(current_state, decision.proposed_action)
+
+    if confirmation_required_by_policy(decision.proposed_action):
+        require_explicit_user_confirmation(decision.proposed_action)
+
+    return execute_with_audit(decision.proposed_action)</code></pre>
+<p>这个示意刻意把两类东西分开：模型负责把新证据与政策关联，形成可检查的下一步建议；程序负责验证参数、权限、业务约束和确认条件。尤其不能让模型自己输出一个 requires_confirmation = false，就跳过真实的授权判断。是否必须确认，应由独立政策决定。</p>
+<p>同样，业务状态可能在查询与执行之间变化。即使上一轮检查时库存存在、订单允许取消，执行时也应该重新核验。推理检查解决的是模型是否理解现有证据，事务约束解决的是动作落地时条件是否仍成立，两者不是替代关系。</p>
+<p>原文还有一条很实用的提示词经验：较长、较复杂的 think 使用指导，放在系统提示词里比全部塞进工具描述更有效。工具描述负责解释入口是什么，系统提示词负责组织何时检查、怎么检查、哪些分支需要停下来。这个分工可以沿用，但“更有效”仍应理解为作者实验里的观察，而不是所有模型通用的硬规则。</p>
+<p>我会让检查点输出简短的决策摘要、所依据的事实和待补信息，而不是把自由展开的文字当成一种必须永久留存的资产。真正需要审计的是：用到了哪份政策、查到了哪个版本的状态、提出了什么动作、谁授权、实际执行结果是什么。长篇文本既不自动可信，也可能混入客户数据；记录越多，并不必然越可审计。</p>
+<p>这里还存在一个安全边界：工具结果可能包含用户文本或其他不可信内容。它们可以作为待分析数据，却不能因为进入检查点，就变成修改系统规则的指令。think 不是沙箱，不是提示注入防护，也不是权限系统。让模型停一下，不等于给外部信息做了信任升级。</p></section>
+<section id="test-and-cost"><h2>08｜怎么判断这次停顿值不值得</h2>
+<p>原文把适用范围限定在三类情况：需要仔细分析工具输出；必须遵守较复杂的政策；连续决策彼此依赖，且错误代价较高。反过来，单次或非顺序的并行调用，以及约束很少的简单指令，作者没有观察到收益。额外的提示长度与输出 token 则是明确成本。</p>
+<p>这意味着上线前不应该只问“最终答得更好了吗”，还应该问“究竟少犯了哪一种错”。如果失败来自工具没有返回必要字段，增加推理不能创造缺失事实；如果取消接口缺少权限校验，增加提示也不能修复这个接口；如果失败发生在多个条件的交叉判断，检查点才更可能有针对性。</p>
+<p>一个可操作的评测设计，是先固定模型版本、工具定义、政策版本与任务集，再比较几种配置：现有基线；当前模型支持的推理方式；加入领域检查示例的配置；确有必要时再测试显式 think 工具。这里是我的实验建议，不是原文已经完成的一组新实验。</p>
+<p>任务集不要只选标准流程。应覆盖缺失身份信息、规则边界、工具返回与原假设冲突、需要用户确认、用户中途修改要求等情形。每个失败要落到可判断的类别：漏查信息、误用政策、错误计算、无授权执行，还是最终环境状态不符合要求。只有这样，才知道新增机制解决的是哪个环节。</p>
+<p>重复执行也不可省略。如果一次成功率略升，但同一任务多次执行时仍频繁出现偶发违规，检查点可能改善了平均表现，却没有修好最危险的尾部。pass^k 的价值正在这里。不过，重复试验必须说明环境如何重置、模拟用户如何设置、随机性如何控制，否则不同次数不一定具有可比性。</p>
+<p>最后把成本放回同一张账里：额外 token、端到端延迟、每个成功任务的总成本、重复查询与重复确认的次数。一个到处暂停的 Agent，可能在测试里显得谨慎，在用户面前却冗长而迟缓。我们要找的不是最大化思考次数，而是在证据发生变化、规则需要合并、行动难以撤回的时候，有针对性地停下来。</p></section>
+<section id="closing"><h2>09｜把“查到了”与“可以做”分开</h2>
+<p>这篇文章最有价值的地方，是用一个几乎没有外部功能的工具，把 Agent 的一个结构性问题暴露出来：查到事实、理解事实、获得授权、执行动作，是四件不同的事。一个工具调用成功，只能说明其中某个环节完成了，不能替后面的环节签字。</p>
+<p>历史实验提示，明确的停顿位置与领域示例，确实可能改善复杂任务中的表现；同一篇文章后来的更新又提醒我们，具体实现应随模型能力变化。保留旧实验的启发，不等于保留旧方案的优先级。</p>
+<p>因此，值得带走的不是“所有 Agent 都加一个 think”。而是每当工具返回新信息，系统都应有办法回答三个问题：<strong>原计划还成立吗，下一步的条件齐了吗，这个动作真的被允许吗？</strong></p>
+<p>能回答这些问题，才是一次有用的停顿。</p></section>
+<section id="sources"><h2>原文与核对说明</h2>
+<ul><li>Anthropic，The &quot;think&quot; tool: Enabling Claude to stop and think in complex tool use situations，发布于 2025 年 3 月 20 日，页面含 2025 年 12 月 15 日 extended thinking 更新。读取日期：2026 年 10 月 20 日。</li><li>原文链接：<a href="https://www.anthropic.com/engineering/claude-think-tool">https://www.anthropic.com/engineering/claude-think-tool</a></li><li>两张 τ-bench 表格、工具定义、航空政策示例与 SWE-bench 统计均来自该页面。航空段落与表格不一致处已在正文说明；未自行校正来源。</li><li>文中的控制流程示意、上线评测建议及对审计边界的讨论，是基于上述机制展开的工程判断，不是原文新增实验结果。原文脚注还称 Claude 3.5 Sonnet（New）在相同配置下也观察到收益，但未在页面中给出对应完整数表，因此不据此外推到所有后续模型。</li></ul></section>
+</article><footer class="page-footer"><a href="https://leo528-ai.github.io/medwork-deck/blog/">返回个人博客</a><a href="#top">回到顶部 ↑</a></footer></main></body></html>
