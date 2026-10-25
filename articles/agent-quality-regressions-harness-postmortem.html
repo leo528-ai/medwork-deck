@@ -1,0 +1,78 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>默认值、会话状态和提示词，也在决定 Agent 的质量｜胡浩源</title><meta name="description" content="重读 Anthropic 4 月 23 日复盘：把用户体感拆成可复现的运行条件"><meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人"><meta name="color-scheme" content="light"><meta name="theme-color" content="#F5F1E8"><link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/agent-quality-regressions-harness-postmortem.html"><style>:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2;--serif:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}a:focus-visible,summary:focus-visible,.table-wrap:focus-visible,pre:focus-visible{outline:3px solid var(--clay);outline-offset:5px}.shell{width:min(100% - 40px,760px);margin:auto}.skip{position:absolute;top:-5rem;left:1rem;background:var(--surface);padding:.5rem 1rem}.skip:focus{top:1rem}.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;color:var(--muted)}.masthead a{color:var(--muted)}header{padding:52px 0 26px}h1{font:700 clamp(32px,5.8vw,46px)/1.35 var(--serif);letter-spacing:-.035em;margin:0 0 25px;text-wrap:balance}.subtitle{font:21px/1.65 var(--serif);color:var(--muted);margin:0 0 24px}.byline{font-size:14px;color:var(--muted);margin:0}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}.contents{border-block:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px}.contents summary{cursor:pointer;font-weight:600}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents li{margin:0}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}article p{margin:0 0 22px}article code{overflow-wrap:anywhere}h2{font:700 26px/1.5 var(--serif);margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}ul{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{font:inherit;white-space:pre}.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}table{border-collapse:collapse;width:100%;min-width:650px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650}tbody th{font-weight:500;min-width:190px}tr:last-child th,tr:last-child td{border-bottom:0}#sources{font-size:14px;color:var(--muted);overflow-wrap:anywhere}#sources h2{font-size:20px}.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}@media(max-width:600px){body{font-size:16px}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px;gap:12px;font-size:12px}header{padding:36px 0 24px}.subtitle{font-size:19px}h2{font-size:23px;margin-top:42px}pre{font-size:12px;padding:14px 12px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px;flex-wrap:wrap}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}pre,pre code{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}a{color:inherit}}</style></head><body id="top"><a class="skip" href="#main">跳至正文</a><main class="shell" id="main"><nav class="masthead" aria-label="导航"><a href="../blog/">个人博客</a><a href="index.html">系列目录</a></nav><article><header><h1>默认值、会话状态和提示词，也在决定 Agent 的质量</h1><p class="subtitle">重读 Anthropic 4 月 23 日复盘：把用户体感拆成可复现的运行条件</p><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-10-23">2026 年 10 月 23 日</time> · Agent 质量与可靠性</p></header><nav class="contents" aria-label="本文目录"><details open><summary>本文目录</summary><ol><li><a href="#incident">01｜先把“变笨了”拆成三项可调查的变化</a></li><li><a href="#default">02｜默认值是一项质量承诺</a></li><li><a href="#memory">03｜缓存命中与任务记忆是两本账</a></li><li><a href="#transition">04｜一次性动作，需要证明它不会变成永久状态</a></li><li><a href="#prompt">05｜输出更短，也是一种行为干预</a></li><li><a href="#reproduce">06｜内部没有复现，先检查测试条件是否相同</a></li><li><a href="#rollout">07｜把多个变化拆开，才能读懂质量信号</a></li><li><a href="#closing">08｜让模型、产品和结果各自留下证据</a></li><li><a href="#sources">原文与核对说明</a></li></ol></details></nav><section id="incident"><h2>01｜先把“变笨了”拆成三项可调查的变化</h2>
+<p>一个编码 Agent 开始重复已经做过的检查，忘记前一轮为什么放弃某个方案，最后又用很短的回答宣布完成。用户感受到的是一个整体：它没有以前好用了。工程团队却需要拆开这个整体，确认变化发生在模型、请求参数、会话组装、工具状态，还是结果呈现。</p>
+<p>Anthropic 于 2026 年 4 月 23 日发布的复盘，把一组质量投诉归因到三项产品层变化，涉及 Claude Code、Claude Agent SDK 与 Claude Cowork；作者确认 API 和推理服务未受影响。下表保留历史时间线，不代表今天的默认配置。<a href="https://www.anthropic.com/research/april-23-postmortem">官方复盘</a></p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="三项历史变更与修复时间，可横向滚动"><table><thead><tr><th scope="col">变更</th><th scope="col">发生了什么</th><th scope="col">时间与范围</th></tr></thead><tbody>
+<tr><th scope="row">默认推理强度</th><td>默认值从 high 降到 medium，以缓解长尾等待</td><td>3 月 4 日上线，4 月 7 日撤回；Sonnet 4.6、Opus 4.6</td></tr>
+<tr><th scope="row">空闲会话清理</th><td>空闲超过一小时后，本应单次清理旧思考，却持续作用于后续轮次</td><td>3 月 26 日上线，4 月 10 日在 v2.1.101 修复；同上两款模型</td></tr>
+<tr><th scope="row">输出长度指令</th><td>工具间文字不超过 25 词；最终回答通常不超过 100 词，任务需要更详细时例外；与其他提示改动共同影响质量</td><td>4 月 16 日上线，4 月 20 日撤回；另涉及 Opus 4.7</td></tr>
+</tbody></table></div>
+<p>作者称三项问题至 4 月 20 日的 v2.1.116 均已解决。扩大后的评测集中，一项评测显示，Opus 4.6 与 4.7 的成绩下降 3%；原文没有在这里澄清相对比例或百分点，本文不替它补口径。<a href="https://www.anthropic.com/research/april-23-postmortem">数字与版本出处</a></p>
+<p>我从这份复盘中得到的判断是：产品把模型能力转成用户结果的过程，本身就是需要评测的系统。后面的分析围绕这一点展开。文中的测试矩阵、状态流和业务例子属于工程建议，没有声称 Anthropic 已做过相同实验，也没有把历史故障当成当前版本的诊断。</p></section>
+<section id="default"><h2>02｜默认值是一项质量承诺</h2>
+<p>默认参数决定没有主动调节设置的人实际得到什么。即使模型标识没有变化，运行预算变了，产品表现也可能改变。官方 effort 文档将该参数描述为输出充分性与 token 效率之间的控制，影响范围包括文字、工具调用和启用时的思考。这里引用它解释参数职责，不据此推断某个历史模型的实际收益曲线。<a href="https://platform.claude.com/docs/en/build-with-claude/effort">Effort 官方说明</a></p>
+<p>如果一个任务集合里，八成工作只需简单编辑，两成工作需要跨文件推理，那么降低预算可能让总体平均等待缩短，同时损害最需要系统帮助的那部分任务。这是一个假设情境，重点不在八成和两成的数字，而在聚合方式：大量容易任务可能掩盖少量高代价失败。</p>
+<p>我会把默认值变更当成产品行为变更来评审。对比时固定任务、模型版本和工具环境，分别记录任务完成率、错误类型、端到端时长、长尾等待、资源消耗以及人工接手成本。若只看单次响应延迟，重复尝试和返工就会消失在统计之外；若只看最终成功，用户多等了半小时的事实也可能被忽略。</p>
+<p>一个假想任务用两分钟得到错误修改，再花十分钟纠正，并不优于用五分钟直接完成。反过来，对一个简单格式修订，额外等待也未必带来可见价值。因此我不会把“始终用最高预算”当成结论。应该先明确哪些任务需要保持质量下限，再决定哪里值得用速度交换资源。</p>
+<p>把开关放到界面上，只完成了可控制性的一部分。用户还需要看懂当前实际设置、选择是否持久，以及一次新会话有没有悄悄继承别处的配置。若任务中途发生了自动降档，结果记录也应反映这个事实，否则同一模型的两次运行看起来相同，实际上接受了不同条件。</p>
+<p>我更倾向于让配置显式、默认稳定、变化可追溯。自动选择可以存在，但应以清楚的规则和可验证的结果为依据。尤其对长任务，系统不应一边保留“高能力工作流”的产品承诺，一边把影响能力的预算变化隐藏在性能优化里。</p></section>
+<section id="memory"><h2>03｜缓存命中与任务记忆是两本账</h2>
+<p>提示缓存复用的是匹配的输入前缀，从而减少重复处理；缓存未命中时，请求仍可处理完整输入。删除上下文则改变模型实际接收到的内容。两者可能影响同一笔费用，却不是同一种操作。<a href="https://platform.claude.com/docs/en/build-with-claude/prompt-caching">Prompt caching 官方说明</a></p>
+<p>对一个工程系统，最危险的简化是把“这个内容很贵”直接等价为“这个内容可以删”。价格是资源属性，必要性是任务属性。某个早期工具结果可能已经被新的事实替代；某个很短的决定却可能约束后面所有动作。仅凭时间先后或 token 长度，无法完成这种判断。</p>
+<p>官方上下文编辑文档把思考块清理单列为策略：<code>clear_thinking_20251015</code> 管理先前轮次的思考，保留设置用于控制连续性。复盘中涉及的 <code>keep:1</code> 应在当时实现语境下理解，不能从这篇历史文章直接复制为今日接入方案。<a href="https://platform.claude.com/docs/en/build-with-claude/context-editing">Context editing 官方说明</a></p>
+<p>我会把一个任务的状态拆成至少三类：仍然有效的要求、已经验证的环境事实、暂时采用的行动方案。第一类决定能做什么，第二类决定已经知道什么，第三类决定接下来打算做什么。它们需要不同的失效规则。用户撤销要求，应立即改变授权；订单状态变了，应重新查询；某次修复失败，应调整方案。</p>
+<p>这并不要求永久保存模型展开的所有文字。更可靠的做法，是把需要跨轮次保持的决定变成简洁、可检查的记录，带上依据和适用条件。保留更多文本有容量和隐私成本，也可能让过时判断继续影响新任务。需要保护的是有效状态的连续性，而不是某种固定长度的历史。</p>
+<p>比如一个假想修复任务已经确认“不能改公共接口，因为下游仍依赖旧参数”。压缩之后若只剩“尝试过修改接口”，模型就可能把已排除路径当作候选重新执行。这时错误不一定来自推理能力下降，而可能来自状态表示丢掉了决定理由。验证压缩质量，应检查这种约束是否还能被正确使用。</p>
+<p>因此，性能看板之外还需要状态保留的验收。清理前后，哪些要求仍可检索，哪些事实已失效，哪些决定不再适用，应该能被逐项解释。缓存命中率再漂亮，也不能替这项检查签字。</p></section>
+<section id="transition"><h2>04｜一次性动作，需要证明它不会变成永久状态</h2>
+<p>许多上下文优化只在一个状态转换点有意义：任务暂停后恢复、输入超过阈值、模型切换、工具结束或者用户修改目标。如果实现把“曾经满足条件”保存成长期布尔值，后续每一轮都可能继续执行只应发生一次的动作。</p>
+<p>可以用下面的概念状态流检查设计。它是测试思路，不是 Anthropic 的实现代码，也没有建议替换某个现行 SDK：</p>
+<pre tabindex="0"><code class="language-text">正在执行
+  → 暂停
+  → 恢复检查
+      → 必要时做一次状态整理
+      → 记录整理完成及新状态版本
+  → 正常执行下一轮
+  → 正常执行再下一轮</code></pre>
+<p>验收不能在“恢复后的第一轮看起来正常”处结束。至少还要观察第二轮、第三轮，以及工具尚未完成时又收到新消息的情况。第一轮可能仍含足够信息，第二轮才显现出持续清理的后果；一次新的输入事件也可能改变轮次边界，使原先对“本轮”的假设失效。</p>
+<p>我会用可控制时钟验证超时条件，并把阈值之前、阈值之后、连续两次暂停分别覆盖。测试既要检查最终答案，也要检查实际发出的请求包含什么。若模型靠别的线索偶然做对，纯结果断言可能掩盖错误状态；若请求已经明确丢掉必需证据，就应在模型生成之前报告失败。</p>
+<p>另一个检查对象是重入。暂停恢复、网络重试和用户追加消息可能同时触发相近逻辑。若两个路径都认为自己是唯一入口，就可能重复整理状态，或者互相覆盖完成标记。状态转换应有可辨识的身份和版本，让重复事件可以被识别，而不是凭执行速度碰巧避免冲突。</p>
+<p>这种测试不需要知道模型内部如何推理。它验证的是系统自己的承诺：任务需要的输入是否被按规则保留，生命周期动作是否只执行预期次数，新的事件是否改变了先前有效的状态。将这些承诺放在模型之外，能减少靠自然语言输出反猜故障原因的成本。</p></section>
+<section id="prompt"><h2>05｜输出更短，也是一种行为干预</h2>
+<p>限制文字长度看起来像编辑要求，实际可能改变模型如何分配解释、检查和工具使用。对 Agent，工具之间的文字还可能承担计划更新、发现不确定性或解释下一步的作用。若不区分这些职责，把所有中间输出同时压短，就很难知道节省来自冗余消失，还是必要信息被省略。</p>
+<p>我的做法是先给输出分类。面向读者的重复说明可以压缩；已经验证的事实可以引用而不重述；会影响后续行动的条件则应保持可表达。要求报告简短，和要求系统不再进行某项检查，应当是两种可以单独测试的变化。</p>
+<p>例如，一个假想交付任务可以把十段过程叙述压成三句状态说明，但仍需要保留失败测试、未完成验证和用户必须作出的选择。若最终答案只剩“已完成”，篇幅确实下降了，交付信息却不完整。验收标准应写“必要信息不能缺失”，再讨论通常能否用更少文字表达。</p>
+<p>提示词还存在组合效应。一条“回答简洁”的指令，与一条“避免提出不必要的问题”分别测试可能没有明显问题，合在一起却可能压掉一个关键澄清。这只是示意，不是对本次故障的额外归因。它说明单行消融与组合回归回答不同问题：前者帮助定位贡献，后者检查完整系统。</p>
+<p>我会把系统提示词当成有版本的产品配置，记录每项修改想改善的行为、可能损害的行为和回滚条件。评测覆盖不同模型、工具组合与任务类型；对模型特定的调节明确设定适用范围。提示词很短，并不能证明其影响很小。</p>
+<p>还应避免把单个评测分数当成产品损失的完整刻画。即使某项平均成绩下降，失败是否集中在复杂任务、某种语言或某类工具上，仍需另查。相同的平均变化，可以对应广泛的小幅退步，也可以对应少数关键场景的大幅失效。只有定位到失败结构，才能决定撤回、限定范围还是继续试验。</p></section>
+<section id="reproduce"><h2>06｜内部没有复现，先检查测试条件是否相同</h2>
+<p>复盘解释，内部消息排队实验增加了复现困难；另一项思考展示改动则抑制了多数 CLI 会话中的故障表现。陈旧会话这一触发条件也增加了定位难度。修复之后，作者提出更多使用公开构建、扩大逐模型评测与消融，并采用观察期和渐进发布。<a href="https://www.anthropic.com/research/april-23-postmortem">复现困难与后续措施</a></p>
+<p>这让我更重视“内部使用”与“外部使用”的差异表。代码版本一致只是起点。功能开关、服务端实验、用户消息进入队列的时机、会话持续时间、缓存状态，都可能改变实际路径。一个团队每天都在用自己的产品，仍可能从未走到用户遇到的那条路径。</p>
+<p>对于长期任务，测试样本应带生命周期。新建即完成的任务测量启动体验，闲置再恢复的任务测量状态延续，运行中被追加要求的任务测量重入与计划更新。把三种任务混成一类“多轮对话”，会失去最有价值的差异。</p>
+<p>我会要求一份可复现反馈至少记录模型与客户端版本、有效配置、关键事件顺序、工具结果摘要和期望终点。无需把用户的整个工作目录收走，也不应把敏感原文默认纳入遥测。可以先构造脱敏的最小场景，再判断是否必须增加特定证据。</p>
+<p>最小场景也不能被压缩过头。若原问题依赖一次暂停或工具调用中插入新消息，删除这些步骤之后得到的“不能复现”，只说明重放条件已经改变。重放应保留因果相关事件，把与故障无关的数据替换为合成内容，而不是把所有时序一起删除。</p>
+<p>对跨服务问题，审查者还需要看到接口两侧的约定。某个参数在发送方看起来合法，在接收方却有持续生效的含义；单看任何一边，都可能看不见交互错误。完整上下文不是无限多文件，而是足以检查这条约定的实现、状态与调用顺序。</p></section>
+<section id="rollout"><h2>07｜把多个变化拆开，才能读懂质量信号</h2>
+<p>如果默认预算、上下文整理和提示词同时调整，线上质量变化就变成混合信号。某一项可能提高速度，另一项增加重试，第三项改变用户对完成程度的判断。只看最终总体评分，既难归因，也难决定应该回退什么。</p>
+<p>我会在变更前固定基线，并为每项候选修改标注可能交互的维度。先比较单独变更，再检查准备一同发布的组合。成本有限时，不必穷举所有参数；但应覆盖最可能共同改变同一个行为的组合，例如上下文清理与暂停恢复、输出限制与复杂工具链。</p>
+<p>发布后的观察也应按暴露条件分组。真正受到某项设置影响的会话，才构成有意义的比较对象。若大量新会话从未跨过触发条件，总体成功率可能显得稳定；某项功能只覆盖一小部分用户时，同样需要观察该群体自己的结果。</p>
+<p>下面是一张可以用于同类系统的验收表。它是我的建议，不是本次事故的新增实验结果：</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="产品层变更验收建议，可横向滚动"><table><thead><tr><th scope="col">变更对象</th><th scope="col">必须观察</th><th scope="col">容易遗漏的成本</th></tr></thead><tbody>
+<tr><th scope="row">推理预算</th><td>难任务完成质量与长尾等待</td><td>失败重试、人工接手</td></tr>
+<tr><th scope="row">状态清理</th><td>下一轮与多轮后的有效输入</td><td>重复查询、约束丢失</td></tr>
+<tr><th scope="row">输出约束</th><td>必要信息、工具行为与最终结果</td><td>读者误判完成程度</td></tr>
+<tr><th scope="row">发布组合</th><td>实际暴露群体与交互效应</td><td>混合信号带来的定位时间</td></tr>
+</tbody></table></div>
+<p>回滚条件应在发布前确定。它可以基于可复现的严重失败，也可以基于质量或成本指标越过约定范围；不能等到负面反馈已经堆积，才临时争论什么算退化。对于影响较大的修改，较慢的放量速度是一种获得证据的安排，而不是形式上的审批步骤。</p>
+<p>恢复旧配置也不是调查的终点。需要验证已经进入异常状态的会话是否仍受影响，正在执行的任务是否需要重新验证，以及新的请求是否真的使用了恢复后的配置。配置已经回退与用户结果已经恢复，应分开记录。</p></section>
+<section id="closing"><h2>08｜让模型、产品和结果各自留下证据</h2>
+<p>这份复盘值得反复阅读的地方，是它让产品质量的责任边界变得更具体。模型能力评测有价值，产品运行条件同样需要被检查。一个 Agent 的表现由模型、请求构造、上下文、工具和状态管理共同形成；排障时应把这些部分分别固定，才能判断改变了什么。</p>
+<p>对医疗相关软件，这种区分尤其重要。即使模型回答更稳、代码任务成功率更高，也不能直接证明临床有效性或安全性。工程回归检查负责确认软件行为，医疗用途仍需针对相应场景的独立验证。不能让一种指标借用另一种指标的信誉。</p>
+<p>我会把最终交付标准落在可追溯的运行记录上：这次任务使用了什么配置，保留了哪些有效状态，哪些工具结果已核实，哪些验证尚未完成。它不需要变成一份冗长报告，但要足以支持下一次排查和重放。</p>
+<p>当用户说系统变差了，最有用的回应是把体感转成可以检查的条件，再用证据解释差异。默认值有版本，状态转换有验收，提示词变化有回归，发布决定有可见的质量边界，Agent 的能力才更容易稳定地兑现。</p></section>
+<section id="sources"><h2>原文与核对说明</h2>
+<ul><li>Anthropic，<a href="https://www.anthropic.com/research/april-23-postmortem">An update on recent Claude Code quality reports</a>，2026 年 4 月 23 日。本文通读其三项变更、修复时间、评测限制与后续措施。</li>
+<li><a href="https://platform.claude.com/docs/en/build-with-claude/effort">Claude Platform：Effort</a>，用于说明预算控制职责，未把现行默认值回填到历史事故。</li>
+<li><a href="https://platform.claude.com/docs/en/build-with-claude/context-editing">Claude Platform：Context editing</a>，用于区分上下文内容管理与保留策略。</li>
+<li><a href="https://platform.claude.com/docs/en/build-with-claude/prompt-caching">Claude Platform：Prompt caching</a>，用于区分前缀复用与上下文删除。</li></ul>
+<p>以上来源复核于 2026 年 10 月 25 日。本篇讨论历史复盘，不提供现行配置建议。文中的假设场景、测试矩阵与状态流是原创工程分析；未复现 Anthropic 内部实验，也未补算其未披露的统计口径。</p></section>
+</article><footer class="page-footer"><a href="../blog/">返回个人博客</a><a href="#top">回到顶部 ↑</a></footer></main></body></html>
