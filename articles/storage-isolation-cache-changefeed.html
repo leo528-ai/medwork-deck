@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>共享数据库以后，谁来保证每次读取都可靠｜胡浩源</title><meta name="description" content="读 OpenAI Habitat：分区预算、缓存新鲜度，以及变更流恢复的三本账"><meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人"><meta name="color-scheme" content="light"><meta name="theme-color" content="#F5F1E8"><link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/storage-isolation-cache-changefeed.html"><style>:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2;--serif:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}a:focus-visible,summary:focus-visible,.table-wrap:focus-visible,pre:focus-visible{outline:3px solid var(--clay);outline-offset:5px}.shell{width:min(100% - 40px,760px);margin:auto}.skip{position:absolute;top:-5rem;left:1rem;background:var(--surface);padding:.5rem 1rem}.skip:focus{top:1rem}.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;color:var(--muted)}.masthead a{color:var(--muted)}header{padding:52px 0 26px}h1{font:700 clamp(32px,5.8vw,46px)/1.35 var(--serif);letter-spacing:-.035em;margin:0 0 25px;text-wrap:balance}.subtitle{font:21px/1.65 var(--serif);color:var(--muted);margin:0 0 24px}.byline{font-size:14px;color:var(--muted);margin:0}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}.contents{border-block:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px}.contents summary{cursor:pointer;font-weight:600}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents li{margin:0}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}article p{margin:0 0 22px}h2{font:700 26px/1.5 var(--serif);margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}ul{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{font:inherit;white-space:pre}.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}table{border-collapse:collapse;width:100%;min-width:650px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650}tbody th{font-weight:500;min-width:190px}tr:last-child th,tr:last-child td{border-bottom:0}#sources{font-size:14px;color:var(--muted);overflow-wrap:anywhere}#sources h2{font-size:20px}.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}@media(max-width:600px){body{font-size:16px}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px;gap:12px;font-size:12px}header{padding:36px 0 24px}.subtitle{font-size:19px}h2{font-size:23px;margin-top:42px}pre{font-size:12px;padding:14px 12px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px;flex-wrap:wrap}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}pre,pre code{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}a{color:inherit}}p,li,th,td,h1,h2{overflow-wrap:anywhere}article p code{font-size:.88em;overflow-wrap:anywhere}</style></head>
+<body id="top"><a class="skip" href="#main">跳至正文</a><main class="shell" id="main"><nav class="masthead" aria-label="导航"><a href="../blog/">个人博客</a><a href="index.html">系列目录</a></nav><article><header><h1>共享数据库以后，谁来保证每次读取都可靠</h1><p class="subtitle">读 OpenAI Habitat：分区预算、缓存新鲜度，以及变更流恢复的三本账</p><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-10-25">2026 年 10 月 25 日</time> · 基础设施与可靠性</p></header><nav class="contents" aria-label="本文目录"><details open><summary>本文目录</summary><ol><li><a href="#promise">01｜一项存储服务，要同时回答三个问题</a></li><li><a href="#budget">02｜总容量够用，为什么一个分区仍会限流</a></li><li><a href="#isolation">03｜共享与独占，解决的是不同层级的干扰</a></li><li><a href="#qos">04｜优先级必须成为资源规则，才能保护交互请求</a></li><li><a href="#operations">05｜故障演练要走到回切与追赶结束</a></li><li><a href="#geography">06｜把数据放近一点，要同时计算副本与迁移成本</a></li><li><a href="#latency">07｜中位数很快以后，慢请求去了哪里</a></li><li><a href="#invalidation">08｜发出了失效通知，也不等于旧值已经消失</a></li><li><a href="#feed">09｜变更流要先说明顺序、删除和重复</a></li><li><a href="#recovery">10｜租约、死信与检查点，决定故障以后会怎样</a></li><li><a href="#scorecard">11｜优化完成的标准，是能解释每一笔取舍</a></li><li><a href="#sources">原文、核对材料与分析范围</a></li></ol></details></nav>
+<section id="promise"><h2>01｜一项存储服务，要同时回答三个问题</h2>
+<p>用户刚刚保存了一次修改，随后重新打开页面，却看见旧内容。监控上，数据库没有宕机，平均延迟也很漂亮。这算成功还是失败？如果答案只取决于“请求有没有返回”，我们对存储服务的定义就太窄了。</p>
+<p>我更关心三件事：另一个业务突然变忙，会不会拖慢我的请求；这次返回的数据，是否足够新；一条更新发生之后，依赖它的其他系统最终能否追上。它们分别对应容量隔离、读取语义和变化传播。三个问题共用基础设施，却不能靠同一个成功率回答。</p>
+<p>OpenAI 在 2026 年 10 月 23 日介绍了 Habitat 的存储演进：容器从共享到独占，再回到共享；用热点限流和优先级保护交互请求；以缓存、变更流和 Rust 服务改善读取。多项改进合计使全球读取 p50 从约 120 毫秒降到约 10 毫秒，作者称为 12 倍改善。这不是 Rust 单项实验，也不是尾延迟或产品端到端时延。<a href="https://openai.com/index/scaling-storage-one-billion-users-part-two/">OpenAI 原文</a></p>
+<p>下面以这条演进为入口，建立一份可以用于自己系统的检查方法。基础机制另以微软官方文档核对；算例、故障场景、迁移顺序和验收建议均为我的工程分析，没有复现 Habitat，也不代表任何团队的线上结果。讨论的重点是：每增加一种优化，系统又需要兑现哪些承诺？</p>
+</section>
+<section id="budget"><h2>02｜总容量够用，为什么一个分区仍会限流</h2>
+<p>先把 QPS 与 RU/s 分开。前者数每秒请求，后者数每秒资源预算。Cosmos DB 用 RU 综合表示操作所消耗的 CPU、IO 和内存等资源；约 1 KB 项目的按 ID 与分区键点读，是官方给出的约 1 RU 示例。文档指出，数据大小、查询复杂度、索引和一致性级别都会影响费用。因此，同样一千次请求，可以对应不同的资源消耗。<a href="https://learn.microsoft.com/en-us/azure/cosmos-db/request-units">Request Units 官方说明</a></p>
+<p>一个假设可以说明区别。业务原来每秒有一千次操作，每次平均消耗 2 RU，需求约为 2,000 RU/s。发布后，请求量不变，但返回字段增多、查询路径改变，每次平均变成 6 RU，需求便来到 6,000 RU/s。只观察 QPS 的人会说流量很平稳，观察资源预算的人却已经看见三倍压力。这组数仅用于解释单位，不能作为真实操作的定价表。</p>
+<p>接下来是预算被分到哪里。Cosmos DB 的逻辑分区由分区键值定义，一个物理分区可以承载多个逻辑分区。官方文档说明，容器的预配吞吐量会均分给物理分区；物理分区由服务管理，增加数据或吞吐量会触发分裂。每个物理分区最高 10,000 RU/s，并不表示其中每个逻辑分区都独享这个数。<a href="https://learn.microsoft.com/en-us/azure/cosmos-db/partitioning">分区与水平扩展</a></p>
+<p>假设一个容器固定预配 60,000 RU/s，最初有 6 个物理分区，平均每个分到 10,000 RU/s。某个热点键持续需要 8,000 RU/s。随后冷数据增长，物理分区变为 12 个，而总预算不变，每个分区只分到 5,000 RU/s。如果这个热点键仍集中在一个分区，它就可能被限流，即使容器总需求远未达到 60,000。这里没有声称真实服务会恰好按这个时间和数量分裂；算例只演示均分预算的后果。</p>
+<pre tabindex="0"><code>假设：容器总预算固定，热点请求的资源成本也固定
+
+分裂前：60,000 RU/s ÷ 6 个物理分区 = 10,000 RU/s / 分区
+分裂后：60,000 RU/s ÷ 12 个物理分区 = 5,000 RU/s / 分区
+热点键：持续需要 8,000 RU/s
+
+总量看板可能很宽裕，热点所在分区却已经超出份额。</code></pre>
+<p>这就是理解 weak partition 这类现象的关键：数据体积、请求热度和资源份额并不一定同步增长。若只按请求数扩容，冷数据引发的拓扑变化可能被漏掉；若只按磁盘占用扩容，也不知道哪些操作已经接近吞吐边界。</p>
+<p>我会让容量看板同时保留容器总预算、实际资源消耗、热点键分布、物理分区数量与限流位置。报警应能回答“谁耗尽了哪一层预算”，而不是只说数据库繁忙。修复也要区分：增加总预算、改变请求、拆分业务键、迁移负载，作用的层级不同。</p>
+</section>
+<section id="isolation"><h2>03｜共享与独占，解决的是不同层级的干扰</h2>
+<p>给每个业务分配一个独立容器，容易理解，也容易建立责任边界：谁用了多少资源，谁为扩容负责。但独占并不自动消除热点。一个大客户的请求仍可能集中在同一个键；应用连接池、网络出口或下游服务也可能继续共享。隔离发生在哪一层，必须在架构图上说清楚。</p>
+<p>我会把边界拆成三层。业务身份决定谁有权发请求；数据键决定相关记录怎样组织；资源调度决定请求相互争夺哪些预算。它们可以关联，但不应被混成一个字符串。例如，两个功能都使用用户编号，是否意味着它们必须共享热点、缓存和限流语义？这需要明确设计，不能因为字段名字相同就自动成立。</p>
+<p>下面的假设能说明共享池的吸引力。十个业务各自准备峰值 100 单位容量，独立部署共准备 1,000。若每个业务平时用 10，而且同一时刻通常只有一个升到峰值，总需求可能只有 190。共享可以利用错峰。但如果十个业务都受同一次产品发布驱动，峰值就可能同时出现，原先的统计优势随之消失。这不是要用 190 配出生产容量，而是要求先检验峰值之间是否相关。</p>
+<p>独占的代价是闲置和逐个规划，共享的代价是调度和干扰治理。选择不应只看资源利用率，还应看团队能否实现可执行的配额、明确的降级和快速迁移。没有这些能力的共享，可能把容量管理的工作藏进故障值班；没有持续利用率审查的独占，则可能把所有峰值预算长期付费保留。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="共享与独占的决策比较，可横向滚动"><table><thead><tr><th scope="col">决策问题</th><th scope="col">共享池需要证明</th><th scope="col">独立资源需要证明</th></tr></thead><tbody><tr><th scope="row">突发流量</th><td>高峰相关性、抢占规则与总余量</td><td>单业务扩容速度和峰值准备</td></tr><tr><th scope="row">故障范围</th><td>热点能否被定位并限制</td><td>共享依赖是否仍会传导故障</td></tr><tr><th scope="row">资源成本</th><td>调度复杂度是否抵消复用收益</td><td>闲置容量是否可被回收</td></tr><tr><th scope="row">后续迁移</th><td>某个租户能否安全移出</td><td>新业务能否低成本接入</td></tr></tbody></table></div>
+<p>迁移能力值得单独建设。假设今天按业务拆，明天按数据热度拆，后天又希望合并空闲资源，若每一步都要求业务代码改数据库地址和分区规则，平台就很难调整。逻辑身份与物理位置之间应有受控映射，并保留版本、回退条件和迁移状态。这里的目标是让调整可验证，而非把迁移过程伪装成完全没有风险的透明操作。</p>
+</section>
+<section id="qos"><h2>04｜优先级必须成为资源规则，才能保护交互请求</h2>
+<p>把请求标记为“高优先级”并不会凭空增加容量。它有价值的前提是：当资源不够时，系统确实知道应该延后谁、拒绝谁，以及拒绝之后会发生什么。我会先把登录、交互读取、后台导出和历史回填区分开，再决定各自的等待预算。</p>
+<p>一个容易漏掉的环节是重试。后台任务收到限流后立刻重试，可能比原来消耗更多连接、队列和日志资源。假设每个失败请求最多被额外执行三次，最坏情况下，原始一万次尝试会产生四万次提交。它不是额外四万次，也不意味着所有系统都会达到这个上界；但足以说明，准入规则与重试规则必须一起评审。</p>
+<p>因此，我会把每类任务的并发上限、最长排队时间、重试次数和恢复速度写在同一份配置中。交互请求可以优先，但后台任务也需要可预期的最低进度或明确暂停状态，否则积压最终可能反过来影响备份、分析和缓存新鲜度。优先级策略应该说明长期饥饿怎样被发现。</p>
+<p>身份也不能由调用方随意自报。若所有服务都能把自己标为关键流量，优先级最后只剩一个标签。平台应把工作负载身份、授权配置与资源等级关联，在变更时留下可审查记录。保护关键请求的规则，本身也是需要保护的共享状态。</p>
+<p>还有一处产品边界需要读清：OpenAI 描述的改进 serverless，是 Azure 针对其工作负载提供的能力，包括每物理分区 10,000 RU/s 及按 RU 使用分裂。不能据此断言所有客户都已获得相同模式。<a href="https://openai.com/index/scaling-storage-one-billion-users-part-two/">该案例的适用范围</a>本次读取的微软公开 serverless 文档仍以每分区 5,000 RU/s 计算最大容量，并明确不保证可预测吞吐与延迟。<a href="https://learn.microsoft.com/en-us/azure/cosmos-db/serverless-performance">公开产品性能说明</a></p>
+<p>这两个材料回答的是不同问题：一个描述特定合作工程，一个说明公开产品行为。做选型时，需要核对自己账号、区域、版本与合同实际得到什么。即使服务替我们管理分区，应用仍要测突发、热点、限流后的体验和恢复过程。“不用手动预配”不会让业务失去容量边界。</p>
+</section>
+<section id="operations"><h2>05｜故障演练要走到回切与追赶结束</h2>
+<p>设想一次跨区域演练：主区域不可用，流量成功切到备用区域，仪表盘转绿，演练结束。这个验收可能只完成了一半。恢复主区域以后，连接是否同时重建？元数据是否需要重新加载？尚未迁回的数据会不会收到请求？备用期间积累的任务是否一起重启？</p>
+<p>这些是我会额外构造的故障情景，并不是在补写案例中未公开的事故。它们的共同点是，系统状态恢复得比客户端行为更慢。某个入口地址已经可用，不代表每个数据分片、连接池和路由表都已准备好。客户端如果把“可以连接”理解为“可以满负荷恢复”，就可能把一次恢复变成下一次拥塞。</p>
+<p>从平台运营角度，我会区分三个时间点：备用路径开始服务；用户体验回到可接受范围；所有积压、复制与后台任务完成追赶。这三者之间可能相差很大。只报告第一个时间点，会低估故障留下的尾部工作；只报告最后一个，也会掩盖用户其实已经恢复使用。</p>
+<p>演练的规模应覆盖连接数量和元数据规模，而不只复制请求 QPS。一个小测试库可以用很少的连接支撑高请求量，却无法暴露大量分片同时刷新路由的压力。同样，把缓存预热好再测试，得到的是热恢复路径；真实停机以后，缓存、连接与后台状态未必都还能保留。</p>
+<p>联合运维需要共同的证据格式：应用请求标识、路由目标、物理资源位置、限流原因和恢复事件能够对齐。问题出现时，应用团队应能证明自己在哪一步等待，基础设施团队应能判断哪个共享层正在拥塞。若双方只能各自提供一张绿色看板，责任边界越清晰，定位反而越慢。</p>
+<p>我的演练退出条件会包括：回切期间的交互延迟受控、重连速度有上限、后台追赶不挤占关键路径、单个失败任务不会拖住整批任务。每项都应有一个能被验证的指标。没有通过的部分，应作为明确限制保留，而不是被“已恢复”三个字盖住。</p>
+</section>
+<section id="geography"><h2>06｜把数据放近一点，要同时计算副本与迁移成本</h2>
+<p>在地图上给每个计算区域配一份完整数据，看起来能够减少跨区域读取。但一个实际方案至少要回答四个问题：那里有没有存储容量；新增副本需要传输多少数据；写入怎样传播；哪些数据允许放在那里。地理距离只解释网络路径的一部分，不能替代资源与数据边界。</p>
+<p>考虑一个完全假设的容量账本。某类数据有 100 TB，完整复制到四个位置，仅应用层副本就需要保存 400 TB；这里还没有计算每个位置内部的冗余、索引、备份和日志。若只有其中 5 TB 是高频跨区读取，先分析热数据分布，比立刻复制全部数据更可能找准成本来源。但热点可能变化，所以热数据策略也要记录漏判与补取。</p>
+<p>我会按读取目的分类。小而频繁使用的元数据，可能值得广泛复制；体积大的历史记录，可以在需要时读取；临时推理上下文则要看生命周期与重用率。这个分类不是固定产品架构，真正的分界应由访问轨迹、时延要求、可接受陈旧程度以及数据放置限制决定。</p>
+<p>迁移期间还要承认“双份世界”的存在。目标位置需要补齐旧数据，同时接收新变化；流量切换后，旧路径可能仍有在途请求。一个稳妥的方案要定义何时目标算追平、路由版本怎样切换、旧路径保留多久，以及何时才允许回收旧副本。数据复制成功，不等于调用方已经全部切换。</p>
+<p>如果容量紧张，迁移本身还可能和正常请求争夺网络与读取预算。原来为了改善访问而启动的复制，可能先让用户变慢。于是迁移也需要限速、暂停和进度指标，并且应能把“复制慢”与“源数据不一致”分开报告。这与上一节的恢复是同一类问题：后台工作必须有自己的资源契约。</p>
+</section>
+<section id="latency"><h2>07｜中位数很快以后，慢请求去了哪里</h2>
+<p>缓存会改变延迟分布，而不仅仅是把所有请求等比例加速。假设 95% 的请求命中缓存，用时 12 毫秒；剩余 5% 需要远端读取，用时 180 毫秒。忽略其他波动，中位数约为 12 毫秒，但第 99 百分位仍落在慢路径。这个模型是为了说明混合分布，不是对 Habitat 指标的拟合。</p>
+<p>因此，评价缓存需要同时看命中路径与未命中路径。命中率上升，可能使总体 p50 很好看，但刚注册的用户、刚创建的数据和冷门地区仍频繁访问慢路径。若只看全球汇总，一个大区域的优秀表现还可能掩盖小区域退步。按地区、数据类型和请求类别拆分，比继续增加一个整体平均值更有用。</p>
+<p>缓存对成本也有两面。一次命中节省了源站读取，但缓存需要内存、网络、更新传播和维护。某个对象很大、只读一次，即使缓存成功写入，也可能在被再次访问之前就被淘汰。我们应测每类对象的重用，而不能把“写进缓存”本身当成优化完成。</p>
+<p>我会在试验中固定请求样本，分别观察无缓存、冷缓存与稳定热缓存。新实现上线时，如果恰好改变了地区分布、对象大小或请求组合，就不能把全部收益归给代码优化。对服务语言或运行时的改造，也应单独记录代理 CPU、排队、序列化和网络时间，才能判断究竟省掉了什么。</p>
+<p>还有一个更尖锐的问题：最快的一次返回，是否允许返回旧数据？如果一个列表页可以接受短暂延迟，缓存有很大余地；如果一个动作依赖刚刚变化的权限或状态，就需要更严格的读取路径。性能报告应该带着语义一起呈现。同样的十毫秒，返回的是最新确认状态还是一个旧快照，产品价值并不相同。</p>
+</section>
+<section id="invalidation"><h2>08｜发出了失效通知，也不等于旧值已经消失</h2>
+<p>Cache-Aside 的基本顺序是：先查缓存，未命中再读存储并填充；更新时先写存储，再失效相应缓存。微软文档同时强调，这个模式本身并不保证两者始终一致。TTL 太短增加回源，太长则增加陈旧风险。<a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside">Cache-Aside 官方说明</a></p>
+<p>即便写入顺序正确，仍要检查在途读取。下面是一个假设时间线：读取已经拿到了旧版本，却还没有完成缓存填充；随后更新完成，缓存也失效；最后那个慢读取才把旧版本放回缓存。每个单独操作都成功，组合结果却违背了“更新以后缓存应当新鲜”的直觉。</p>
+<pre tabindex="0"><code>假设时间线：同一对象，旧版本 v7，新版本 v8
+
+t1  读取 A 缓存未命中，开始获取数据
+t2  A 已拿到 v7，但填充缓存的动作尚未完成
+t3  写入 B 将存储更新为 v8
+t4  B 发出失效，缓存中对应条目被删除
+t5  A 恢复执行，把先前拿到的 v7 填回缓存
+
+关键检查：失效完成之后，过期的在途填充还能否被接受？</code></pre>
+<p>一种设计方向是让缓存条目带版本，并让失效推进一个最低可接受版本或代际。填充时校验结果是否仍然有效。这里的难点在于校验与写入需要合适的原子性；如果只是先检查版本、再单独写缓存，检查之后仍可能发生新更新。这是设计方向，不是一段复制过去就能保证一致性的算法。</p>
+<p>版本还必须有比较语义。任意两个 opaque token 未必能直接用大小比较；跨区域版本也未必存在一个简单全序。系统应明确版本从哪里产生、比较范围是什么、代际记录保留多久，以及记录过期后怎样拒绝过旧的在途请求。否则，增加一个 version 字段只会让文档显得更完整。</p>
+<p>另一种选择是为需要强新鲜度的操作绕开某些缓存，或携带写后读取所需的状态。代价是这些请求可能更慢，也可能在故障期间暂时不可用。这个取舍应由业务语义决定，并让调用方能够区分“读到了旧值”“尚未追平”“读取失败”，避免三个状态都表现为一次普通成功。</p>
+<p>TTL 可以作为最后一层限制，但它不是自动的全局新鲜度证明。若旧值不断从滞后的副本被重新填充，缓存的计时器可能不断重启。评估时应观察数据版本的年龄和更新到可见的时间，而不只是缓存条目从写入到过期的秒数。</p>
+</section>
+<section id="feed"><h2>09｜变更流要先说明顺序、删除和重复</h2>
+<p>把数据更新变成一条可消费的流，可以让缓存、索引和其他派生状态逐步跟上。但“监听所有变化”是一句过于宽泛的接口承诺。消费方需要知道，它得到的是最新版本、每次版本，还是包含删除的完整变化；顺序又是在单个对象、分区还是整个数据库内成立。</p>
+<p>Cosmos DB 官方文档说明，变更顺序保证在同一分区键值内，不保证跨分区键的全局顺序。最新版本模式不捕获删除；所有版本及删除模式提供不同的捕获范围。通过 Change Feed Processor 消费，则要按至少一次处理语义设计。<a href="https://learn.microsoft.com/en-us/azure/cosmos-db/change-feed">Change Feed 的范围与模式</a></p>
+<p>所以我会让每个订阅在注册时声明用途。缓存失效通常只需知道某个对象已经变化；审计可能需要保留每次中间状态；删除传播还必须区分真实删除与暂时查不到。不能因为它们都订阅同一张表，就默认一套事件内容满足所有人。</p>
+<p>至少一次意味着同一变化可能被再次处理。对于失效缓存，重复删除一个条目通常容易容忍；对于发送通知、累计计数或生成账单，就需要稳定操作标识及去重或幂等机制。这里并不是说变更流应承担全部业务事务，而是要求每个消费方清楚地定义重复到达时的结果。</p>
+<p>顺序也不能靠接收时间猜测。两个不同分区的事件先后到达，未必代表业务因果先后。若某个派生结果必须同时观察多个对象的某一版本，就需要明确依赖条件，或等到可证明输入齐备的状态。把所有消息放入同一个队列，只能给到达顺序编号，不能凭空恢复原本不存在的全局事务顺序。</p>
+<p>对于删除，我会单独设计验收：对象删除后，缓存、搜索结果、导出系统多久可见；离线了一段时间的消费者恢复后，是否还能知道删除发生过。如果答案依赖某种保留窗口，必须让订阅方知道窗口长度与超期后的重建办法。删除不能只在创建和更新都通过之后，作为一个小补丁补上。</p>
+<p>这些语义确定后，吞吐量才有意义。一个系统每秒能传很多事件，却无法解释遗漏与重复，并不能证明派生状态可信。消费延迟也应按最老未完成事件的年龄、关键对象的追平状态来观察。只报每秒处理多少条，可能在处理大量新事件的同时，把一个旧问题永久留在后面。</p>
+</section>
+<section id="recovery"><h2>10｜租约、死信与检查点，决定故障以后会怎样</h2>
+<p>当消费者数量增加，系统需要把不同分区的工作分配给不同实例。微软的 Change Feed Processor 用租约容器协调进度，并在处理成功后保存检查点；处理失败可能从此前保存的位置重新发送批次。官方还提醒，回调过早返回而异步处理尚未完成，可能使检查点领先于真实业务完成。<a href="https://learn.microsoft.com/en-us/azure/cosmos-db/change-feed-processor">Processor 生命周期与错误处理</a></p>
+<p>从这里可以建立一个通用的恢复模型：租约回答当前谁负责，检查点回答哪些工作已确认完成，下游状态回答副作用究竟有没有发生。三者并不天然一致。实例失去租约时，旧请求可能仍在网络中；下游已经成功时，保存检查点可能失败；检查点保存成功时，也要确保所谓完成不只是把任务放进本地内存。</p>
+<p>因此，消费方应把“处理成功”的定义写得足够具体。如果目标是失效缓存，成功可能需要目标系统确认接收；如果目标是生成索引，则要判断写入是否已持久化，以及恢复后能否安全重复。租约用于协调，但不能代替下游幂等；检查点用于恢复，但不能替代业务结果核验。</p>
+<p>批量保存检查点可以减少写入，却扩大故障后重放的区间。假设一个工作单元每秒处理 500 条，正常每 10 秒保存一次，单看间隔就可能积累约 5,000 条尚未持久记录的进度。这个数不是严格恢复上界：保存延迟、批次边界和失败次数都会改变它。它提醒我们，节省检查点写入之前，要确认下游能承受相应重放。</p>
+<p>死信队列则处理另一个矛盾：一个坏事件不应该阻塞无限多后续事件，但跳过它也不能被当作已经完成。我的做法是把可重试失败与需要人工或代码修复的失败区分开，将原事件、失败原因和处理版本一起持久保存，并定义重放责任、期限与报警。没有重放计划的死信队列，很容易变成隐藏的数据丢失清单。</p>
+<p>某些业务有强顺序依赖，跳过前一个事件会让后面的结果失去意义。这时不能机械地把坏事件移入死信后继续，需要暂停对应的最小依赖范围，或重新构建该范围的状态。隔离粒度应该由依赖关系决定：一个对象失败不必停整个集群，一个跨对象事务也不能被拆成互不相关的成功。</p>
+<p>控制面同样需要接受故障测试。新增容器有没有被纳入订阅，分区变化后有没有漏分配，读取区域切换后是否沿用正确进度，配置发布有没有让大量消费者同时重启？这类遗漏可能不会产生明显错误，只表现为某份数据悄悄不再更新。定期对账与覆盖率检查，能补上仅靠异常日志看不到的部分。</p>
+</section>
+<section id="scorecard"><h2>11｜优化完成的标准，是能解释每一笔取舍</h2>
+<p>如果把上述工作放到一个项目里，我会先选一类数据和一条请求路径，再逐项验证。先建立资源与版本遥测，再引入缓存或新的消费机制；每一步保留回退路径，并记录回退会给原系统增加多少负载。一次性改变分区、缓存、语言和调度，即使整体变快，也很难解释哪里可靠、哪里只是暂时没有出问题。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="共享存储验收清单，可横向滚动"><table><thead><tr><th scope="col">承诺</th><th scope="col">需要的证据</th><th scope="col">应主动制造的情况</th></tr></thead><tbody><tr><th scope="row">容量隔离</th><td>热点所在层、限流原因、关键请求延迟</td><td>单租户突增、冷数据增长、批量重试</td></tr><tr><th scope="row">读取新鲜度</th><td>版本年龄、更新到可见时间、慢路径分布</td><td>在途旧读取、失效丢失、远端副本落后</td></tr><tr><th scope="row">恢复完整性</th><td>租约交接、持久检查点、重复处理结果</td><td>处理中崩溃、下游成功但确认丢失</td></tr><tr><th scope="row">变化覆盖</th><td>订阅覆盖率、删除传播、最老积压年龄</td><td>新容器、分区变化、消费者长期离线</td></tr><tr><th scope="row">成本可解释</th><td>每类请求的计算、存储、传输与维护成本</td><td>冷启动、峰值、跨区迁移及全量重建</td></tr></tbody></table></div>
+<p>原文最后还讨论了未来的定制存储方向：以减少闪存占用换取较低峰值 QPS。它属于后续建设方向，不能当成已经验证的新系统收益。<a href="https://openai.com/index/scaling-storage-one-billion-users-part-two/">原文的未来工作</a>这个取舍值得单独记住，因为成本优化未必意味着所有维度都变好。</p>
+<p>对于自己的系统，应该先画出需求范围：需要多少持久容量，能接受多长冷读取，峰值持续多久，重建需要多少时间。若大量数据很少读取，降低高性能介质占用可能合理；若所有用户会在同一时刻访问同一批数据，峰值读取能力就更难让步。不能拿一种工作负载的成本曲线，替另一种工作负载签字。</p>
+<p>技术报告最终应能让人看见收益与代价同时存在：共享节省了多少闲置，增加了哪些调度责任；缓存省掉了多少回源，允许怎样的新鲜度；检查点批量化减少多少写入，故障后多重放多少工作。只有把这些问题放在同一份报告中，才知道优化是否值得长期维护。</p>
+<p>对医疗相关软件，也应守住指标的职责：更快、更可靠地读取数据，可以改善工程链路；它本身不能证明诊疗判断正确，也不能证明一份过期信息适合用于当前决策。数据时效、权限和业务确认条件仍需独立验证。这里讨论的是基础设施方法，没有报告任何医疗系统的实施成果。</p>
+<p>我从这次阅读中带走的，是一个更具体的服务标准：<strong>当请求变多、数据变旧、消费者发生故障时，系统仍能说明谁受到影响、返回了什么版本，以及还欠哪些工作。</strong>把这些账说清楚，共享数据库才成为可以依赖的基础设施。</p>
+</section>
+<section id="sources"><h2>原文、核对材料与分析范围</h2>
+<p>主读文章：OpenAI，<a href="https://openai.com/index/scaling-storage-one-billion-users-part-two/">Rapidly scaling online storage to serve over 1 billion ChatGPT users (Part II)</a>，2026 年 10 月 23 日发布。本文读取与核对日期：2026 年 10 月 25 日。主文中的系统演进、定制能力和性能数字为作者自报；本文没有进行独立性能复现。完整架构背景与事故细节请见原文。</p>
+<ul><li><a href="https://learn.microsoft.com/en-us/azure/cosmos-db/request-units">Microsoft Learn：Request Units</a>，核对资源单位、操作成本与吞吐量的关系。</li><li><a href="https://learn.microsoft.com/en-us/azure/cosmos-db/partitioning">Microsoft Learn：Partitioning and horizontal scaling</a>，核对逻辑与物理分区、吞吐预算分配。</li><li><a href="https://learn.microsoft.com/en-us/azure/cosmos-db/serverless-performance">Microsoft Learn：Serverless account performance</a>，用于区分公开产品说明与特定客户的改进模式。</li><li><a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside">Azure Architecture Center：Cache-Aside pattern</a>，核对读写顺序和一致性限制。</li><li><a href="https://learn.microsoft.com/en-us/azure/cosmos-db/change-feed">Microsoft Learn：Work with the change feed</a>，核对顺序范围、模式、删除与消费语义。</li><li><a href="https://learn.microsoft.com/en-us/azure/cosmos-db/change-feed-processor">Microsoft Learn：Change feed processor</a>，核对租约、检查点、失败重试与回调完成条件。</li></ul>
+<p>正文中的容量数字、流量分布、时间线、验收表与实施顺序均为明确标注的假设或原创工程建议；它们不代表 OpenAI 或微软的额外实验，不是可直接投入生产的实现。各官方文档的产品行为按本次读取版本理解，实际部署仍需核对所用服务和配置。</p>
+</section>
+</article><footer class="page-footer"><a href="../blog/">返回个人博客</a><a href="#top">回到顶部 ↑</a></footer></main></body></html>
