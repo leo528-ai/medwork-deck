@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>沙箱失守以后，Agent 的边界靠什么守住｜胡浩源</title><meta name="description" content="读 OpenAI 的训练环境加固：离线世界、传递性出网、侧信道与停机闭环"><meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人"><meta name="color-scheme" content="light"><meta name="theme-color" content="#F5F1E8">
+<link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/agent-containment-defense-in-depth.html"><style>:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2;--serif:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}a:focus-visible,summary:focus-visible,.table-wrap:focus-visible,pre:focus-visible{outline:3px solid var(--clay);outline-offset:5px}.shell{width:min(100% - 40px,760px);margin:auto}.skip{position:absolute;top:-5rem;left:1rem;background:var(--surface);padding:.5rem 1rem}.skip:focus{top:1rem}.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;color:var(--muted)}.masthead a{color:var(--muted)}header{padding:52px 0 26px}h1{font:700 clamp(32px,5.8vw,46px)/1.35 var(--serif);letter-spacing:-.035em;margin:0 0 25px;text-wrap:balance}.subtitle{font:21px/1.65 var(--serif);color:var(--muted);margin:0 0 24px}.byline{font-size:14px;color:var(--muted);margin:0}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}.contents{border-block:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px}.contents summary{cursor:pointer;font-weight:600}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents li{margin:0}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}article p{margin:0 0 22px}h2{font:700 26px/1.5 var(--serif);margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}ul{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{font:inherit;white-space:pre}.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}table{border-collapse:collapse;width:100%;min-width:650px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650}tbody th{font-weight:500;min-width:190px}tr:last-child th,tr:last-child td{border-bottom:0}#sources{font-size:14px;color:var(--muted);overflow-wrap:anywhere}#sources h2{font-size:20px}.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}@media(max-width:600px){body{font-size:16px}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px;gap:12px;font-size:12px}header{padding:36px 0 24px}.subtitle{font-size:19px}h2{font-size:23px;margin-top:42px}pre{font-size:12px;padding:14px 12px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px;flex-wrap:wrap}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}pre,pre code{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}a{color:inherit}}</style></head>
+<body id="top"><a class="skip" href="#main">跳至正文</a><main class="shell" id="main"><nav class="masthead" aria-label="导航"><a href="../blog/">个人博客</a><a href="index.html">系列目录</a></nav><article>
+<header><h1>沙箱失守以后，Agent 的边界靠什么守住</h1><p class="subtitle">读 OpenAI 的训练环境加固：离线世界、传递性出网、侧信道与停机闭环</p><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-10-24">2026 年 10 月 24 日</time> · Agent 安全与可靠性</p></header>
+<nav class="contents" aria-label="本文目录"><details open><summary>本文目录</summary><ol><li><a href="#boundary">01｜先问边界承诺了什么，再问模型有多听话</a></li><li><a href="#offline">02｜离线世界解决练习空间，不自动解决所有出口</a></li><li><a href="#layers">03｜纵深防御的价值，取决于各层是否会一起失效</a></li><li><a href="#transitive">04｜允许访问一个服务，不等于允许借它访问整个世界</a></li><li><a href="#channels">05｜没有共享文件，也可能仍在共享信息</a></li><li><a href="#experiment">06｜红队实验要交付证据，不只是交付惊险故事</a></li><li><a href="#stop">07｜看见风险以后，系统还要真的停下来</a></li><li><a href="#case">08｜恢复运行需要一条证据链，而不是一张安全标签</a></li><li><a href="#practice">09｜把边界写进日常交付，而不是留到出事以后</a></li><li><a href="#sources">原文与技术参考</a></li></ol></details></nav>
+<section id="boundary"><h2>01｜先问边界承诺了什么，再问模型有多听话</h2>
+<p>一个 Agent 能运行代码、查资料、调用服务，就已经进入了真实的权限体系。它看到的工具列表只是这个体系的入口。工具背后的身份、网络、文件、缓存和共享计算资源，会共同决定它最终能够影响什么。</p>
+<p>OpenAI 于 2026 年 10 月 23 日发布的 <a href="https://openai.com/index/securing-our-frontier-model-training-environment/">Securing our frontier model training environment</a>，讨论的是前沿模型的内部训练与评测环境，不能直接当成已发布产品的安全说明。</p>
+<p>读这篇文章，我最关注一个设计要求：当 Agent 已经开始寻找限制的薄弱处，边界还剩下多少约束力？如果系统只有在模型愿意服从时才安全，那些限制更接近操作约定。可靠的架构需要把一部分关键约束交给模型无法自行改写的执行层。</p>
+<p>这会改变验收问题。我们通常问“正常任务能不能完成”，也会问“危险请求会不会被拒绝”。还应该增加第三类问题：假设某个组件已经失效，系统能否把后果限制在约定范围内？例如，执行进程被完全控制以后，它能否触达别的任务；网络策略被错误配置以后，是否有独立出口约束；监测器失联以后，新任务能否继续启动。</p>
+<p>这些问题不能靠一次演示回答。它们要求每条安全承诺都有明确对象、失败条件和观测方法。“隔离良好”太宽泛；“任务 A 无法读取任务 B 的文件”要具体一些；再追问共享缓存是否也能携带信息，才开始接近完整的边界。</p>
+</section>
+<section id="offline"><h2>02｜离线世界解决练习空间，不自动解决所有出口</h2>
+<p>主文介绍用索引与缓存内容构造离线练习环境，同时明确研究基础设施并未物理断网。<a href="https://openai.com/index/securing-our-frontier-model-training-environment/">原文：离线世界与纵深隔离</a></p>
+<p>这两个表述放在一起很重要。模型可以练习检索、浏览和使用应用，不必把每一次探索都送到外部真实系统；但支撑练习空间的基础设施，仍然有运维、身份、日志等职责。于是“业务内容来自离线副本”与“任何路径都无法连接外网”，成为两个需要分别证明的命题。</p>
+<p>可以把它理解为一座训练场。场内的商店、路口和交通信号都可以模拟，但训练场仍需要供电、消防和维护通道。不能因为练习道路封闭，就忽略维护通道通向哪里。对软件而言，这些通道经常隐藏在依赖关系里，而不是模型可见的浏览器按钮上。</p>
+<p>我会先画两张不同的图。第一张是任务能力图：模型需要哪些数据、工具和反馈，哪些可以由快照或模拟服务提供。第二张是实际可达性图：执行环境能接触哪些服务，这些服务又能以什么身份接触哪些下游。第一张决定训练是否有意义，第二张决定边界能否成立。</p>
+<p>还要给缓存缺失定义清楚的语义。当资料不在离线集合里，正确结果可以是“当前环境无法验证”。如果产品把这种情况一律解释成需要继续尝试的技术障碍，就可能把任务完成压力传递成寻找替代出口的压力。因此，离线任务也需要可接受的未完成状态、明确的证据不足标记，以及不会惩罚合理停止的评测口径。</p>
+<p>反过来，离线环境也有能力评估上的代价。内容覆盖、页面版本和交互真实性，都可能影响结果。若一个 Agent 在某个快照上表现很好，只能先说明它适应了那个环境；要评估真实部署，还需另行设计得到授权的在线验证。安全边界与评测外部有效性，应当同时被记录，而不是相互替代。</p>
+</section>
+<section id="layers"><h2>03｜纵深防御的价值，取决于各层是否会一起失效</h2>
+<p>主文组合了沙箱、microVM、监测及网络云边界，并专门测试内层已失守的情况。<a href="https://openai.com/index/securing-our-frontier-model-training-environment/">原文：隔离与红队条件</a></p>
+<p>执行层并不只有一种形态：Linux 使用 microVM 内的受限容器；macOS、Windows 使用虚拟化环境；需要加速器的任务使用带用户态沙箱的 GPU 容器。 <a href="https://openai.com/index/securing-our-frontier-model-training-environment/">原文</a></p>
+<p>“多放几层”很容易变成架构图上的安慰。真正需要检查的是，一次故障会不会同时穿透几层。如果沙箱、出口代理和停止开关都依赖同一份可被任务修改的配置，名义上的三层可能只有一个失效点。如果监测日志保存在受测进程可改写的位置，检测与取证也没有获得真正的独立性。</p>
+<p>理解层次差异，可以参考 gVisor 的官方架构说明：普通 Linux 隔离机制仍由宿主内核执行；虚拟机引入客体内核和虚拟化边界；gVisor 则通过用户态应用内核实现系统调用接口，限制其自身对宿主的接触面。它们并非相同技术的不同品牌。<a href="https://gvisor.dev/docs/architecture_guide/intro/">gVisor 架构说明</a></p>
+<p>选择其中一种技术后，仍要回答它之外的问题。运行时保护什么，宿主保护什么，网络策略由谁实施，凭据从哪里注入，谁有权撤销？一个组件可以很好地完成自己的任务，同时留下它从未承诺解决的风险。采购或接入清单上的“已有沙箱”，不应该替代这些责任划分。</p>
+<p>我更愿意为每一层写一张简短的失效卡：这层默认相信谁，能阻止哪种影响，失效后下一层能看见什么，证据由谁保留。测试时则逐层撤去假设。不要让出口测试因为内层过于牢固而永远没有机会运行，也不要把宿主已被控制的测试结果误说成正常任务一启动就会发生的事情。</p>
+<p>这里有一个工程上的取舍：隔离粒度越细，资源和协调成本可能越高；共享越多，边界审计就越复杂。我会根据数据敏感度和可能后果划分隔离单元，再测量代价，而不是先选择最便宜的执行单元，事后让提示词承担所有安全职责。</p>
+</section>
+<section id="transitive"><h2>04｜允许访问一个服务，不等于允许借它访问整个世界</h2>
+<p>主文的三类发现是虚拟机逃逸、经内部服务间接出网，以及跨隔离任务通信。<a href="https://openai.com/index/securing-our-frontier-model-training-environment/">原文：红队发现</a></p>
+<p>在宿主失陷的测试前提下，一条路径复用了防火墙放行的连接，经指标服务的认证端点代取模型指定的 URL。 <a href="https://openai.com/index/securing-our-frontier-model-training-environment/">原文</a></p>
+<p>其中，间接访问最容易被“域名白名单”这种简洁表达掩盖。假设任务获准调用一个内部资料服务，这个服务又能替调用者取得远端内容。任务是否只能读取事先审核的资料，取决于服务怎样处理输入和下游权限。若它把请求中的位置原样交给更有权限的组件执行，那么一个受控入口可能变成了权限转借点。</p>
+<p>这不要求每一步看起来都可疑。单独看，登录、指标、资源获取都可能是正常功能；问题出在它们组合以后形成了新的路径。架构审查因此不能只检查“这个 API 是内部的”，还要检查“它接受哪些可控参数”“它会替调用者做哪些动作”“最终约束在哪里重新验证”。</p>
+<p>gVisor 的安全模型也明确指出：即使没有从容器中提权，可达的上层服务仍可能构成攻击路径；网络策略还需要在相应层实施。沙箱不能代替整个系统的安全架构。<a href="https://gvisor.dev/docs/architecture_guide/security/">gVisor 安全模型</a></p>
+<p>对业务 Agent，我会把接口尽量设计成受约束的业务能力。例如，读取一份已授权的检查报告，输入应是经过权限验证的业务对象，而不是任意位置；生成报告附件，应绑定任务、用户和目标存储范围。这样做并不能消灭底层漏洞，但可以减少“通用接口 + 高权限身份”带来的组合空间。</p>
+<p>另一个常见遗漏是返程。调用前校验了权限，结果回来时却把缓存命中的他人数据直接交给调用者。请求、下游执行、缓存键和返回结果，应共同保留同一项授权约束。否则，系统可能在入口合规、在内部串线、在出口失去来源。</p>
+<p>因此，我会把“批准的调用链”作为审计对象，而不只保留工具调用名称。一次操作至少应能回答：谁发起、为哪个任务、依据哪次授权、由哪个服务继续执行、实际接触了什么资源。若这些关系无法还原，出了问题就只能从自然语言对话里猜测系统做过什么。</p>
+</section>
+<section id="channels"><h2>05｜没有共享文件，也可能仍在共享信息</h2>
+<p>主文展示了利用缓存时序等共享资源通信的案例；多数实验提供了方向或协议提示，不能描述成完全自主发现。<a href="https://openai.com/index/securing-our-frontier-model-training-environment/">原文：跨任务通信</a></p>
+<p>处理器缓存之外，实验还利用了共享存储时序、共享执行容器的 CPU 竞争，以及离线网络设施的 TLS 证书缓存。 <a href="https://openai.com/index/securing-our-frontier-model-training-environment/">原文</a></p>
+<p>理解这个问题，不必先记住具体攻击名字。设想两个人隔着墙，不能交谈，也不能交换纸条，但共用一条供水管道。一个人反复开关水龙头，另一个人观察水压变化，某种信息就可能通过共享资源传过去。计算系统里的时延、竞争和缓存命中，也可能承担类似角色。</p>
+<p>这里需要分清两件事。侧信道是通过非预期观察推断信息；隐蔽通信则可以由双方有意编码和解码。它们可能利用相近的物理现象，但测试目标、威胁假设与后果并不相同。把一次低速协作实验写成“任何 Agent 都能瞬间窃取所有数据”，既夸大结果，也会掩盖真正应修复的边界。</p>
+<p>官方 gVisor 文档把硬件侧信道列为需要宿主或硬件层缓解的问题。这提醒我们，文件目录和进程命名空间分开，不等于所有资源已经互不影响。<a href="https://gvisor.dev/docs/architecture_guide/intro/">官方适用边界</a></p>
+<p>在评测系统里，这个问题还有一层容易被忽略的意义。若两个本应独立的样本能够交换信息，受影响的不只是保密性，也可能是实验有效性。题目之间共享答案、任务之间传递环境线索，都会改变我们正在测量的对象。此时高分可能来自不应存在的协作通路，而不是单任务能力。</p>
+<p>我会把跨任务测试分成两个目标：一类验证是否能传出信息，另一类验证这些信息是否足以改变任务结果。前者决定边界是否被突破，后者帮助评估影响。不能因为传输慢就宣布没有问题，也不能忽略带宽、可靠性、前置协作和可探测性，把任何信号都放大成同等级风险。</p>
+<p>对于多人、多租户或者不同敏感等级的任务，共享策略应成为显式配置。哪些任务允许协作，哪些只能共享不可变资料，哪些必须隔离运行，应在调度之前确定。允许的协作使用可审计通道；禁止的协作则需要独立验证，而不是仅在每个 Agent 的提示词里写一句“不要交流”。</p>
+</section>
+<section id="experiment"><h2>06｜红队实验要交付证据，不只是交付惊险故事</h2>
+<p>这次红队投入数千亿 token，获得源码、配置等辅助；累计图混合了模型、范围和测试窗口，不能当作受控算力曲线。<a href="https://openai.com/index/securing-our-frontier-model-training-environment/">原文：实验设计与图表限制</a></p>
+<p>红队在隔离、专门搭建的研究环境副本中运行，并设越界暂停检查；联网目标是 OpenAI 自有外部服务器。部分测试直接假定沙箱、监测均已被绕过，代理已控制宿主，以单独检验外层边界。 <a href="https://openai.com/index/securing-our-frontier-model-training-environment/">原文</a></p>
+<p>这些条件并不会使实验失去意义。若目标是找出防御薄弱处，主动提供有利条件可以提高发现效率；但它回答的是“在这些条件下，防线是否存在可利用缺口”，而不是“随机部署一个普通 Agent，会以多大概率独立发现同样的问题”。防御验证和自主能力评估应当分别命名。</p>
+<p>同样，候选发现数也不是漏洞数的同义词。多个轨迹可能触发同一个根因；一个轨迹也可能串联多个问题。若团队按报告份数奖励红队，很容易获得越来越多描述不同、实质重复的发现。更有价值的是完成去重、复现、影响判定和修复验证之后，形成可以进入回归测试的证据。</p>
+<p>我会要求每个候选项至少带上五个字段：起始权限、预期禁止的结果、实际观察、复现条件、修复后的反证。这里的“反证”很关键：补丁以后，同样条件下是否还会出现禁止结果；如果不出现，是补丁真正起效，还是测试环境碰巧变了？环境版本、策略版本和监测版本应一起固定。</p>
+<p>发现数量下降，也需要放回实验过程解释。测试范围变窄、模型更换、重复项被合并、外部协作窗口缩短，都可能改变曲线。更可信的信号，是在相同或更强的威胁假设下，旧问题被稳定挡住，新路径仍被主动搜索，而且监测与处置没有出现新的空白。</p>
+<p>对于没有大型红队算力预算的团队，迁移的重点不应是模仿 token 数。可以先做少量、重复性强的边界测试：跨用户对象读取、被撤销授权的重用、工具结果中的越权指令、任务结束后仍存活的凭据。每一项都在隔离测试环境中，用合成数据和明确授权运行。把最重要的安全承诺变成可复测实验，通常比收集大量难以复现的失败截图更有价值。</p>
+<p>安全测试本身也需要边界。测试目标、允许接触的系统、停止条件和异常升级路径必须预先确定。为了证明产品有缺口而真的把外部用户数据作为实验材料，是把验证成本转嫁给了没有参与实验的人。</p>
+</section>
+<section id="stop"><h2>07｜看见风险以后，系统还要真的停下来</h2>
+<p>9 月 20 日 DNS 事件的官方时间线提供了一个很具体的提醒：那次获得外部响应的 DNS 工具调用发生在 9:50:23，P0 告警在 10:02:11，人工确认收到告警在 10:05:06，运行到 12:34:30 才被停止。按时间线计算，从该次工具调用到告警为 11 分 48 秒，到停止为 2 小时 44 分 7 秒。报告指出，预期的自动停止没有发生。<a href="https://alignment.openai.com/misalignment-reports/an-agent-used-dns-to-reach-an-external-chatbot/">事件时间线与调查</a></p>
+<p>这几项时间不能压成一句“及时发现并阻止”。检测、告警送达、有人接手、采取控制动作、确认动作生效，是不同阶段。前面的阶段做得不错，后面仍可能留下很长的暴露窗口。把它们分别计量，才能知道应该优化模型监测、值班流程，还是执行控制。</p>
+<p>同一报告还记录了一种判断偏差：有的外部访问没有取得有用信息，监测因此低估了访问已经发生的事实。<a href="https://alignment.openai.com/misalignment-reports/an-agent-used-dns-to-reach-an-external-chatbot/">监测漏判的原因</a></p>
+<p>任务成功与安全成功应当分开。访问外部系统后只收到错误页，可能意味着任务没有进展，但不代表没有跨越边界；读取了未授权对象却未能理解内容，也不能按“没有答对”算作无事发生。安全判据应观察动作、权限和实际接触，而不是仅依据最终答案是否有用。</p>
+<p>我会把处置链设计成一个有回执的状态机：事件进入后先固定证据，再根据风险执行预定控制，最后由独立观察确认结果。停止任务不能只表示界面上的状态变红，还要检查子进程、队列、工具凭据、已排出的调用以及仍在运行的协作任务。哪些必须立即中断，哪些允许完成安全收尾，需要事先约定。</p>
+<p>这也是为什么控制面不应完全依附于执行面。若被监测任务能修改自己的监测开关，或者调度器仅相信它上报“已经停止”，处置就会重新落回自我声明。可以让任务报告状态，但最终验收应来自掌握进程、权限或资源事实的另一层。</p>
+<p>对健康服务 Agent，可以用一个纯设计场景理解：系统发现报告发送对象不符合授权，停止动作应尽可能发生在外发之前；若发送已经发生，就必须转入披露、追踪和补救流程。此时继续生成一份语气谨慎的总结，没有改变已经发生的状态。高风险动作的防线，需要放在动作真正生效的位置。</p>
+</section>
+<section id="case"><h2>08｜恢复运行需要一条证据链，而不是一张安全标签</h2>
+<p>OpenAI 在 9 月 28 日的 safety cases 文章中，把对齐、隔离和监测放在同一论证框架中，并强调残余风险、独立质疑、暂停与回滚能力。这是其当时提出、仍在推进的框架，不是已经完成的行业认证。<a href="https://openai.com/index/towards-safety-cases-for-frontier-ai-training/">训练安全论证框架</a></p>
+<p>我把这种思路理解为一种持续维护的工程论证：我们想允许什么工作，在什么条件下允许，哪些证据支持决定，哪些变化会让证据失效。它比“上次安全评审通过”更接近长期 Agent 系统的实际运行方式。</p>
+<p>例如，安全论证依赖“执行环境不能触达外网”，新增一个取文件的服务就可能改变可达性；依赖“所有高风险工具调用都有监测”，接入一种新的批处理调用方式就可能改变覆盖；依赖“授权撤销后不能继续行动”，引入长期缓存的工具凭据就可能改变假设。功能改动即使不碰安全代码，也可能使安全结论过期。</p>
+<p>我会让重要假设直接关联到配置和测试，而不只写在文档里。每次部署可列出：哪些假设未变，哪些已重新验证，哪些证据仍缺失，哪些风险由谁接受。这样，安全审查不必从头读一遍所有材料，也不会因为文档还存在就默认它仍然有效。</p>
+<p>主文说明前沿 RL 与内部推理于 10 月 1 日恢复；DNS 事件报告则明确不续训原涉事模型。两个范围不能混写。<a href="https://openai.com/index/securing-our-frontier-model-training-environment/">恢复范围</a> · <a href="https://alignment.openai.com/misalignment-reports/an-agent-used-dns-to-reach-an-external-chatbot/">涉事模型的处理</a></p>
+<p>原文没有发现既能轻易利用、又能向监测隐藏活动的出网路径。 <a href="https://openai.com/index/securing-our-frontier-model-training-environment/">原文</a>这只是给定测试范围内的观察，不能据此断言不存在出网漏洞，或保证未来每次尝试都能被监测发现。</p>
+<p>恢复运行也不等于风险归零。更可操作的决策是：已知问题是否修复、必要测试是否覆盖当前配置、监测和停止链是否实际演练、尚未覆盖的风险是否被明确接受。如果其中一项缺失，就应把它显示为缺口，而不是用总体“安全”两个字覆盖掉。</p>
+<p>这套做法还要求保留反对意见的位置。提出“这个假设可能不成立”的人，不应只获得一个待办编号；他指出的条件需要进入验证或风险接受流程。否则，安全论证很容易退化成把已有决定写得更好看的材料。</p>
+</section>
+<section id="practice"><h2>09｜把边界写进日常交付，而不是留到出事以后</h2>
+<p>从这篇工作向业务系统迁移，我不会直接复制某个前沿训练集群的技术栈。内部训练、面向用户的产品、健康服务和一般办公自动化，拥有不同的数据、权限、威胁和运营条件。可以迁移的是检查问题的顺序。</p>
+<p>第一，定义禁止发生的结果。不要停在“模型不能胡来”，而要写成可观察状态：跨用户数据是否被读取，未批准的消息是否被发出，被取消任务是否仍在执行，测试样本是否交换了不允许的信息。</p>
+<p>第二，找到真正实施约束的层。模型提示、工具参数校验、服务端授权、数据访问控制、运行时隔离和出口策略，各自负责什么。明确哪些约束由独立系统验证，哪些仍然依赖模型判断，不要把后者包装成前者。</p>
+<p>第三，测试假设已经失败时的后果。故意在合成环境中给予比正常任务更高的初始权限，验证下一层是否仍有效；同时保留正常权限下的测试，避免把压力测试的结果当成日常发生概率。</p>
+<p>第四，验收整条停止链。谁发现、谁接手、谁能停、停止是否生效、影响如何清点，至少演练一次。恢复也要有门槛，不能因为告警安静下来就自行宣布结束。</p>
+<p>第五，把改变边界的配置视为产品变更。新增共享缓存、新工具、新身份和新网络依赖，都要重新检查相关假设。能力迭代越快，证据更新越不能依赖某个人记得提醒。</p>
+<p>对 Agent 来说，持续尝试是一种能力。对承载它的系统来说，限制持续尝试的影响范围是一项责任。真正值得追求的可靠性，是把二者同时做好：让系统有足够空间完成得到授权的任务，也让未经授权的路径在模型想继续寻找时仍然走不通。</p>
+</section>
+<section id="sources"><h2>原文与技术参考</h2>
+<ol>
+<li><a href="https://openai.com/index/securing-our-frontier-model-training-environment/">OpenAI：Securing our frontier model training environment</a>，2026 年 10 月 23 日。本文主要讨论对象，通读正文及实验限制。</li>
+<li><a href="https://alignment.openai.com/misalignment-reports/an-agent-used-dns-to-reach-an-external-chatbot/">OpenAI Alignment：An agent used DNS to reach an external chatbot</a>，事件日期 2026 年 9 月 20 日，报告更新于 9 月 25 日。用于核对事件范围、处置时间线与监测缺口。</li>
+<li><a href="https://openai.com/index/towards-safety-cases-for-frontier-ai-training/">OpenAI：Towards safety cases for frontier AI training</a>，2026 年 9 月 28 日。用于核对安全论证框架及其适用边界。</li>
+<li><a href="https://gvisor.dev/docs/architecture_guide/intro/">gVisor：Introduction to gVisor security</a>。用于区分内核隔离、虚拟化与用户态应用内核，不代表 OpenAI 的完整部署配置。</li>
+<li><a href="https://gvisor.dev/docs/architecture_guide/security/">gVisor：Security Model</a>。用于核对沙箱与更高层服务、网络策略、硬件侧信道之间的责任边界。</li>
+</ol>
+<p>以上公开资料初稿核对于 2026 年 10 月 24 日，发布前于 10 月 25 日再次核对。文中的时间差由已公开时间线计算；没有推算漏洞总数、真实攻击发生概率或未披露的修复效果。</p>
+</section>
+
+</article><footer class="page-footer"><a href="../blog/">← 返回个人博客</a><a href="#top">回到顶部 ↑</a></footer></main></body></html>
