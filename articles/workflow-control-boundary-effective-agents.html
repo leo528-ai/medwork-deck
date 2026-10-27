@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>工作流何时应该交出控制权：重读 Anthropic 的 Agent 架构选择｜胡浩源</title><meta name="description" content="从任务可预测性、状态、证据、权限与验收出发，讨论工作流何时需要交出局部控制权。"><meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人"><meta name="theme-color" content="#F5F1E8"><style>:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2;--serif:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}a:focus-visible,summary:focus-visible,.table-wrap:focus-visible,pre:focus-visible{outline:3px solid var(--clay);outline-offset:5px}.shell{width:min(100% - 40px,760px);margin:auto}.skip{position:absolute;top:-5rem;left:1rem;background:var(--surface);padding:.5rem 1rem}.skip:focus{top:1rem}.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;color:var(--muted)}.masthead a{color:var(--muted)}header{padding:52px 0 26px}h1{font:700 clamp(32px,5.8vw,46px)/1.35 var(--serif);letter-spacing:-.035em;margin:0 0 25px;text-wrap:balance}.subtitle{font:21px/1.65 var(--serif);color:var(--muted);margin:0 0 24px}.byline{font-size:14px;color:var(--muted);margin:0}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}.contents{border-block:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px}.contents summary{cursor:pointer;font-weight:600}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents li{margin:0}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}article p{margin:0 0 22px}h2{font:700 26px/1.5 var(--serif);margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}ul{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{font:inherit;white-space:pre}.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}table{border-collapse:collapse;width:100%;min-width:650px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650}tbody th{font-weight:500;min-width:190px}tr:last-child th,tr:last-child td{border-bottom:0}#sources{font-size:14px;color:var(--muted)}#sources h2{font-size:20px}.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}@media(max-width:600px){body{font-size:16px}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px;gap:12px;font-size:12px}header{padding:36px 0 24px}.subtitle{font-size:19px}h2{font-size:23px;margin-top:42px}pre{font-size:12px;padding:14px 12px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px;flex-wrap:wrap}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}pre,pre code{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}a{color:inherit}}
+h3{font:700 21px/1.6 var(--serif);margin:30px 0 15px}article{overflow-wrap:anywhere}article code{font-size:.86em}blockquote{margin:24px 0;padding-left:20px;border-left:2px solid var(--line)}</style><link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/workflow-control-boundary-effective-agents.html"></head><body id="top"><a class="skip" href="#main">跳至正文</a><main class="shell" id="main"><nav class="masthead" aria-label="导航"><a href="https://leo528-ai.github.io/medwork-deck/blog/">个人博客</a><a href="https://leo528-ai.github.io/medwork-deck/articles/index.html">系列目录</a></nav><article><header><h1>工作流何时应该交出控制权：重读 Anthropic 的 Agent 架构选择</h1><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-10-26">2026 年 10 月 26 日</time> · 架构与控制 · 经典重读</p></header><nav class="contents" aria-label="本文目录"><details open><summary>本文目录</summary><ol><li><a href="#section-1">一 从原文出发，但不把架构图当作成熟度阶梯</a></li><li><a href="#section-2">二 把控制权拆成可以逐项批准的决定</a></li><li><a href="#section-3">三 固定流程需要守住中间结果的含义</a></li><li><a href="#section-4">四 路由需要一个诚实的“不确定”出口</a></li><li><a href="#section-5">五 并行之前，先画出依赖和共享状态</a></li><li><a href="#section-6">六 动态编排要承担计划债务</a></li><li><a href="#section-7">七 评价循环要先签订验收契约</a></li><li><a href="#section-8">八 环境反馈必须包含身份、版本与缺口</a></li><li><a href="#section-9">九 工具接口要显式表达对象与版本</a></li><li><a href="#section-10">十 写操作需要提交协议，而不只是一个确认按钮</a></li><li><a href="#section-11">十一 用一个医疗材料准备的假设流程检验边界</a></li><li><a href="#section-12">十二 用证据决定是否增加自主性</a></li></ol></details></nav><p>讨论 Agent 架构，容易从模型能力、框架选型或者多智能体分工开始。但在产品进入真实业务之前，有一个更基础的问题需要回答：系统中的哪些决定可以交给模型，哪些必须留在确定性的程序和人的手里？</p>
+<p>本文的判断是，控制权应按具体决定分配，而不应跟随“Agent 产品”这个标签整体移交。模型可以自行寻找证据，却不必有权修改记录；可以提出下一步计划，却不必有权扩大任务范围。架构设计的重点，是把这些边界变成能够执行、检查和撤销的系统约束。</p>
+<h2 id="section-1">一 从原文出发，但不把架构图当作成熟度阶梯</h2>
+<p><strong>原文要点简述：</strong>Anthropic 于 2024 年 12 月 19 日发表的《Building effective agents》，区分预设路径的工作流与由模型动态决定过程的 Agent，讨论串行、路由、并行、编排与评估反馈等组织方式，并强调简单设计、环境反馈和工具接口。当前页面中的工具信息已有更新，不能把今天的页面内容全部视为发表当日的状态。<a href="https://www.anthropic.com/research/building-effective-agents">原文</a></p>
+<p><strong>以下为本文的独立架构分析。</strong>文中的案例均为明确标注的假设设计，不代表任何企业已经上线的系统；指标均为评估建议，不是实测结果。本文不复述原文案例，也不对任何模型或方案作性能排名。</p>
+<p>把几种架构画在一张图上，很容易形成一种错觉：单次调用比较初级，多步工作流更先进，能自主规划的 Agent 则代表最终形态。本文不采用这种排序。不同结构承担的是不同种类的不确定性。把本来能够确定的步骤改成模型决策，会新增一次需要验证的判断；把确实未知的路径硬编码，又可能让系统在异常输入上机械地走错。选择架构首先要说明，究竟是哪一种不确定性无法由更简单的设计消除。</p>
+<h2 id="section-2">二 把控制权拆成可以逐项批准的决定</h2>
+<p><strong>本文提出的设计方法</strong>是先列“决策清单”，再画流程图。清单可以包括：查询什么资料、选择哪个处理分支、是否新增子任务、是否接受一份中间结果、是否写入外部系统、是否结束任务。这些决定不必由同一个主体掌握。</p>
+<p>对每一项决定，应分别检查三个条件：所需信息能否事先获得，错误能否在行动前被发现，行动后果能否恢复。路径未知但只读的探索，与路径明确但不可撤销的提交，具有不同的风险结构。不能因为前者更复杂，就给后者同样宽泛的权限。</p>
+<p>还需要区分“选择权”和“执行权”。模型可以建议创建一个任务，调度器仍然负责检查预算与权限；模型可以认为材料完整，确定性校验器仍然可以拒绝进入发布环节。这样的设计允许模型贡献判断能力，同时避免它通过一次判断修改自己的约束。</p>
+<p>控制权也应能够收回。如果连续观测显示证据不足、工具异常或目标发生冲突，系统应转入受限状态，而不是继续使用最初授予的全部能力。授权是与当前任务状态绑定的许可，不是一次启动后永久有效的通行证。</p>
+<h2 id="section-3">三 固定流程需要守住中间结果的含义</h2>
+<p><strong>本文的设计判断：</strong>对于输入和交付物都较稳定的任务，首先值得投入的往往是中间结果契约。只规定输出为 JSON 并不充分。字段合法，只能说明结果可以被程序读取，不能说明其含义满足下一步要求。</p>
+<p>例如，在一个<strong>假设的资料整理系统</strong>中，“材料日期”究竟指文件上传时间、内容形成时间，还是业务发生时间？如果前一步混用这些概念，后一步即使完全遵守提示，也会排出错误顺序。串行流程会把上游解释固定成下游事实，因此关键节点应保留原始依据、字段语义和无法确定的状态，不能用一个空字符串同时表达“没有”“未知”和“不适用”。</p>
+<p>关卡应检查下一步真正依赖的条件。需要来源的结论，没有来源就不能通过；允许缺失的字段，可以携带缺失原因继续前进。所有异常都阻断，会让流程难以使用；所有异常都降级为提示，又会让关卡失去作用。阻断条件应由结果的使用方式决定。</p>
+<p>串行步骤还会带来等待和重复传递信息的成本。本文建议，只有当一个阶段形成可独立检查的产物，或者下一阶段确实依赖它时，才将其单独拆出。为了看起来“分工明确”而增加节点，可能只是增加了需要解释和维护的边界。</p>
+<h2 id="section-4">四 路由需要一个诚实的“不确定”出口</h2>
+<p><strong>本文的设计建议：</strong>路由器的职责应包括识别自己无法可靠分类的输入。一个必须从既有类别中选出答案的路由器，会把分类体系尚未覆盖的问题伪装成已知问题。</p>
+<p>在一个<strong>假设的企业文档入口</strong>中，同一请求可能同时包含资料查询、内容修改和对外发送。若仅根据占比最高的意图选择一个分支，剩余要求可能被遗漏，也可能绕过发送权限检查。更合适的处理是先识别动作集合，再分别判断哪些动作获得授权，最后决定是否需要组合流程。</p>
+<p>路由错误的代价也不对称。把一个普通查询送去人工检查，主要消耗等待时间；把需要确认的操作送入自动执行分支，则可能改变外部状态。两种错误不应只合并为一个总体分类准确率。</p>
+<p><strong>建议评估指标</strong>包括危险分支误入率、未知类别识别情况和转人工后的有效解决情况。统计时应明确各自分母，并按业务后果分别观察。置信度可以作为一个信号，但不能替代权限验证，更不能由模型自己声称“很确定”就获得额外能力。</p>
+<h2 id="section-5">五 并行之前，先画出依赖和共享状态</h2>
+<p><strong>本文的设计判断：</strong>能同时发起调用，不等于任务能够安全并行。判断的关键是，各分支是否需要读取另一分支尚未完成的结果，是否可能写入同一对象，以及最后如何处理冲突。</p>
+<p>在一个<strong>假设的材料检查任务</strong>中，检查版式与检查附件是否存在，可以读取同一个冻结版本；重新编号附件与核对正文中的附件编号，却存在明显依赖。后两项若直接并行，可能各自通过检查，却拼成一个整体不一致的版本。</p>
+<p>因此，并行单元应声明读取版本、输出对象和合并规则。某个分支超时后，是取消整个任务、交付带缺项的结果，还是等待人工处理，应在启动前确定。否则，调度器可能为了尽快返回，把不完整结果包装成完整交付。</p>
+<p>并行评审还存在相关性问题。多个模型如果看到同一份不完整证据，使用相近的判断条件，可能重复同一种错误。投票数量本身不能证明结论可靠。本文建议把评审职责拆开：有的检查证据覆盖，有的检查条件是否被遗漏，有的验证可执行规则。独立性首先来自检查对象与证据路径的差异，而不是角色名称的差异。</p>
+<h2 id="section-6">六 动态编排要承担计划债务</h2>
+<p>当子任务无法提前完整列出时，可以考虑让模型提出任务分解。但<strong>本文的设计推论</strong>是，每增加一个动态子任务，也增加了一笔“计划债务”：系统需要说明它为什么必要，谁依赖它，它的结果如何被验收，以及何时不再继续。</p>
+<p>编排器应维护可检查的任务记录，而不是只生成一段不断增长的计划文字。每个任务至少包含目标、输入版本、授权工具、交付格式和终止条件。计划变化也应留下原因。删除一个任务，不能悄悄抹去它曾经承担的要求。</p>
+<p>工作节点的局部成功，不等于整体目标完成。某个节点可能很好地总结了拿到的材料，却没有发现材料缺页；另一个节点可能按要求生成了一份清单，却遗漏了总任务中的限制。因此，编排器需要对照原始请求做覆盖检查，不能只把各节点的“完成”状态相加。</p>
+<p>任务扩展尤其要受约束。发现相邻问题，并不自动获得处理相邻问题的授权。本文建议将扩展请求作为独立对象，记录预期收益、额外成本和所需权限。只读探索可以在既定范围内继续，新增外部操作则应重新经过授权关卡。</p>
+<h2 id="section-7">七 评价循环要先签订验收契约</h2>
+<p><strong>本文的设计建议：</strong>在允许模型反复修改结果之前，先定义什么可以被判定为更好。否则，评价器可能只是在改变措辞偏好，生成器则不断迎合最新意见，任务并没有更接近可交付状态。</p>
+<p>验收契约应区分硬约束与可优化项。必要字段、来源可定位、禁止出现未经授权的信息，可以设置为硬约束；表达是否简洁、排序是否方便阅读，则可以作为有边界的优化项。硬约束失败时不应用“整体评分较高”抵消。</p>
+<p>评价器也需要证据。让模型仅凭成稿判断“事实是否准确”，容易把语言流畅当成可信。对于可以比对的内容，应直接提供原始材料和定位信息；对于可以执行的规则，应优先运行程序检查。模型适合解释差异、识别潜在冲突，但不应替代所有可重复的校验。</p>
+<p>同一个模型换一个角色提示，并不天然构成独立审查。即使更换模型，共享错误材料也会造成共同盲点。本文建议对重要检查保留独立的数据读取路径，限制评价器对生成理由的依赖，并用人工标注的反例测试评价器自身。</p>
+<p>循环必须能够返回“无法满足”。停止条件可以包括硬约束通过、改动不再解决已知缺陷、预算触顶，或发现需要用户补充的信息。触顶是停止原因，不是成功证据。最终输出应区分已完成、带缺项交付和等待补充，避免把不同状态压成同一个“完成”。</p>
+<h2 id="section-8">八 环境反馈必须包含身份、版本与缺口</h2>
+<p><strong>本文的设计判断：</strong>工具返回的内容只有在上下文明确时，才能成为有效反馈。“搜索没有结果”可能意味着不存在，也可能意味着查询条件不合适、权限不足或索引尚未更新。把这些状态混为一谈，模型就可能在一个错误前提上继续规划。</p>
+<p>检索结果也不只是几段文本。建议保留来源标识、版本或时间、访问范围以及内容位置。对外部信息的使用应能回答：哪一个结论依赖哪一段证据，证据覆盖到什么条件，哪些地方仍然没有依据。缺少这些信息时，后续评价难以区分“结论错误”和“证据不足”。</p>
+<p>在一个<strong>假设的制度材料整理任务</strong>中，新旧文件出现不同要求，系统不应仅凭发布日期选择较新的文本。还要检查适用对象、实施日期、废止关系和授权来源；如果材料无法支持判断，就应保留冲突并请求确认。这里讨论的是文档处理设计，不是对具体制度效力作判断。</p>
+<p>反馈还应区分“已发起”与“已生效”。收到写入请求的响应，不代表目标内容已经以预期版本保存；收到异步任务编号，也不代表任务成功。后续动作若依赖实际结果，应读取终态或回查目标对象。</p>
+<p>本文建议保存足以重建决策依据的事件记录，同时避免无差别保留敏感内容。事件记录可以引用受控存储中的证据，而不必把原文复制到每一层日志。可观察性与数据最小化需要一起设计。</p>
+<h2 id="section-9">九 工具接口要显式表达对象与版本</h2>
+<p><strong>以下是假设性的接口分析。</strong>用户批准修改一份材料包中的说明文字，模型看到的是版本 A。在工具执行前，另一位协作者已经把文件更新为版本 B。如果接口只接受文档名称和新正文，就可能把新版本中的有效修改一起覆盖。模型生成的文字即使正确，提交的对象状态也已经与批准时不同。</p>
+<p>这个问题不能只靠在提示里要求“不要覆盖他人修改”解决。调用方需要表达它基于哪个版本提出变更，服务端需要把当前版本与预期版本进行比较。遇到冲突时，应返回差异并重新准备可审阅的修改，而不是让模型凭旧内容猜测如何合并。版本相同也不等于具备权限，对象范围和操作授权仍须分别验证。</p>
+<p><strong>本文提出的接口设计示例</strong>是优先传递工作区标识、对象标识、预期版本和动作类型，而不是让模型自行拼装一个拥有广泛能力的命令。服务端据此限定对象范围，拒绝版本冲突，并返回可验证的目标标识。</p>
+<p>错误响应也应帮助安全恢复。权限不足、对象不存在、版本冲突和暂时不可用，应有可区分的状态。只有确认为暂时性且适合重试的失败，才进入自动重试。把所有错误都交给模型“换一种方法”，可能使本来清晰的边界变成可以不断试探的障碍。</p>
+<h2 id="section-10">十 写操作需要提交协议，而不只是一个确认按钮</h2>
+<p><strong>本文的设计建议：</strong>凡是会改变外部状态的动作，都应明确对象、内容、授权和实际结果之间的绑定关系。用户批准某个版本，不代表批准模型在批准后继续修改的版本；批准准备材料，也不代表批准把材料发送出去。</p>
+<p>可以将写入过程设计为准备、校验、批准、提交和回读。准备阶段生成变更差异；校验阶段检查对象与版本；批准阶段绑定具体内容和接收范围；提交阶段执行受限操作；回读阶段确认最终状态。对于低风险且已明确授权的动作，流程可以自动推进，但这些责任仍然需要由系统承担。</p>
+<p>重试尤其需要谨慎。一个请求超时，可能发生在提交之前，也可能发生在提交成功、响应返回之前。直接再次提交，可能产生重复对象或重复通知。本文建议使用幂等标识和状态查询，并让工具明确表达结果未知的情形。</p>
+<p>回滚也不能只写成一句“失败后恢复”。恢复前要检查是否有人已经基于新状态继续工作，旧版本是否仍然可用，以及恢复是否会覆盖别人的修改。有些动作只能补偿，不能真正撤回。对于这些动作，风险应在执行前处理，不能把事后纠正当成等价保障。</p>
+<h2 id="section-11">十一 用一个医疗材料准备的假设流程检验边界</h2>
+<p><strong>以下为完整的假设设计，仅讨论授权范围内的资料整理，不提供诊疗建议，也不主张任何临床效果。</strong>设想用户希望将一组医疗相关文件整理成供本人核对的材料包。系统的目标是组织已有材料、标注缺失与冲突，并生成可检查的草稿；不解释病情，不决定治疗，不向任何机构自动提交。</p>
+<p>入口首先确认材料范围、使用目的和输出位置。固定流程完成文件识别、可读性检查、重复文件标记与来源编号。对身份字段的处理遵循任务所需最小范围，并将访问权限限制在获准使用这些材料的组件中。</p>
+<p>接下来，路由器区分可以直接提取的文件、需要进一步识别的文件与无法处理的文件。无法确定类别时保留未知状态。版式检查和附件清单核对可以并行读取同一材料快照，不能各自修改共享编号。</p>
+<p>如果发现正文提及一份尚未包含的附件，动态编排器可以新增“检查当前获准材料是否包含该附件”的只读任务。若仍未找到，应在缺失清单中注明，不应扩大到未获授权的数据源，更不能生成看似合理的附件内容来补齐材料包。</p>
+<p>草稿形成后，评价器核对每个摘要条目是否能够定位原文，日期和身份字段是否存在冲突，以及缺失状态是否如实呈现。对于材料之间无法解释的差异，系统输出待确认项，不自行作医学判断。</p>
+<p>最终交付应包括草稿、来源索引和待确认清单。用户确认草稿，只表示确认这份材料的当前版本；若后续要求发送，还需单独核验接收方和发送范围。这个假设流程的价值判断，应限定在材料组织质量与过程可控性，不能从“文件整理正确”推导出“诊疗更有效”。</p>
+<h2 id="section-12">十二 用证据决定是否增加自主性</h2>
+<p><strong>本文建议的评估方案</strong>是从最简单的可用基线开始，在同一组任务与同一验收契约下比较不同控制分配。除了正常输入，还应准备缺失证据、相互冲突的文件、工具超时、版本变化、权限不足与用户中途撤销等测试情形。</p>
+<p>评估对象应覆盖过程。<strong>建议指标</strong>包括任务验收通过情况、未经证据支持的结论出现情况、越权动作是否被阻断、重复写入情况、人工接管后的恢复难度，以及完整任务的耗时与资源消耗。这些都是待测项目，本文不提供虚构的数值、阈值或效果提升结论。</p>
+<p>成本也不应只计算模型调用。一个结构新增了节点，就新增了接口维护、错误归因和版本兼容的工作；一次失败之后需要多少人工时间恢复，也是成本的一部分。比较方案时，应记录任务难度和失败类型，避免把简单任务上的低成本误当成所有场景的优势。</p>
+<p>上线前的测试应覆盖任务轨迹，而不只检查最终文本。模型即使给出了正确答案，也可能在过程中读取了不该读取的对象，或者执行了无关操作。测试环境应能够复现权限边界和状态变化，并验证系统在不确定时是否真的停止。</p>
+<p>本文最终主张，把自主性当作需要证据支持的设计选择。路径已经明确的地方，让程序稳定执行；必须探索的地方，给予模型受限的选择空间；结果难以验证或后果难以恢复的地方，保留更严格的关卡。每次增加控制权，都应能够说明它解决了什么具体限制，以及出现错误时由谁发现、谁承担、如何收回。</p>
+<p>一套值得信任的 Agent 架构，应让使用者看清：系统掌握什么、尚不知道什么、此刻能做什么，以及下一步为什么被允许。这些问题有了可验证的答案，工作流才有充分理由交出那一部分控制权。</p>
+<p><strong>来源与阅读说明：</strong>Anthropic, <a href="https://www.anthropic.com/research/building-effective-agents">Building effective agents</a>，首次发表于 2024 年 12 月 19 日。本文于 2026 年 10 月 26 日阅读当前页面。</p>
+</article><footer class="page-footer"><a href="https://leo528-ai.github.io/medwork-deck/blog/">← 返回博客</a><a href="#top">返回顶部 ↑</a></footer></main></body></html>
