@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人"><meta name="description" content="重读 Anthropic 可解释性研究，从模型解释、执行记录与因果机制的区别出发，设计文献抽取的证据记录与反事实评测。"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'"><title>为大模型的解释划定证据边界｜胡浩源</title><style>
+:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:3px solid var(--clay);outline-offset:5px}
+.skip{position:absolute;left:1rem;top:-5rem;background:var(--surface);padding:.5rem 1rem;z-index:5}.skip:focus{top:1rem}
+.shell{width:min(100% - 40px,760px);margin:0 auto}
+.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.masthead a{color:var(--muted)}header{padding:52px 0 26px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);font-weight:700;margin:0 0 20px}
+h1{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif;font-size:clamp(32px,5.8vw,46px);line-height:1.35;font-weight:700;letter-spacing:-.035em;margin:0 0 25px}
+.byline{font-size:14px;margin:0;color:var(--muted)}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}
+.contents{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px;color:var(--muted)}
+.contents summary{cursor:pointer;font-weight:600;color:var(--ink)}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}
+article p{margin:0 0 22px}blockquote{margin:0 0 34px;padding:6px 0 6px 20px;border-left:3px solid var(--clay);font-size:18px;color:var(--muted)}blockquote p:last-child{margin-bottom:0}
+h2{font-size:26px;line-height:1.5;font-weight:700;margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}
+h3{font-size:20px;line-height:1.55;margin:32px 0 18px}strong{font-weight:700}code{font:0.88em/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#EBE5D9;border-radius:3px;padding:.1em .3em;overflow-wrap:anywhere}
+ul,ol{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}
+.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650;color:var(--ink)}tbody th{font-weight:500;width:36%}tr:last-child th,tr:last-child td{border-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:14px;line-height:1.95;color:var(--muted)}hr~h3{font-size:17px;margin-top:0}
+.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){body{font-size:16px;line-height:1.95}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px}header{padding:36px 0 24px}h2{font-size:23px;margin-top:42px}h3{font-size:19px}blockquote{font-size:17px;padding-left:16px}.table-wrap{margin-left:-2px;margin-right:-2px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}h3{font-size:13pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}blockquote{font-size:12pt}}
+
+.subtitle{font-family:ui-serif,"Songti SC","STSong",serif;font-size:21px;line-height:1.65;color:var(--muted);margin:0 0 24px}article a{overflow-wrap:anywhere}.source-heading{font-size:19px;border-top:0;padding-top:0;margin-top:0}#source-notes+ul{font-size:14px;color:var(--muted)}@media(max-width:600px){.subtitle{font-size:19px}.masthead{gap:12px;letter-spacing:.03em}.page-footer{flex-wrap:wrap}}
+
+h1{text-wrap:balance}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{background:none;padding:0;border-radius:0;font:inherit;overflow-wrap:normal}pre:focus-visible{outline:3px solid var(--clay);outline-offset:3px}#source-notes+ul{line-height:1.9}#source-notes+ul a{display:block}table{min-width:610px}table th:first-child{width:44%}
+@media(max-width:600px){pre{font-size:12px;padding:14px 12px}.masthead{font-size:12px}}
+@media print{pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}table{min-width:0}}
+
+article{overflow-wrap:anywhere}.status{color:var(--clay);font-weight:600}h2{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif}article blockquote{font-size:17px}</style><link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/interpretability-explanations-evidence.html"></head>
+<body id="top"><a class="skip" href="#main">跳至正文</a><div class="shell"><nav class="masthead" aria-label="站点导航"><span>研究解读 · 证据与解释</span><a href="https://leo528-ai.github.io/medwork-deck/blog/">返回博客</a></nav><header><p class="eyebrow">MedWork / Research Notes</p><h1>为大模型的解释划定证据边界</h1><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-10-27">2026 年 10 月 27 日</time> · 经典重读 · 证据与解释</p></header><details class="contents"><summary>文章目录</summary><nav aria-label="文章目录"><ol><li><a href="#section-1">一 这项研究提供的有限观察</a></li><li><a href="#section-2">二 先区分三种证据的责任</a></li><li><a href="#section-3">三 从一个文献抽取任务开始</a></li><li><a href="#section-4">四 让证据成为字段的一部分</a></li><li><a href="#section-5">五 反事实测试应改变可检查的条件</a></li><li><a href="#section-6">六 负对照决定评估有没有辨别力</a></li><li><a href="#section-7">七 把失败落到能够修复的环节</a></li><li><a href="#section-8">八 证据的成本也需要设计</a></li><li><a href="#section-9">九 上线判断应当小于研究愿景</a></li></ol></nav></details><main id="main"><article><p>一个助手回答完问题，又补上一段层次清楚的分析：先识别任务，再定位材料，最后综合判断。读者很容易把这段文字理解为一次执行过程的回放。可供用户理解的说明，与能够接受检查的执行记录，承担的是不同责任。把二者混在一起，产品就可能把“说得通”当成“查得清”。</p>
+<p>我更关心一个具体问题：如果某项结论后来被证明有误，现有证据能否让另一个人定位错误、复现检查，并阻止同类问题再次发生？以这个问题为起点，可解释性才会从界面上的一段文字，进入系统设计和质量责任的讨论。</p>
+<h2 id="section-1">一 这项研究提供的有限观察</h2>
+<p>Anthropic 于 2025 年 3 月 27 日发布的 <em>Tracing the thoughts of a large language model</em>，介绍了追踪模型内部计算的研究工作。研究者尝试将可解释特征连接为计算回路，在 Claude 3.5 Haiku 的若干简化任务上观察部分信息流，并通过干预检验某些内部环节与输出的关系。文章报告，模型给出的文字解释有时与研究工具观察到的计算过程并不一致；因此，回答中的推理说明不能直接当作内部计算的完整记录。作者同时明确指出，方法只能覆盖计算的一部分，工具可能引入伪影；即使面对只有几十个词的短提示，理解回路也可能需要数小时人工，尚难扩展到复杂长任务。这些结果支持继续研究机制，尚不足以把局部观察扩展成对所有模型、所有任务的完整解释，更不能据此宣布已经获得通用的可信性证明。<a href="https://www.anthropic.com/research/tracing-thoughts-language-model">原文</a></p>
+<h2 id="section-2">二 先区分三种证据的责任</h2>
+<p>从这项研究出发，我更关心产品应该如何约束自己提出的可信性主张。以下是我的工程分析与假设设计，不代表上述研究的实验结果，也不描述任何公司的内部实践。</p>
+<p>第一种是面向用户的解释。它回答“这个结论应该怎样理解”：术语是什么意思，哪些前提适用，为什么一个选项被排除。好的解释可以降低阅读成本，也可以帮助用户发现系统误解了问题。它的评价重点包括清晰、相关和边界是否准确。解释文本即使由模型逐步生成，也不能仅凭自身内容证明对应步骤真实发生过。</p>
+<p>第二种是可核验的外部证据。它回答“凭什么接受这个具体主张”：材料中的哪句话支持它，工具返回了什么，程序执行了哪项转换。引用、运行日志和校验结果属于这一层。它们可以证明材料确实存在、某次操作确实被记录，或者某项计算在给定输入下可复现；但一条引用存在，不等于引用支持结论，一次调用成功，也不等于返回内容被正确使用。</p>
+<p>第三种是内部机制证据。它试图回答“模型内部哪些计算对这个输出起了作用”。这一问题需要与相应机制假说匹配的观测和干预，而不是让模型自述过程。即使找到了一个有影响的内部环节，也仍要界定影响发生在哪些输入和条件下，是否存在其他路径，以及观察工具本身改变了什么。</p>
+<p>三层之间可以相互帮助，却没有自动升级关系。解释写得清楚，不能补足缺失的来源；来源对应准确，不能证明模型以某种人类熟悉的方式完成了推理；局部机制解释成立，也不能免除产品对最终字段逐一核验的责任。设计之初先讲清楚自己要证明什么，比事后增加一张复杂图更重要。</p>
+<h2 id="section-3">三 从一个文献抽取任务开始</h2>
+<p>设想一个用于整理研究资料的助手。以下报告、数字和测试均为虚构，只用于讨论抽取系统，不涉及诊疗判断，也不构成真实部署记录。</p>
+<p>某教学实验报告写道：“共招募二百四十名学习者，其中完成第十二周测评者二百一十六人。”摘要强调招募规模，正文另有末次测评人数。用户要求抽取“完成末次测评的人数及测评时点”，并指出证据位置。目标答案应对应二百一十六人与第十二周，而非看到“样本”一词就取最醒目的二百四十。</p>
+<p>助手可以给出一句很自然的说明：“我核对了研究设计与结果部分，确认最终测评人数。”这句话是否易读，与字段是否正确是两个问题。假如它填了二百四十，解释仍然可能显得专业；假如它填对了二百一十六，但引用的是另一份报告，结果也没有达到可交付标准。数字正确只覆盖了验收的一部分。</p>
+<p>这个任务看似小，却包含明确的责任链：取到指定版本，保留段落与表格关系，识别用户需要的语义角色，将原文转换为字段，再连接证据。如果研究材料没有报告末次测评人数，系统应交付“未找到可支持的数值”，而不是用招募人数代填。完整的表格未必比保留空缺的表格更有价值。</p>
+<p>由此，产品需求应先写成可检验的约束：每个已填写字段都有能够支持其语义的定位信息；不同统计口径不能静默合并；材料缺失、语义冲突和读取失败必须分开呈现。至于解释采用几句话、是否展开步骤，可以留给交互层选择。</p>
+<h2 id="section-4">四 让证据成为字段的一部分</h2>
+<p>我会把最小交付单元从“一个答案”改为“一个带证据的主张”。对于上述人数，记录中至少需要同时保留主张值、语义角色、材料版本、证据位置、必要原文片段、转换规则和核验状态。只存一个数字，再把整篇报告挂在回答末尾，很难让后续使用者判断对应关系。</p>
+<p>其中，语义角色尤其重要。“二百一十六”不是独立事实，它是“完成第十二周测评的人数”。如果丢掉限定语，字段在后续汇总时就可能被误用为招募人数。证据位置也应指向能够稳定找回的内容，而非只保留一个可能变化的网页地址。文档版本标识、页码和文本定位可以相互补充；单靠其中一种，遇到重新排版或解析差异就可能失效。</p>
+<p>转换规则要区分原文抽取与派生计算。中文数字转成阿拉伯数字，是一种规范化；将两个互斥组的人数相加，是另一种操作，必须额外记录输入字段和成立条件。若系统没有执行求和，就不应在说明中写“经计算得到”。如果执行了，也应让确定性的计算结果进入记录，而不是只保存模型描述计算的句子。</p>
+<p>核验状态则应具体到检查内容：“来源可打开”“片段定位成功”“字段与原文语义一致”“计算已复核”不能合并成一个笼统的绿色对勾。界面可以简化展示，但底层不能丢掉这些差别，否则任何一项通过都会被误读为整体通过。</p>
+<p>还有一个容易被忽略的边界：这套记录证明的是字段与材料的关系，不负责证明材料本身的研究质量。原文可能有错误，抽取仍然可以忠实。若业务还需要评价材料质量，就应另设任务、标准和审查责任，不能让“抽取核验通过”悄悄承诺更多。</p>
+<h2 id="section-5">五 反事实测试应改变可检查的条件</h2>
+<p>当助手声称某字段来自某段材料，我不会把“再解释一遍”作为主要验证手段。我会先提出一个可以失败的假说：在其他条件保持一致时，改变支持字段的证据，应当引起对应字段的变化；不改变该证据的编辑，则不应无故改变字段。</p>
+<p>例如，制作成对测试材料，仅将“完成第十二周测评者二百一十六人”改为“二百零八人”，保留其他内容。期望人数变化、测评时点不变，且引用定位仍然正确。再做一组，只将时点改为第十周，期望只有时点变化。这类测试检查字段是否对相关输入敏感，也检查修改是否错误地传染到无关字段。</p>
+<p>下一步是删除唯一支持末次测评人数的句子，同时保留招募人数。此时期待的行为不再是稳定答对某个数，而是撤回原来的确定结论。如果系统仍输出原值，至少说明当前流程不能证明字段依赖于这份材料。但不能仅凭这一现象认定模型“记住了答案”或“故意编造”：缓存、旧版本读取、测试数据拼接错误，都需要排查。</p>
+<p>还可以在附录加入一段与招募人数有关、但与末次测评无关的文字，测试系统是否被醒目的数字吸引。这时必须确保新增内容确实不改变目标问题的含义。所谓反事实不是随意修改文档，而是对预先说明的变量实施受控变化；一旦修改同时改变多项条件，结果就难以归因。</p>
+<p>成对输入还需要在固定配置下重复运行，记录字段改变的频率与失败类型，避免把一次偶然输出当成稳定规律。若系统含有检索、缓存和后处理，就应先做端到端测试，再逐层固定输入定位差异。只测模型本身，无法替整条产品链路验收；只测最终输出，又可能看不见是哪一层抵消了另一层的错误。</p>
+<p>这些测试得到的是系统在材料变化下的行为证据。它们可以暴露脆弱依赖，帮助选择修复位置，却不能直接说明某个神经元承担了什么职能，也不能证明模型在其他任务中仍遵循同样路径。行为测试与机制研究应在这个边界上保持诚实。</p>
+<h2 id="section-6">六 负对照决定评估有没有辨别力</h2>
+<p>如果评估集只包含“材料完整且答案明确”的案例，一个总是给出流畅确定回答的系统，可能获得很好看的成绩。为了知道评分到底奖励了什么，我会加入预期不应触发变化或不应通过验收的负对照。</p>
+<p>第一类是不相关编辑：调整页眉、替换无关章节的示例编号，目标字段应保持稳定。第二类是证据错配：答案数值正确，但绑定另一份文档中恰好相同的数值。验收必须判为证据失败，而不能因数字一致而放行。第三类是空证据：材料没有目标字段，系统应保持缺失状态，不能因格式要求而补齐。</p>
+<p>解释也需要单独接受检验。可以给人工审阅者同一组字段及来源，一组附有简短说明，另一组附有更长的说明，再比较他们发现预设错误的能力和所花时间。这里要检验的是解释是否帮助审查，而不是审阅者是否更喜欢它。若长说明提高了主观信任，却降低了错误发现率，界面就需要调整。</p>
+<p>测试分组应事先固定，评分者也不应在看到结果后临时改变“可接受”的口径。相关指标至少分开报告字段正确性、证据支持度、缺失处理和无关编辑稳定性。总分方便排序，但可能掩盖“数字更准、证据更差”的交换。对于需要审计的任务，这种交换不能靠平均分自动决定。</p>
+<p>还要交代分母。只计算已填写字段的准确率，会让大量留空的系统看起来很安全；只计算填满了多少，又会奖励没有依据的猜测。因此，应同时观察有答案材料中的有效覆盖，以及无答案材料中的错误填充。这里的“有答案”需要由独立标注确认，而不能取决于被测系统是否找到。拒答和作答都要接受检验，才能避免用一种失败掩盖另一种失败。</p>
+<h2 id="section-7">七 把失败落到能够修复的环节</h2>
+<p>错误分类的价值，在于指导下一次工程动作。若所有问题都被归入“幻觉”，修复往往只剩下加长提示词，随后又用相同测试期待改善。</p>
+<p>在这个假设系统里，我会先区分材料失败与抽取失败。指定文件未读取、读取了旧版本，属于前者；数字被识别出来却配错语义角色，属于后者。前者优先检查文件身份与访问链路，后者需要检查字段定义、上下文保留和抽取约束。两类问题不该共享一个模糊的修复理由。</p>
+<p>再区分变换失败、证据绑定失败和表达失败。单位转换错误应回到转换规则；字段正确但引用错位应回到绑定逻辑；证据尚不完整却表述为“已经确认”，则要修正输出状态与措辞之间的映射。单独提高模型答题能力，不一定能改善这些连接处的问题。</p>
+<p>最后是核验失败。如果校验器只检查引用能否打开，它就可能放过“引用真实、内容无关”的结果。增加第二个模型复核可以形成一道检查，却不能自动获得独立性：两个检查者若都只看到同一段错误解析文本，就可能共同认可错误。更有价值的差异，是让检查路径接触不同的失败来源，例如把解析结果与原始页面位置对照。</p>
+<p>这套分类也不必追求一次覆盖全部故障。应允许“尚未定位”，保存足够信息后再调查。比起过早给出一个听起来专业的原因，保留未决状态更有利于建立可靠的改进记录。</p>
+<h2 id="section-8">八 证据的成本也需要设计</h2>
+<p>要求每个字段都保留完整来源、每次输出都多轮复核，会增加处理时间、存储和审阅负担。合理的目标是让证据粒度匹配错误后果，而不是让所有任务承担相同成本。</p>
+<p>对于供人浏览的初步资料清单，可以先返回候选字段和明显的不确定状态；进入跨文献汇总时，再要求严格的版本固定、语义核验和冲突处理。关键是阶段边界不能含糊：未经核验的候选值不应因为被复制到另一个页面，就自动成为已确认事实。状态必须随数据传播，而非只存在于最初的聊天气泡中。</p>
+<p>人工也不宜平均分配给所有结果。出现多处数值冲突、关键段落缺失或口径无法区分时，可以优先送审；同时保留一定范围的普通样本抽查，防止系统只会识别已经知道的风险。这里不宜预设通用的审核比例，应由任务错误成本、实际分布和可接受等待时间共同决定。</p>
+<p>证据保留还应遵循必要性。为核验一个字段，未必需要把整份材料复制到每份日志中。可保存受控的来源标识、必要片段与操作记录，并明确谁能读取、保留多久。收集得更多不会自然带来更强的可信性；如果大量记录无人能检索和解释，审计成本反而会上升。</p>
+<h2 id="section-9">九 上线判断应当小于研究愿景</h2>
+<p>面对这样的助手，我愿意接受的上线陈述应该很具体：在明确的文献类型、字段集合和测试条件下，系统能够提供可定位证据，识别一组已定义的缺失与冲突情形，并把无法确认的结果交给人处理。这是一项有范围、可以复测、能够被新故障推翻的工程判断。</p>
+<p>我不会把它改写为“模型的思考过程已经透明”，也不会因为没有完整的内部机制解释，就认定所有外部核验都失去意义。产品需要在能够取得的证据上建立有限承诺，同时给尚未证明的部分留下边界。机制研究可以扩展我们未来能够检查的问题，当前系统仍需把已经能检查的事情做实。</p>
+<p>验收通过也应绑定版本。提示词、解析器或字段定义变更后，原来的结果只能作为历史记录，不能未经复测就继承为新版本的证明。保留失败样本并加入回归测试，可以检查修复是否持续有效；仍需另设尚未用于调试的测试材料，避免系统只对已经见过的问题表现良好。</p>
+<p>用户最终需要的，是一种可以追责到具体主张的可靠性：知道这个字段来自哪里，经过什么转换，哪些检查确实做过，在哪些条件下应该撤回。解释应帮助用户使用这些证据，而不是替证据发言。</p>
+<p>下一次审阅一个回答时，我会把“它解释得是否漂亮”放在后面，先问：如果这项结论错了，谁能凭现有记录发现它，系统又会怎样承认和修正？一个产品对这个问题回答得越具体，它提出的可信性承诺才越有分量。</p>
+</article></main><footer class="page-footer"><a href="https://leo528-ai.github.io/medwork-deck/blog/">返回博客</a><a href="#top">回到顶部 ↑</a></footer></div></body></html>
