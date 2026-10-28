@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>相同的崩溃栈，可能藏着两种故障｜胡浩源</title><meta name="description" content="读 OpenAI 的 core dump 复盘：从故障分群到栈生命周期，怎样把推测变成可验证的修复"><meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人"><meta name="color-scheme" content="light"><meta name="theme-color" content="#F5F1E8"><link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/crash-populations-stack-lifetime.html"><style>:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2;--serif:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}a:focus-visible,summary:focus-visible,.table-wrap:focus-visible,pre:focus-visible{outline:3px solid var(--clay);outline-offset:5px}.shell{width:min(100% - 40px,760px);margin:auto}.skip{position:absolute;top:-5rem;left:1rem;background:var(--surface);padding:.5rem 1rem}.skip:focus{top:1rem}.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;color:var(--muted)}.masthead a{color:var(--muted)}header{padding:52px 0 26px}h1{font:700 clamp(32px,5.8vw,46px)/1.35 var(--serif);letter-spacing:-.035em;margin:0 0 25px;text-wrap:balance}.subtitle{font:21px/1.65 var(--serif);color:var(--muted);margin:0 0 24px}.byline{font-size:14px;color:var(--muted);margin:0}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}.contents{border-block:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px}.contents summary{cursor:pointer;font-weight:600}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents li{margin:0}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}article p{margin:0 0 22px}h2{font:700 26px/1.5 var(--serif);margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}ul{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{font:inherit;white-space:pre}.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}table{border-collapse:collapse;width:100%;min-width:650px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650}tbody th{font-weight:500;min-width:190px}tr:last-child th,tr:last-child td{border-bottom:0}#sources{font-size:14px;color:var(--muted)}#sources h2{font-size:20px}.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}@media(max-width:600px){body{font-size:16px}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px;gap:12px;font-size:12px}header{padding:36px 0 24px}.subtitle{font-size:19px}h2{font-size:23px;margin-top:42px}pre{font-size:12px;padding:14px 12px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px;flex-wrap:wrap}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}pre,pre code{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}a{color:inherit}}article{overflow-wrap:anywhere}article :not(pre)>code{font:.88em/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;background:#EBE5D9;padding:.1em .25em;border-radius:3px}sup{font-size:.72em;line-height:0}</style></head>
+<body id="top"><a class="skip" href="#main">跳至正文</a><main class="shell" id="main"><nav class="masthead" aria-label="导航"><a href="../blog/">个人博客</a><a href="index.html">系列目录</a></nav><article><header><h1>相同的崩溃栈，可能藏着两种故障</h1><p class="subtitle">读 OpenAI 的 core dump 复盘：从故障分群到栈生命周期，怎样把推测变成可验证的修复</p><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-10-28">2026 年 10 月 28 日</time> · 评测与可靠性</p></header><nav class="contents" aria-label="本文目录"><details open><summary>本文目录</summary><ol><li><a href="#two-populations">01｜先把相似的故障拆开</a></li><li><a href="#cohort-data">02｜给事故表补上分母和缺失状态</a></li><li><a href="#stack-state">03｜栈上的字节还在，不等于仍受保护</a></li><li><a href="#unwind-transition">04｜沿着恢复状态的读写顺序找竞态</a></li><li><a href="#patch-invariant">05｜修复要改变依赖关系</a></li><li><a href="#rare-events">06｜把极小概率放回执行次数里</a></li><li><a href="#experiments">07｜让测试区分几种竞争解释</a></li><li><a href="#automation">08｜自动化调查需要交付可重跑的分类</a></li><li><a href="#release-evidence">09｜把止损、机制修复和发布验收分开</a></li><li><a href="#closing">10｜让每个解释留下被推翻的办法</a></li><li><a href="#sources">原文与技术核对</a></li></ol></details></nav>
+<section id="two-populations"><h2>01｜先把相似的故障拆开</h2>
+<p>同一段代码频繁出现在崩溃栈里，很容易成为调查的中心。工程师围着它检查指针、边界和编译结果，每提出一个解释，又找到一份不符合解释的现场。问题看起来越来越神秘，也可能只是因为这些现场本来就不属于同一种故障。</p>
+<p>OpenAI 工程师 Nathan Bronson 在 2026 年 6 月 30 日的复盘中，报告了这样一次调查：Rockset 的崩溃最终分成硬件异常与 GNU libunwind 竞态两组。团队批量分析过去一年的 core dump，才看清两类分布；异常主机退出后，一类崩溃消失，但数周压力测试没有受控复现该硬件异常。另一类则追到存在逾 18 年的异常恢复代码，并提交了上游修复。<a href="https://openai.com/index/core-dump-epidemiology-data-infrastructure-bug/">原文</a></p>
+<p>这件事改变了我对排障顺序的理解。第一步未必是为最典型的现场找到最深的解释，也可能是先证明：我们正在把哪些现象当作同一个问题？如果分类本身有误，增加更多日志、更多模型推理和更多专家讨论，只会更快地积累互相冲突的论据。</p>
+<p>例如，一个假设的服务里，两批故障都发生在“写入结束”附近。甲批与特定机器相关，乙批与某个运行库版本相关。如果把它们放在一起，甲批中的旧版本机器会成为反对软件假说的证据，乙批中的健康机器又会成为反对硬件假说的证据。两条本来可以分别成立的解释，被错误的归并变成了彼此的反例。</p>
+<p>因此，症状标签应先描述观察，而不要过早携带病因。“指令地址为空”“栈指针异常”“数据不足以判断”，比“内存踩踏”“编译器错误”更适合作为第一层分类。前一组允许后续证据推翻解释，后一组却容易把调查方向写进数据。分析者再去统计这些标签时，会误以为自己得到了独立支持。</p>
+<p>下面沿着这一案例继续走：先讨论怎样建立可比较的故障集合，再直接检查公开修复涉及的栈生命周期，最后设计能区分“暂时没出事”和“错误路径被消除”的验收方法。最值得带走的成果，应是一条可以让其他人重新检查的证据链。</p></section>
+<section id="cohort-data"><h2>02｜给事故表补上分母和缺失状态</h2>
+<p>我会先为故障调查建一张窄表。每行对应一次明确的崩溃事件，记录时间、构建标识、进程身份、宿主环境、症状分类及原始文件位置。不要第一天就把所有可能相关的字段塞进去；更重要的是让每一行都能追溯到同一个定义，确认重复上传没有被当成多次事故。</p>
+<p>这里有三种身份需要分开。进程重启后名称可能相同，但已经不是同一个运行实例；虚拟机重新创建后编号变了，底层物理宿主未必改变；一个版本号下的动态库也可能因镜像构建不同而不一致。只记服务名和发布日期，往往不足以把软件变更与硬件暴露分开。需要什么身份，应由待检验的假说决定。</p>
+<p>计数之外还要保存暴露量。下面是一组虚构数据，用来说明为什么仅按崩溃次数排序会误导。假定机器小时是这次调查选定且口径一致的分母：</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="假设故障率比较，可横向滚动"><table><thead><tr><th scope="col">机器组</th><th scope="col">崩溃次数</th><th scope="col">累计机器小时</th><th scope="col">每千机器小时崩溃</th></tr></thead><tbody><tr><th scope="row">甲组</th><td>20</td><td>10,000</td><td>2</td></tr><tr><th scope="row">乙组</th><td>4</td><td>100</td><td>40</td></tr></tbody></table></div>
+<p>甲组的事故总数更高，乙组的单位暴露风险却是甲组的二十倍。如果怀疑问题与异常抛出有关，机器小时仍可能过粗，还应尝试用相关异常次数或目标路径执行次数作分母。分母不是越复杂越好，而是要接近故障真正获得触发机会的过程。</p>
+<p>缺失也必须进入这张表。没有 core 文件、文件不完整、符号不匹配、寄存器无法提取，应该是不同状态。不能把无法分类的记录直接删除，再称剩余样本为“全部事故”。可以同时展示总事件数、成功取得现场数、成功分类数，以及未知类别的占比；这样读者才知道结论覆盖了哪一部分系统。</p>
+<p>接下来按时间、机器组、版本、运行时长和负载分层，而不只画一张总曲线。若某个标签在所有维度上都混杂，应该考虑继续拆分。若一个分组只有极少样本，则保留不确定性。先看模式，再回到代表性现场；总体数据帮助选择下一份值得精读的 core，而不是替代精读。</p>
+<p>我还会保留分类规则的版本。同一份文件在规则升级后由“未知”变成“栈异常”，会改变历史曲线。把旧记录重新处理是一项合理操作，但应明确这是分类修订，不能把它画成生产故障突然增加。调查工具本身也会制造数据变化。</p></section>
+<section id="stack-state"><h2>03｜栈上的字节还在，不等于仍受保护</h2>
+<p>理解这次修复，先把三个概念分开：一块内存里还留着什么字节，当前程序把哪部分内存视作有效栈，以及异步信号到来时系统允许覆盖哪里。字节没有立刻消失，并不代表下一条指令仍有权依赖它。</p>
+<p>在这里讨论的 x86-64 环境里，<code>%rsp</code> 表示栈指针，<code>%rip</code> 表示指令位置。GCC 文档说明，该 ABI 的 red zone 是当前 <code>%rsp</code> 以下的 128 字节区域，信号或中断处理不会修改它，程序可用它保存临时数据而不必先调整栈指针。这是一段相对于当前栈指针定义的保护范围，不是一块永远保留的历史仓库。<a href="https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html">GCC x86 选项说明</a></p>
+<p>Linux 的信号机制会保存被中断执行的上下文，并为信号处理建立栈帧。正常返回时，再通过相应恢复流程继续执行。若安装了备用信号栈并为处理器指定 <code>SA_ONSTACK</code>，使用的栈还会不同。因此，分析覆盖关系之前，必须知道实际信号配置，不能把某一种布局当成所有程序的默认事实。<a href="https://man7.org/linux/man-pages/man7/signal.7.html">Linux signal(7)</a></p>
+<p>可以用一个简化模型想象这件事：程序把一份“稍后恢复执行所需的状态”放在旧栈上，随后把栈指针移到另一个位置。此时旧状态的地址数值仍然有效，内存也可能尚未变化，但它已不一定落在当前活动栈或保护范围内。如果信号处理开始使用那片区域，之前保存的状态就可能被改写。</p>
+<p>这类错误很难通过“这里有没有释放内存”找到，因为它未必调用了任何释放函数。资源生命周期由栈边界的变化决定。审查重点应变成：改变边界之后，是否还有读取依赖旧边界？同样的推理也适用于缓冲区归还给池以后仍被异步任务引用，只是具体约束和修复方法各不相同。</p>
+<p>core dump 提供的是观察时刻的现场，并不会自动告诉我们这些字节经历过什么。一个看似返回地址的数值，可能来自正常调用，也可能由恢复流程临时放入；一段看似完好的旧栈，也可能只是在这次运行中碰巧未被覆盖。要从静态现场推回执行历史，必须把写入者、读出者和所有权变化一起列出来。</p></section>
+<section id="unwind-transition"><h2>04｜沿着恢复状态的读写顺序找竞态</h2>
+<p>我进一步在 libunwind 的公开提交 <code>a9b9293</code> 中核对了修复前后的代码差异。具体实现位于 <code>src/x86_64/setcontext.S</code>。这是上游该版本的代码证据；排查其他系统时，仍要回到实际部署的二进制，不能假定同名库、不同版本和博客中的片段完全相同。<a href="https://github.com/libunwind/libunwind/commit/a9b9293b286c14b9ed19db501aa347b46edd8a28">上游修复</a></p>
+<p>这个函数的任务是恢复一组机器状态。输入指针指向保存寄存器值的上下文结构，恢复过程要把这些值重新装入寄存器，并把执行转移到目标位置。它承担的事情比普通函数返回更多：既改变“在哪里继续”，也改变“继续时使用哪一段栈”。</p>
+<p>有问题的顺序可以概括为下图。它是为了突出依赖关系的流程示意，省略了许多寄存器恢复操作：</p>
+<pre tabindex="0"><code>旧顺序
+读取目标栈位置 → 更新 %rsp
+                     ↓
+              旧上下文可能失去保护
+                     ↓
+               信号可能在此进入
+                     ↓
+从旧上下文读取目标指令地址 → 放入栈 → 转移执行</code></pre>
+<p>危险不在于“信号可以进入”这件事本身，而在于进入时仍有一份后续必读的数据留在不再受保护的位置。即使信号处理严格遵守当前栈规则，也可能覆盖那份旧数据。局部看，每个参与者都完成了自己的动作；组合起来，恢复流程却依赖一个已经失效的内存承诺。</p>
+<p>这里还需要区分两个动作：恢复过程拿到的目标地址已经错误，与原先正常调用保存的返回地址被直接改坏。两者最终都可能表现为跳到错误位置，修复对象却不同。前者应该追查目标状态从哪里读出、何时失去保护；后者则需要寻找对保存槽的非法写入。仅凭最后停在哪条返回指令上，不能替它们作出选择。</p>
+<p>我的阅读方法是给每一步加一张“仍然活着的数据”清单。更新栈指针前，输入上下文必须可读；更新后，哪些字段还未消费？这些字段现在在哪里？信号若恰好介入，会改动什么？只要有一个字段在所有权切换后仍从旧区域读取，就需要解释它为何安全。这个问题比猜测 CPU “是不是偶尔乱执行”更容易被验证。</p>
+<p>竞态也不要求两个业务线程同时写同一个对象。正常执行与异步信号处理之间就存在交错。只盯线程锁或共享容器，可能看不到这条路径。审查状态切换代码时，应把信号、回调、取消和清理等可能打断当前流程的机制列为参与者，再根据实际环境逐项排除。</p></section>
+<section id="patch-invariant"><h2>05｜修复要改变依赖关系</h2>
+<p>公开补丁采取的办法很具体：在改变 <code>%rsp</code> 之前，先把目标指令地址和目标 <code>%rdi</code> 放到目标栈位置下方的两个槽中，分别距目标栈指针 8 和 16 字节；完成其他必要的旧上下文读取后，才切换栈位置，再取回这两个值并转移执行。<a href="https://raw.githubusercontent.com/libunwind/libunwind/a9b9293b286c14b9ed19db501aa347b46edd8a28/src/x86_64/setcontext.S">修复后的实现</a></p>
+<p>为什么最后还要恢复 <code>%rdi</code>？因为在读取输入上下文时，它承担指针的职责；到了目标执行状态，它又必须具有目标状态要求的值。一个寄存器在流程前后扮演不同角色，不能仅凭“还有空寄存器”随意改写。恢复顺序既受数据生命周期限制，也受最终机器状态约束。</p>
+<p>把完整指令细节暂时放下，修复建立了一条容易审核的原则：<strong>一旦切换栈边界，后续执行就不再从失去保护的旧上下文取得必需数据。</strong>这比把危险窗口缩短一点更强。窗口再短，调用足够多时仍可能撞上；消除那条不安全依赖，才是在改变错误能否发生的条件。</p>
+<pre tabindex="0"><code>修复的依赖结构（简化示意）
+旧上下文仍受保护
+  ├─ 读取目标栈位置
+  ├─ 将最后需要的状态放入目标栈附近
+  └─ 完成其余旧上下文读取
+             ↓
+         切换栈边界
+             ↓
+从目标栈取回已准备的状态 → 转移执行</code></pre>
+<p>这个示意并不是可以直接放进业务程序的上下文切换实现。具体汇编还涉及寄存器、平台约定和 shadow stack 等细节。尤其要注意，补丁父版本含有博客所示生产片段之外的指令；“单条指令的危险窗口”不能不加区分地套在所有历史版本上。判断一个修复是否适用，应核对真正加载的库及机器码。</p>
+<p>从代码审查的角度，我会沿着边界前后各走一次。向前看，暂存数据是否在最后一次合法读取之前已准备好；向后看，是否有遗漏字段还从旧指针读取。然后把信号可能介入的位置逐项插入，检查暂存位置是否仍在对应时刻的有效区域。读懂一条指令还不够，要证明它与相邻步骤组成的时序满足同一条规则。</p>
+<p>同样，也不能把“换成另一套实现”与“解释了这一套实现的缺陷”混为一谈。替换可以是止损方案，源码修复可以是机制证据，回归测试则检验特定执行条件；三者各自回答一个问题。只有替换后没有再崩溃，仍不足以说明所有可能交错都已被处理。</p></section>
+<section id="rare-events"><h2>06｜把极小概率放回执行次数里</h2>
+<p>原文用约 10<sup>−10</sup> 秒的窗口、约 10<sup>−2</sup> 秒的信号间隔作费米估算，得到每次相关清理或捕获机会约 10<sup>−8</sup> 的风险；结合每秒约 10<sup>4</sup> 次异常，估计单机故障间隔约 10<sup>4</sup> 秒。这些是说明机制与频率相容的数量级，不是精确测时或概率实验。作者还将故障显现与异常频次、信号频次及信号处理函数的栈占用联系起来。<a href="https://openai.com/index/core-dump-epidemiology-data-infrastructure-bug/">原文中的估算与条件</a></p>
+<p>为什么这样的估算有用？因为“窗口短到不可能”是一种直觉判断，而计算可以检验这个直觉是否站得住。若把窗口宽度记为 <code>w</code>，信号平均间隔记为 <code>T</code>，在非常简化的随机时相近似下，每次机会命中窗口的概率可写成 <code>w/T</code>。再乘以机会发生速率，才得到单位时间的风险尺度。</p>
+<p>这里的“机会”需要谨慎定义。一次异常可能经过多个清理步骤，不同路径的栈布局也可能不同；信号递送未必均匀独立，负载还可能同时改变异常率与信号行为。因此，这个乘法适合做可行性检查，不能直接作为上线服务的故障预测器，更不能把某次事件率当成所有机器的固定常数。</p>
+<p>可以另外做一个纯假设的测试时长算例。设某种触发条件下，故障率恒定为每 10,000 秒一次，并暂时采用泊松过程近似。那么运行一小时没有观察到故障的概率是 <code>exp(−3600/10000)</code>，约为 70%；运行十小时，仍有约 2.7% 的概率没有故障。一个小时测试通过，在这个假设下并不令人惊讶。</p>
+<p>这些结果不表示真实系统服从泊松分布。它们用于暴露一种验收错误：把“测试期间没有命中”解释成“路径已经不可能发生”。如果测试没有达到相应暴露量，或者恰好缺少信号、栈占用和异常路径的组合，再长的墙钟时间也可能与线上风险关系不大。</p>
+<p>我会同时记录异常次数、目标恢复路径执行次数、信号递送情况与负载分布，并明确哪些只是代理指标。不同机器并行测试能增加总暴露量，却不能自动覆盖不同交错；若每台都避开同一触发条件，一千台也可能重复同一种盲区。规模扩大和条件覆盖应分别报告。</p>
+<p>长期没有暴露的老代码也需要这样看。代码年龄说明它经历了时间，不说明它经历了今天的工作负载。评估一次看似无害的监控、采样或异常处理调整时，可以多问一句：它是否改变了某条低概率路径的执行频次、可重入性或栈布局？这比把所有近期事故都归咎于最近一行业务改动更有针对性。</p></section>
+<section id="experiments"><h2>07｜让测试区分几种竞争解释</h2>
+<p>如果已经怀疑“恢复状态与信号介入之间存在时序问题”，下一步应该提出能区分解释的实验，而不是只把原来的压力测试再跑一遍。我的测试矩阵会围绕三个问题组织：必须进入哪条路径，必须出现什么外部事件，以及事件发生时哪些数据仍被后续读取。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="竞态排查测试矩阵建议，可横向滚动"><table><thead><tr><th scope="col">改变的条件</th><th scope="col">主要检查什么</th><th scope="col">仍不能单独证明什么</th></tr></thead><tbody><tr><th scope="row">旧实现与修复实现</th><td>相同任务下，目标错误是否随实现变化</td><td>所有平台、所有调用路径都已安全</td></tr><tr><th scope="row">信号频次与递送条件</th><td>故障是否依赖异步介入机会</td><td>某一具体指令就是唯一错误位置</td></tr><tr><th scope="row">处理路径的栈占用</th><td>是否存在覆盖旧状态的必要条件</td><td>只要占用更小就可以永久规避</td></tr><tr><th scope="row">异常深度与清理链</th><td>不同恢复路径是否共享同一缺陷</td><td>真实工作负载的全部分布已覆盖</td></tr><tr><th scope="row">构建及实际加载的库</th><td>测试对象与生产对象是否一致</td><td>版本标签相同就没有二进制差别</td></tr></tbody></table></div>
+<p>这是一份验收设计，不是原团队已经完成的额外实验。每一行都应配有预期：如果当前假说成立，改变该变量后哪种观察应发生变化？如果没有变化，是假说受损，还是测试没有真正施加预期条件？把这两个可能性分开，实验失败才有信息。</p>
+<p>对稀有交错，还可以在受控测试版本里放大窗口或安排确定的介入点，使一个原本很难撞上的顺序更容易观察。代价是程序已经被测试装置改变。因此，放大后的失败只能支持“这条执行顺序存在风险”，不能直接给出生产故障率；还需检查放大手段是否引入了新的错误。</p>
+<p>负对照同样重要。如果测试把无关实现、关闭目标路径的配置也打崩，就要先排查测试本身。如果所有版本都通过，也不能自动认为旧实现安全，可能只是触发器没有工作。好的测试应该能够解释为什么某组应该失败、某组应该通过，并能验证这两个预期。</p>
+<p>备用信号栈是另一个容易被过度简化的选项。Linux 文档要求先分配并注册备用栈，再在安装处理器时指定 <code>SA_ONSTACK</code>；它还涉及栈大小和上下文切换等条件。<a href="https://man7.org/linux/man-pages/man2/sigaltstack.2.html">sigaltstack(2)</a> 因而，“把信号搬到别处”最多是一项需要单独验证的配置变化，不能未经分析就替代对旧上下文生命周期的修复。</p>
+<p>对于硬件相关怀疑，测试也应保留“暂未复现”。受控压力没有失败，可能排除部分容易触发的问题，却未必覆盖线上指令组合、温度状态、资源争用和调度条件。相反，移走某台机器后故障减少，也要核查负载是否同时下降、样本是否改变。干预后的观察很有价值，但结论范围应与控制住的条件一致。</p></section>
+<section id="automation"><h2>08｜自动化调查需要交付可重跑的分类</h2>
+<p>这类工作很适合让编码助手参与：写解析器、补元数据、批量生成分布、查找异常记录。但我会把交付物定义为可以反复运行和人工抽查的处理流程，而不是让助手输出一篇“根因应该是某某”的长分析。调查材料的质量，取决于每条标签是怎样产生的。</p>
+<p>一个可用的解析结果，应带着输入文件摘要、解析器版本、目标平台、构建或符号标识，以及无法解析的具体原因。如果同一个 core 换一套符号后分类改变，审查者应能看见这项差异。若只保存最后的标签，错误的解释会成为下一轮统计的事实。</p>
+<p>规则也要避免循环论证。比如先根据“出现在某台机器”将事故标为硬件故障，再统计硬件故障集中在哪台机器，这只是在把分类条件画成图。更好的第一层规则根据现场特征分类，机器、版本等因素放到后续关联分析中；需要使用它们辅助分类时，应明确披露。</p>
+<p>可以先人工检查一小批有代表性的样本，覆盖明显正例、容易误判的相邻类型及无法判断的情况，再检验自动分类。抽样不能只挑已经被脚本识别出来的事故，还应从被排除的记录中取样，寻找漏检。自动化的吞吐越高，越需要知道它可能把哪一类错误大规模复制。</p>
+<p>下面是一份我会要求调查工具保存的记录轮廓，字段并不对应任何公司的内部系统：</p>
+<pre tabindex="0"><code>event_id                 本次崩溃的稳定标识
+input_digest             原始现场文件的摘要
+build_and_symbols        二进制与符号的对应关系
+parser_version           解析规则版本
+observed_signature       直接观察到的症状
+classification_reason    哪些字段满足了分类规则
+missing_fields           哪些证据没有取得
+review_status            抽查及修订状态</code></pre>
+<p>还要把计算资源与敏感数据边界一并考虑。core dump 可能包含进程中的业务数据；在真实调查中，应沿用获批的存储、访问和保留范围，仅把必要结果交给后续分析。这里的重点不是多加一条警告，而是让批量工具从一开始就可以只读取必要片段、记录访问对象并控制输出，避免为了排错扩散更多原始内容。</p>
+<p>最后，应当能从图表回到单条记录，再回到输入和规则。让助手帮助建立这种路径，比让它代替人宣布结论更有价值。只要分类可以复查，后来发现规则有误时，就能重算数据并修正判断，而不必从一份无法追溯的报告重新开始。</p></section>
+<section id="release-evidence"><h2>09｜把止损、机制修复和发布验收分开</h2>
+<p>修复准备好以后，最容易出现的跳跃是：旧版本会崩，新版本暂时没崩，于是事故已经结束。但对低概率错误，验收需要说明究竟改变了什么、经历了多少相关工作量，以及还留下哪些未知项。否则，成功发布只是在重复最初那个未经检验的解释。</p>
+<p>我会把证据分成三层。第一层是代码性质：修复是否消除了切换栈边界后的旧上下文读取。第二层是执行行为：针对该路径的测试是否在预期条件下区分旧版和新版。第三层是运行效果：实际部署后，对应症状是否下降，且没有以别的错误或性能损失出现。这三层可以相互加强，但不能相互代替。</p>
+<p>代码层需要审阅的是最终进入制品的版本。维护者提交了补丁，不代表产品已经使用它；依赖清单写了某个版本，也不一定足以定位实际运行的库。发布记录应能将源码提交、构建结果、镜像和运行实例连接起来。调查者不应在事故之后才发现，没有办法确认某台机器到底执行过哪一份实现。</p>
+<p>行为层应保留修复前后的配对结果。对稀有竞态，值得保存触发条件、随机种子或调度设置、失败签名和执行次数。若用特殊装置放大了窗口，还要记录装置与生产构建的差异。复现测试可证明一个错误路径被命中；它的通过不能扩展为整个异常机制没有其他问题。</p>
+<p>运行层则要继续沿用分群，别在修复后又把所有崩溃合并为一个指标。目标故障下降，而未知类上升，可能是观测方式改变；总量下降而目标路径工作量下降得更多，也未必意味着风险降低。应尽量保持可比的分母，检查负载、采样和保留策略是否同时发生变化。</p>
+<p>发布还应有清楚的停止条件。若目标签名重新出现，先确认部署身份和分类规则，再决定回退或继续调查；若只有无关故障增加，应单独评估，避免把所有变化归给同一补丁。对于已被隔离的可疑机器，也应保留排除原因和复用条件，不要让几周后的资源清理抹去这段运维知识。</p>
+<p>“永久修复”是很强的说法。对这类事件，更有帮助的结论往往更具体：哪条已知错误路径被移除，哪些配置经过了检验，哪些症状仍受监测，下一次相似事故怎样更快分类。这样形成的知识，才不会随着当班工程师离开而消失。</p></section>
+<section id="closing"><h2>10｜让每个解释留下被推翻的办法</h2>
+<p>这篇复盘把两个尺度连接了起来：一个尺度是整个系统中故障的分布，另一个尺度是几条指令之间的数据依赖。只看总体，很容易止步于相关性；只看单个现场，又可能把不同问题硬塞进同一个解释。有效的调查需要在两者之间往返，让分布指导精读，让机制重新定义分类。</p>
+<p>我的一个判断是，可靠性工程最稀缺的产物不是根因故事，而是可反驳的解释。它应该说明：如果这个解释成立，哪些观测应当出现；如果看到了什么，我们必须撤回判断；改变哪个条件能够把它与另一种解释区分开。没有这些内容，再完整的事故时间线也可能只是在事后把事件串得顺畅。</p>
+<p>面对模型、Agent 或它们依赖的服务，也可以沿用这样的调查纪律。回答质量下降、工具调用失败和进程崩溃不是同一种对象，但都需要先定义事件、保留版本、观察分母，并允许一个表面症状对应多个原因。不要因为模型能够提出更多假说，就降低对证据的要求。</p>
+<p>我会把排障助手的价值放在几个可检查的结果上：能否更快整理出可信样本，能否指出分类中的循环论证，能否生成区分假说的实验，能否把代码变化与实际运行版本对齐。它可以协助读懂一段汇编，也可以协助发现统计口径的问题。最后是否接受结论，仍取决于这些步骤产生了什么证据。</p>
+<p>下一次看到一批“相同”的崩溃时，值得先留出一个位置，写下尚未被证明的前提：它们真的属于同一种故障吗？在这个问题得到回答之前，不必急着寻找能够解释所有现场的宏大原因。把问题分得准确，有时已经完成了最困难的一半。</p></section>
+<section id="sources"><h2>原文与技术核对</h2>
+<ul>
+<li>OpenAI，Nathan Bronson，<a href="https://openai.com/index/core-dump-epidemiology-data-infrastructure-bug/">Core dump epidemiology: fixing an 18-year-old bug</a>，2026 年 6 月 30 日发布；本次阅读日期为 2026 年 10 月 28 日。</li>
+<li>libunwind 上游<a href="https://github.com/libunwind/libunwind/commit/a9b9293b286c14b9ed19db501aa347b46edd8a28">修复提交 a9b9293</a>，父版本为 <code>8f294c4551d3a34d13c71d7d77f445ef2ee67971</code>；核对修复差异及该提交的 <a href="https://raw.githubusercontent.com/libunwind/libunwind/a9b9293b286c14b9ed19db501aa347b46edd8a28/src/x86_64/setcontext.S">x86_64/setcontext.S</a>。该文件及项目采用<a href="https://raw.githubusercontent.com/libunwind/libunwind/a9b9293b286c14b9ed19db501aa347b46edd8a28/LICENSE">MIT 许可</a>。本文没有运行故障复现器，也没有独立复现原团队的生产观察。</li>
+<li><a href="https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html">GCC x86 Options</a> 的 red zone 说明，以及 Linux man-pages 的 <a href="https://man7.org/linux/man-pages/man7/signal.7.html">signal(7)</a> 和 <a href="https://man7.org/linux/man-pages/man2/sigaltstack.2.html">sigaltstack(2)</a>，用于核对栈与信号机制。</li>
+</ul>
+</section>
+
+</article><footer class="page-footer"><a href="../blog/">返回个人博客</a><a href="#top">回到顶部 ↑</a></footer></main></body></html>
