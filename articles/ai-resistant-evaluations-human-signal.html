@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人"><meta name="color-scheme" content="light"><meta name="theme-color" content="#F5F1E8"><link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/ai-resistant-evaluations-human-signal.html"><meta name="description" content="重读 Anthropic 三代性能工程评测：模拟加速器、推理预算、执行框架与人类增量信号。"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'"><title>当模型做完了面试题，评测还在区分什么｜胡浩源</title><style>
+:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:3px solid var(--clay);outline-offset:5px}
+.skip{position:absolute;left:1rem;top:-5rem;background:var(--surface);padding:.5rem 1rem;z-index:5}.skip:focus{top:1rem}
+.shell{width:min(100% - 40px,760px);margin:0 auto}
+.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.masthead a{color:var(--muted)}header{padding:52px 0 26px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);font-weight:700;margin:0 0 20px}
+h1{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif;font-size:clamp(32px,5.8vw,46px);line-height:1.35;font-weight:700;letter-spacing:-.035em;margin:0 0 25px}
+.byline{font-size:14px;margin:0;color:var(--muted)}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}
+.contents{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px;color:var(--muted)}
+.contents summary{cursor:pointer;font-weight:600;color:var(--ink)}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}
+article p{margin:0 0 22px}blockquote{margin:0 0 34px;padding:6px 0 6px 20px;border-left:3px solid var(--clay);font-size:18px;color:var(--muted)}blockquote p:last-child{margin-bottom:0}
+h2{font-size:26px;line-height:1.5;font-weight:700;margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}
+h3{font-size:20px;line-height:1.55;margin:32px 0 18px}strong{font-weight:700}code{font:0.88em/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#EBE5D9;border-radius:3px;padding:.1em .3em;overflow-wrap:anywhere}
+ul,ol{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}
+.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650;color:var(--ink)}tbody th{font-weight:500;width:36%}tr:last-child th,tr:last-child td{border-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:14px;line-height:1.95;color:var(--muted)}hr~h3{font-size:17px;margin-top:0}
+.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){body{font-size:16px;line-height:1.95}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px}header{padding:36px 0 24px}h2{font-size:23px;margin-top:42px}h3{font-size:19px}blockquote{font-size:17px;padding-left:16px}.table-wrap{margin-left:-2px;margin-right:-2px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}h3{font-size:13pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}blockquote{font-size:12pt}}
+
+.subtitle{font-family:ui-serif,"Songti SC","STSong",serif;font-size:21px;line-height:1.65;color:var(--muted);margin:0 0 24px}article a{overflow-wrap:anywhere}.source-heading{font-size:19px;border-top:0;padding-top:0;margin-top:0}#source-notes+ul{font-size:14px;color:var(--muted)}@media(max-width:600px){.subtitle{font-size:19px}.masthead{gap:12px;letter-spacing:.03em}.page-footer{flex-wrap:wrap}}
+
+h1{text-wrap:balance}h1>span{display:block}.contents li{margin:0}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{background:none;padding:0;border-radius:0;font:inherit;overflow-wrap:normal}pre:focus-visible{outline:3px solid var(--clay);outline-offset:3px}#source-notes+ul{line-height:1.9}#source-notes+ul a{display:block}table{min-width:610px}table th:first-child{width:44%}
+@media(max-width:600px){pre{font-size:12px;padding:14px 12px}.masthead{font-size:12px}}
+@media print{pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}table{min-width:0}}
+
+article{overflow-wrap:anywhere}.status{color:var(--clay);font-weight:600}h2{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif}article blockquote{font-size:17px}
+body{font-family:"Noto Serif CJK SC","Songti SC","STSong",serif}.masthead,.byline,.dateline,.contents,.eyebrow,table,.page-footer{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif}table th:first-child{width:auto}table th:first-child,table td:first-child{min-width:120px}table{min-width:620px}caption{text-align:left;padding:12px 15px;font-weight:600} .source-note{font-size:14px;color:var(--muted)}</style></head>
+<body id="top"><a class="skip" href="#main">跳至正文</a><div class="shell"><nav class="masthead" aria-label="站点导航"><span>工程深读 · 评测与可靠性</span><a href="../blog/">返回博客</a></nav><header><p class="eyebrow">Engineering Notes / Anthropic</p><h1><span>当模型做完了面试题，</span><span>评测还在区分什么</span></h1><p class="subtitle">从模拟加速器到陌生指令集，追踪一场三次改题的工程实验</p><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-10-31">2026 年 10 月 31 日</time> · 重读 2026 年 1 月 21 日官方文章</p></header><details class="contents" open><summary>本文目录</summary><ol><li><a href="#signal">一、一道题可以仍然很难，却已经不适合筛选人</a></li><li><a href="#origin">二、最初的设计，认真对待了候选人的时间</a></li><li><a href="#machine">三、模拟加速器怎样把工程能力变成可观察的动作</a></li><li><a href="#early-evidence">四、早期成功，说明了什么，又没有说明什么</a></li><li><a href="#versions">五、第二版把起点抬高，保留尚未被模型吃掉的部分</a></li><li><a href="#opus45">六、Opus 4.5 的突破，不能省略那个目标数字</a></li><li><a href="#cycles">七、六组 cycle 应当怎样读</a></li><li><a href="#choices">八、禁止 AI 和提高分数线，都绕不开时间结构</a></li><li><a href="#transpose">九、一次失败的换题：转置数据，还是转置计算</a></li><li><a href="#weird">十、第三版用陌生规则，换回一段可以观察人的空间</a></li><li><a href="#tradeoffs">十一、陌生任务保住信号，也带来了新的代价</a></li><li><a href="#practice">十二、留给评测设计者的，是一套持续校准的方法</a></li></ol></details><main id="main"><article><section>
+  <p>2026 年 10 月 31 日，重读 Tristan Hume 今年 1 月 21 日发表的 <a href="https://www.anthropic.com/research/AI-resistant-technical-evaluations" target="_blank" rel="noopener noreferrer">《Designing AI-resistant technical evaluations》</a>，我更在意的已经不是某个 Claude 版本击败了多少求职者，而是一道曾经很好用的工程面试题，怎样一步步失去了区分人的能力。</p>
+  <p>Hume 是 Anthropic 性能优化团队的负责人之一，也设计了这道带回家完成的测试。题目从 2024 年初投入使用，累计有超过一千名候选人完成，帮助团队招到了数十名性能工程师。按照他的回顾，这些工程师参与了 Trainium 集群的落地，以及自 Claude 3 Opus 起各代模型的交付。这是一道在真实招聘中运转过的题，不是为了展示模型能力临时拼出的基准。</p>
+  <p>它也没有靠禁止 AI 来维持难度。候选人可以使用 AI，正如他们入职之后会使用一样。问题恰恰出在这里：最初，人带着工具做题，成绩还能反映人的差异；后来，把题交给工具本身，就越来越接近最优策略。继续提高分数线，未必能把人的贡献重新测出来。</p>
+  <p>这篇文章记录的是三个版本的试题，以及设计者对“究竟在测什么”的不断修正。下文涉及的模型表现、时间预算和招聘结果，均按原文发表时的历史记录理解；它们不是截至今天的模型排名，也不代表 Anthropic 当前仍在使用同一道题或同一套招聘标准。我的分析会围绕这些记录展开，但不把工程推演当成原作者已经证明的结论。</p>
+</section>
+
+<section>
+  <h2 id="signal">一、一道题可以仍然很难，却已经不适合筛选人</h2>
+  <p>面试题的价值，不能只看它有多难。它还要让不同水平的候选人在可接受的时间内，留下足够不同的结果。如果成绩主要由候选人不能控制的因素决定，或者大家都能调用同一个强力解题器，分数依然可以很精确，解释分数却会变得困难。</p>
+  <p>性能优化尤其容易让人忽略这一点。程序是否正确可以测试，执行用了多少个 cycle 可以计数，分数看起来比开放式系统设计清楚得多。但 cycle 精确回答的是“这个程序在这台模拟机上跑得怎样”，并不自动回答“提交程序的这个人能为团队带来什么”。当程序生成方式变化时，这两者之间的关系也会变化。</p>
+  <p>原来的关系很好理解：候选人读懂陌生机器，定位瓶颈，选择优化方向，写代码，再通过反馈修正。最终成绩浓缩了这一连串判断。AI 加入之后，一部分路径被缩短了；当 AI 能独立走完整条路径，人是否理解、何时介入、是否纠正过模型，就越来越难从最终分数反推。</p>
+  <p>这不意味着 AI 辅助成绩没有价值。工作本来就允许使用工具，能把工具用好也应当计入能力。真正棘手的情况是：加入人的判断，未必比让工具自己跑更有效。此时评测仍在生产结果，却可能已经不能稳定地区分优秀操作者与被动等待者。Hume 遇到的正是这个边界。</p>
+</section>
+
+<section>
+  <h2 id="origin">二、最初的设计，认真对待了候选人的时间</h2>
+  <p>事情起于 2023 年 11 月。Anthropic 正在准备训练和发布 Claude 3 Opus，已有新的 TPU、GPU 集群，大型 Trainium 集群也在筹备中。加速器投入增长，性能工程师却不够。Hume 在 Twitter 发出招聘信息后，收到了大量有潜力的申请，常规面试流程消耗双方时间，吞吐量很快成了瓶颈。他花了两周设计带回家测试，希望在更大范围里找到真正合适的人。</p>
+  <p>“带回家做”往往意味着候选人额外承担一段无偿劳动，因此他的设计没有止于把白板题加长。最初的时间上限是四小时，候选人在自己的编辑器里独立工作，不需要一边编码一边向旁观者解说。性能优化需要先理解已有系统，有时还得搭建调试工具；在五十分钟左右的现场面试中，这些过程很容易被压缩成零碎的口头表演。</p>
+  <p>四小时当然仍远短于真实项目，但至少给理解、试错和反馈留出空间。候选人也明确获准使用 AI。这一点是该测试的特别安排，不能推成 Anthropic 所有带回家测试都允许 AI；原文特别说明，通用候选人指引的默认要求并非如此。</p>
+  <p>题目还有四个彼此牵制的目标：尽量像工作，有足够宽的成绩分布，不要求狭窄的先验领域知识，并且让人愿意探索。所谓“高信号”，在这里包含一个很具体的设计选择：不要把成败押在某个灵光一现上。题目要提供多条可以前进的路线，强者也不能很快把全部空间做完。</p>
+  <p>我认为这一点比题目是否新颖更重要。单一谜底型问题，容易把“今天是否碰巧想到”放大成能力判断；多层优化题则让候选人在理解、拆解、实现和验证上多次作出选择。不过，这个优势也带来后来的问题：路线足够丰富，意味着模型同样有许多可以持续获取收益的方向。</p>
+</section>
+
+<section>
+  <h2 id="machine">三、模拟加速器怎样把工程能力变成可观察的动作</h2>
+  <p>Hume 用 Python 实现了一台虚构加速器，特征近似 TPU。候选人优化运行在这台机器上的程序，并通过可热重载的 Perfetto trace 查看每一条指令，类似团队在 Trainium 上使用的工具。它保留了真实性能工作的反馈形式，却避免把题目绑定到某块昂贵硬件、某个特定 SDK 或已有的设备经验上。</p>
+  <p>机器的核心不是“跑得慢”，而是允许从四种不同的机制里找出并行性。这些机制容易混在一起，实际上它们要求不同的思考。</p>
+  <div class="table-wrap" tabindex="0" role="region" aria-label="模拟加速器机制对照表，可横向滚动"><table>
+    <thead><tr><th scope="col">机制</th><th scope="col">候选人要处理的问题</th><th scope="col">为什么能形成优化空间</th></tr></thead>
+    <tbody>
+      <tr><td>手动管理 scratchpad</td><td>显式安排暂存区里的数据，而非一切交给隐式缓存行为</td><td>数据何时准备、放在哪里、能否复用，进入程序设计本身</td></tr>
+      <tr><td>VLIW</td><td>把可以同时执行的指令组织到同一个周期中</td><td>多种执行单元可能同时工作，但依赖关系和资源限制会留下空闲位置</td></tr>
+      <tr><td>SIMD</td><td>让一条向量指令同时处理多个元素</td><td>相同操作可以批量执行，前提是数据与控制流程适合向量化</td></tr>
+      <tr><td>多核</td><td>把工作分配给不同核心</td><td>独立任务能够并行推进，但还需要合理划分与组织</td></tr>
+    </tbody>
+  </table></div>
+  <p>表中后两列是对机制的工程解释，不是原文给出的额外机器规格。原文没有在正文里完整列出执行槽数量、访存时延或全部指令语义，因此不宜据此补画一台看似精确、实际靠猜测的微架构。</p>
+  <p>VLIW 和 SIMD 尤其值得分开理解：前者关心同一周期里能安排多少项相互兼容的操作，后者关心一项操作能覆盖多少数据。一个程序可能已经向量化，指令调度却仍有大量空隙；也可能把串行代码排得很紧，却始终没有利用数据并行。这使题目不容易退化成“找到一个技巧就结束”。</p>
+  <p>具体任务是并行树遍历，灵感来自无分支 SIMD 决策树推理这一经典机器学习优化问题，但刻意避开深度学习业务背景。当时许多潜在的性能工程师尚未做过深度学习，Hume 希望测的是可迁移的基础能力，而不是已经接触过哪套行业术语。</p>
+  <p>候选人从完全串行的实现开始，先用多核并行热身，再选择向量化或 VLIW 指令打包等方向。最初的版本还埋了一个需要先修复的 bug，用来观察候选人能否定位问题、是否会搭建必要的工具。完整的指令 trace 让“我觉得这里慢”可以接受检验：某项修改究竟减少了工作，还是仅仅换了一种写法，应当在执行结果里体现出来。</p>
+  <p>原文的 Perfetto 截图同时展示了 load、向量运算、普通运算等指令轨道，以及 scratch 中变量状态的变化。观察者可以把执行单元的空闲位置和数据准备过程联系起来。这里真正有用的是可观测性：性能判断可以追溯到具体执行过程，而不必只盯着最后一个总分；截图本身则不足以证明某项优化带来了多少提升。</p>
+  <p>这个设计有一种朴素的公平感：大家面对同一台陌生机器，规则可以现场学习，性能改善可以立即验证。它不能消除既有经验的影响，却把许多无法控制的现实条件收进了一个较小、可反复实验的系统。</p>
+</section>
+
+<section>
+  <h2 id="early-evidence">四、早期成功，说明了什么，又没有说明什么</h2>
+  <p>最早那批来自 Twitter 的申请者中，有一人成绩明显领先。他在二月初入职，比常规流程招到的第一批员工只晚两周。入职后，他很快开始优化 kernel，并为一个阻碍发布的编译器问题找到绕行方案：张量索引计算发生了 32 位溢出。</p>
+  <p>这个例子很有说服力，因为题目所看重的系统理解与调试能力，确实在实际工作中出现了。随后一年半左右，约一千人完成测试，团队通过它招到了当前性能工程师中的大多数。有些后来表现很好的工程师直接来自本科，履历并不显眼，测试却让团队有把握给他们机会。</p>
+  <p>这些是作者提供的实践观察，不是一项披露了完整样本、误拒率和长期绩效测量的招聘研究。我们可以说这套题在团队经验中很有用，不能据此计算它对全行业的预测效度，也无法知道被筛掉的人后来会表现如何。把案例放在合适的证据等级上，反而能保留它真正的启发。</p>
+  <p>另一个重要信号来自时间上限之外。有人因为觉得有趣，四小时结束后还继续做；不限时的优秀提交甚至写出了完整的小型优化编译器，以及出题者没有预料到的优化。题目有足够深度，既能容纳短时评估，也能容纳长期探索。</p>
+  <p>但这两类成绩不能混为一谈。限时题在测有限预算内怎样分配注意力；不限时挑战还允许投资复杂工具、重构整个方案和反复搜索。后来“人类仍然更快”的结论，正需要放回这个时间差异里理解。</p>
+</section>
+
+<section>
+  <h2 id="versions">五、第二版把起点抬高，保留尚未被模型吃掉的部分</h2>
+  <p>到 2025 年 5 月，Claude 3.7 Sonnet 已经逼近一个危险位置：按照 Hume 的描述，超过一半候选人如果把任务完全委托给 Claude Code，成绩反而会更好。随后测试的 Claude Opus 4 预发布版本，在四小时限制内超过了几乎所有人类候选人。</p>
+  <p>这并非他第一次见到面试题被模型追上。2023 年，他为了避开早期 Claude 熟悉的常见任务，专门根据自己工作中遇到的一个小众问题设计现场面试题，希望更看推理、少看知识。结果 Claude 3 Opus 解决了第一部分，Claude 3.5 Sonnet 又解决了第二部分。原文说团队仍在使用它，因为其他现场题也没有表现出更好的抗 AI 能力。</p>
+  <p>带回家测试还有余地。Hume 没有马上抛弃模拟机，而是让 Opus 4 帮助寻找自己开始吃力的位置，把那里设为第二版的新起点。他整理了更干净的初始代码，增加机器特性以扩展深度，并移除了多核部分：模型已经会做，这一层又拖慢开发反馈，保留下来不再增加多少区分度。</p>
+  <p>时间上限也从四小时缩成两小时。最初选择四小时，是候选人反馈希望降低被某个 bug 或理解障碍卡住的风险；后来团队发现，安排大块连续时间会让招聘流程延迟数周。两小时更容易放进一个周末。这个调整有组织效率上的理由，不能只解释成“模型变强了，所以故意让人更赶”。</p>
+  <div class="table-wrap" tabindex="0" role="region" aria-label="三代评测设计对照表，可横向滚动"><table>
+    <thead><tr><th scope="col">版本</th><th scope="col">主要起点与结构</th><th scope="col">试图保留的区分度</th></tr></thead>
+    <tbody>
+      <tr><td>第一版</td><td>四小时；从串行实现出发，包含多核和初始调试</td><td>理解系统、搭工具，并逐层利用并行性</td></tr>
+      <tr><td>第二版</td><td>两小时；更成熟的初始代码、新机器特性、单核</td><td>减少重复劳动，把时间留给更巧妙的优化判断</td></tr>
+      <tr><td>第三版</td><td>极简而强约束的指令集，多个独立谜题</td><td>在不熟悉的规则下构造方案，并判断是否值得自建工具</td></tr>
+    </tbody>
+  </table></div>
+  <p>第二版相当于重新划定“基础设施”和“考查内容”的边界。已经人人可借助模型完成的工作，直接作为起点提供；有限时间用来观察剩下的差异。我认为这是比机械增加代码量更合理的应对。不过，它依赖一个条件：模型能力边界外，还剩下一段人类能在两小时内到达的空间。这个条件只维持了几个月。</p>
+</section>
+
+<section>
+  <h2 id="opus45">六、Opus 4.5 的突破，不能省略那个目标数字</h2>
+  <p>测试 Claude Opus 4.5 的预发布 checkpoint 时，Hume 看着 Claude Code 连续优化了两小时。模型先处理初始瓶颈，完成常见微优化，不到一小时就达到团队的通过线。随后它停止前进，认为程序已经撞上无法突破的内存带宽瓶颈。</p>
+  <p>这个判断与许多人类候选人的反应相同，但它不是真正的终点。题目的结构里还有可以绕开该瓶颈的技巧。关键的一步是：Hume 告诉模型，可以达到怎样的 cycle 数。模型重新思考后找到了技巧，又继续调试、调优和实现其他优化。两小时结束时，它追平了同时间限制下的最佳人类成绩；那位人类候选人也曾大量使用 Claude 4，并主动引导它。</p>
+  <p>因此，这段故事不能缩写成“模型完全无人干预，两小时击败所有人”。目标 cycle 的提示改变了模型对可行空间的判断；比较中的最佳人类也并非纯手写。它展示的是带有不同程度辅助的工作过程。要理解结果，提示、时间和操作方式都必须留下。</p>
+  <p>一个已知更好的目标，为什么有价值？我的理解是，它未必直接提供解法，却否定了“当前瓶颈不可绕过”的假设。模型于是有理由继续寻找改变计算结构的方案，而不是只在现有路径上微调。工程实践中，可信的性能目标常有类似作用：它把“再努力一点”变成一个更明确的问题，现有分析到底漏掉了什么？</p>
+  <p>随后团队使用内部 test-time compute harness 作更系统的测试，确认模型能在两小时内超过人类，并且继续随时间投入而提升。发布之后，他们对 harness 做了通用改进，又得到更好的结果。原文没有披露足够细节让外部读者重建全部运行条件，因此我们能确认系统配置影响成绩，不能擅自断言其中用了多少并行代理、怎样的搜索策略或怎样的重试分配。</p>
+  <p>原文另一张配图画的是 Best Score 的阶梯式变化，其中 Opus 4.5 的新 harness 曲线在后段超过旧 harness，另有 Sonnet 4.5 和 Opus 4.1 作参照。它帮助说明优化过程可能经历平台期，也说明执行框架会影响最终到达的位置。但图中没有清楚给出横轴和 score 的换算定义，不能把纵轴读成 cycle，更不能据图推算具体耗时或提升比例。</p>
+  <p>这也使“某模型得了多少分”变成一个不完整的句子。准确的对象应该包括模型、提示、初始代码、运行环境、时间预算，以及驱动模型工作的 harness。忽略这些条件，容易把系统层面的提升全部记到模型名称下面。</p>
+</section>
+
+<section>
+  <h2 id="cycles">七、六组 cycle 应当怎样读</h2>
+  <p>原文开放的挑战并不等同于最早发给候选人的第一版。它采用“从头开始”的起点，但使用第二版的指令集和单核设计，因此其 cycle 数可以与第二版比较。cycle 是模拟机的时钟周期数，越低越好；它不是模型思考用了多久，也不是现实硬件上的毫秒延迟。</p>
+  <div class="table-wrap" tabindex="0" role="region" aria-label="模型周期数与运行条件对照表，可横向滚动"><table>
+    <thead><tr><th scope="col">模拟机周期数</th><th scope="col">原文报告的条件</th><th scope="col">读数时的注意点</th></tr></thead>
+    <tbody>
+      <tr><td>2164 cycles</td><td>Claude Opus 4，在 test-time compute harness 中运行许多小时</td><td>不是 Opus 4 在两小时内的成绩</td></tr>
+      <tr><td>1790 cycles</td><td>Claude Opus 4.5，一次较随意的 Claude Code 会话</td><td>约等于最佳人类两小时成绩，不代表严格对照实验</td></tr>
+      <tr><td>1579 cycles</td><td>Claude Opus 4.5，在内部 harness 中运行两小时</td><td>与普通 Claude Code 会话属于不同运行条件</td></tr>
+      <tr><td>1548 cycles</td><td>Claude Sonnet 4.5，test-time compute 明显超过两小时</td><td>不能据此直接比较两小时预算下的模型强弱</td></tr>
+      <tr><td>1487 cycles</td><td>Claude Opus 4.5，在 harness 中运行 11.5 小时</td><td>也是文章开放挑战采用的历史门槛</td></tr>
+      <tr><td>1363 cycles</td><td>Claude Opus 4.5，在改进后的 harness 中运行许多小时</td><td>说明同一模型更换运行系统后仍可能继续改善</td></tr>
+    </tbody>
+  </table></div>
+  <p>这六个数首先证明了比较条件的重要性。它们不是一张所有变量受控的排行榜，也不是一条保证可复现的“每多跑一小时提高多少”的曲线。文章没有报告每种设置的完整重复运行分布，我们无从仅凭最佳结果估计稳定性、成本或达到该成绩的概率。</p>
+  <p>原文还说，不限时间的人类最快提交明显快于 Claude 在大量测试时计算投入后的结果，但没有给出那个最快人类提交的具体 cycle 数。这个空白应当保留，不能从图表印象或招聘话术里补出一个精确数字。文章支持的说法是：在作者当时观察的条件下，长时间投入的人类专家仍然保有优势。</p>
+  <p>开放挑战的历史邀请是：优化到低于 1487 cycles，就可以把代码和简历发给团队。这里比较的是模型发布时的最佳表现，而非正文列出的 1363 cycles 更低纪录。1487 不是“击败表中所有 Claude 结果”的门槛，更不是自动获得面试或录用的承诺。今天重读，应把它视作 2026 年 1 月文章中的邀请；是否仍受理、怎样申请，需要另行确认官方现状。</p>
+</section>
+
+<section>
+  <h2 id="choices">八、禁止 AI 和提高分数线，都绕不开时间结构</h2>
+  <p>同事提出过禁止 AI。Hume 不愿这样做，一方面是执行困难，另一方面是工作中确实还需要人：既然人在实际团队里能够贡献价值，面试就应该尽量找到一种允许使用 AI、又能显出人的作用的形式。他也不想过早接受“人只在超过几小时的任务上才有优势”这个前提。</p>
+  <p>另一种建议是把要求改成显著超过 Claude Code 单独工作的成绩。乍看之下，这似乎恰好在测协作增益。但两小时的窗口有一个不对称：Hume 观察到，人类往往先花掉约一半时间阅读和理解题目，模型已经开始连续迭代。人在还没建立系统全貌时，可能只能追着模型的修改事后补课。</p>
+  <p>提高门槛无法自动消除这种不对称。如果人还来不及判断某次改变是否正确，所谓“指导模型”就可能退化成打断一个已经进展很快的过程。最好策略可能真的变成坐着看。这里的问题并非人永远不擅长引导，而是这一类任务、这一段限时是否给人的优势留下了发挥窗口。</p>
+  <p>原文同时交代了岗位本身的变化：团队依然有大量工作，但更集中于棘手调试、系统设计、性能分析、验证系统正确性，以及让 Claude 写出的代码更简单、更优雅。这些任务往往需要共同背景和较长观察时间，很难全部压成短时、客观、自动评分的面试题。</p>
+  <p>我从中读到的矛盾是，最容易批量评分的部分，可能恰好最容易被模型完成；最需要人作判断的部分，又最难低成本测量。设计新题不是单纯追求更怪或更难，而是在候选人负担、评分可靠性和工作代表性之间重新找位置。</p>
+</section>
+
+<section>
+  <h2 id="transpose">九、一次失败的换题：转置数据，还是转置计算</h2>
+  <p>Hume 的第一条新路线，仍然紧贴真实工作。他曾做过一个困难的 kernel 优化：在二维 TPU 寄存器上高效转置数据，同时避免 bank conflict。他把它提炼成较简单的模拟机问题，让 Claude 不到一天就实现了改动。</p>
+  <p>转置之所以适合做性能题，是因为逻辑上很简单的排列变化，在机器上可能意味着代价很高的数据搬运。一般而言，bank conflict 涉及并行访问竞争同一存储 bank，使期望中的并行服务受到限制。不过，具体冲突规则依赖架构；不能把某种 GPU 上常见的解决办法直接当成这台模拟机的已知实现。</p>
+  <p>Claude Opus 4.5 找到的第一条路，连出题者也没有想到：它没有继续研究怎样高效转置数据，而是转置了整个计算，重写程序，让计算的组织方式适应数据布局。这是一种更高层的变换。很多优化工作过早固定了问题表述，“怎样把这一步做快”掩盖了“这一步是否必须以当前形式出现”。</p>
+  <p>但在 Hume 当时的真实工作场景里，这条路不可行。他于是修改题目，封住该捷径。这个细节很重要：模拟任务是现实问题的抽象，简化时可能漏掉限制；模型找到抽象空间里的合法解，不等于已经解决原来的生产问题。相反，它也帮出题者检查了题目的约束是否完整。</p>
+  <p>修改后，模型有所进展，却没有找到最高效的方案。Hume 一度觉得新题有了，接下来只需验证人能否在限时内完成。但他又用 Claude Code 的 ultrathink 和更长思考预算复测，模型这次解了出来，连避免 bank conflict 的技巧也掌握了。</p>
+  <p>原作者回头认为，这条路线选错了：许多平台的工程师都长期研究转置和 bank conflict，模型可以调用的经验工具箱很大。他自己是从第一性原理摸索出的困难问题，不代表模型也必须从零推导。这里“训练数据丰富”是作者的解释，文章并未展示对具体训练样本的追踪。</p>
+  <p>对评测设计而言，失败有两层启发。首先，出题者的个人艰难经历不能用来估计模型难度；其次，一次短预算失败不能证明题目具有稳定的抗 AI 性。增加思考预算之后边界会移动，改变问题表述也可能突然打开另一条路线。</p>
+</section>
+
+<section>
+  <h2 id="weird">十、第三版用陌生规则，换回一段可以观察人的空间</h2>
+  <p>第二条路线更远离日常工作。Hume 转向自己喜欢的 Zachtronics 编程解谜游戏：小而苛刻的指令集，迫使人采用不寻常的编码方式。以 Shenzhen I/O 为例，程序分布在相互通信的芯片上，每颗芯片只能容纳约十条指令，只有一两个状态寄存器。优化时可能要把状态藏进指令指针的位置或分支标志，而不只是再添一个变量。</p>
+  <p>这类限制改变了程序设计的基本经济账。在常规语言里，一行方便的表达几乎不值得计较；在狭窄指令预算下，表示状态的方法本身就会决定方案能否成立。已有的丰富代码经验仍有帮助，却不一定能原样套用。Hume 希望借此找到一个相对偏离模型熟悉分布的区域。</p>
+  <p>新测试由使用极简、强约束指令集的多个谜题组成，优化目标是尽可能减少指令数量。他先实现一道中等偏难的题，Opus 4.5 没做出来；随后补齐更多题目，又让没有像自己这样深度浸泡于问题中的同事试做，确认人仍能超过模型。</p>
+  <p>这里的“第三版”已经不再沿用前面那种 cycle 排名。最小指令数与最少执行周期是不同目标：更短的程序不必然更快，更快的程序也可能使用更多静态指令。把新题的表现与前面的六组数字接成一张统一能力榜，会掩盖题目实际已经更换了评分对象。</p>
+  <p>更有意思的是工具安排。和 Zachtronics 游戏不同，Hume 刻意没有提供可视化或调试工具，初始代码只检查答案是否合法。候选人可以插入精心选择的打印，也可以让编程模型用几分钟生成交互式调试器。什么时候值得造工具、造到什么程度，成为测试的一部分。</p>
+  <p>我认为这比“不准使用现成工具”更有工程意味。工具的收益取决于后面还会遇到多少同类问题：如果只差一步就能定位错误，搭复杂界面可能浪费时间；如果还要反复观察状态流转，几分钟的投入可能不断回本。题目试图观察的，是候选人能否对剩余任务作出合理预期，而不只看他会不会叫模型写一个漂亮界面。</p>
+  <p>但原文没有公布工具选择与成绩之间的统计关系，所以这只能作为对设计意图的分析，不能写成“做了调试器的人普遍更好”。同样，模型在一道中等偏难题上失败，也不是永久能力上限。新的模型、新的 harness 和更合适的提示，都可能改变结果。</p>
+</section>
+
+<section>
+  <h2 id="tradeoffs">十一、陌生任务保住信号，也带来了新的代价</h2>
+  <p>Hume 对新题的早期结果比较满意。它包含更多相对独立的子问题，他认为这可能降低成绩的方差；候选人的分数与既往工作质量看起来吻合，一位他非常认可的同事也取得了当时高于所有候选人的成绩。这些都是积极迹象，但原文措辞仍然是初步观察，没有给出相关系数或受控验证。</p>
+  <p>独立子问题可能降低“恰好卡在一个地方”的影响，这是合理的设计直觉。不过，能否真正降低方差，还取决于题目之间共享多少技巧、评分是否被某一道难题支配，以及候选人如何分配时间。题数增加，本身并不保证测量更稳。</p>
+  <p>它也可能带来新的背景优势。熟悉编程谜题、受限状态机或极小指令集的人，或许更容易进入状态。这不是原文报告的偏差结果，而是我认为值得检验的风险。原来的目标之一是少依赖小众知识，新题虽然换了知识种类，却不能假定所有人面对它都同样陌生。</p>
+  <p>更大的代价是工作代表性。原题让人体验真实性能工程的一个缩影，新题则更侧重面对新规则时的推理和适应。后者可能很有预测价值，但需要通过后续工作表现逐渐建立联系，不能因为“人暂时能赢模型”就自动判定它是更好的招聘工具。</p>
+  <p>Hume 也没有回避这份遗憾：原来那种贴近工作的真实感，以及多方向、深层次的探索空间，被部分牺牲了。读到这里，我不觉得文章提供了一套已经定型的标准答案。它更像是一份诚实的设计记录：每次修复一种测量失效，都会引入新的取舍。</p>
+</section>
+
+<section>
+  <h2 id="practice">十二、留给评测设计者的，是一套持续校准的方法</h2>
+  <p>如果把这段经历用于自己的团队，我会先保留三张分开的记录：题目究竟要预测什么工作能力，候选人在什么条件下完成，以及同样条件下模型单独能够做到什么。只有三者同时存在，分数的解释才不至于在模型升级之后悄悄过期。</p>
+  <p>第一，给运行条件做版本管理。初始代码、时间上限、是否允许目标提示、harness 配置、评分口径，都应当和题目一起记录。允许 AI 的评测尤其不能只写一句“可以使用 AI”，然后把所有工作流当作等价条件。这是从本文案例推出的建议，不是原文已经验证的标准流程。</p>
+  <p>第二，区分提交质量与候选人的可解释贡献。最终产物仍然重要，但可以结合后续核验，了解候选人能否解释关键变换、发现适用边界，以及在约束稍有改变时调整方案。这样做会增加面试成本，也需要避免重新奖励口才而不是工程能力，不能把它包装成免费的解决办法。</p>
+  <p>第三，别把“模型暂时没解出来”当成长期资产。Hume 的两次失败已经显示，增加思考预算、给出更准确的目标，或改进通用 harness，都可能让一道题突然失去原来的区分度。更合理的目标是知道题目当前在哪些条件下有效，并且保留复测、更新和退役的机制。</p>
+  <p>第四，承认短时客观测量有边界。如果岗位最重要的能力越来越依赖长期上下文、正确性判断和系统取舍，面试就需要决定愿意付出多少成本去接近它们。一直把题目变得更偏、更难，可以延长某个基准的寿命，却未必持续改善招聘。</p>
+  <p>这也是我在十月重读一月文章时，最想留下的判断：AI 抗性不是一道题固有、永久的属性。它依赖模型、工具、预算，也依赖我们到底想从分数里认识什么样的人。Hume 三次改题的价值，不在于终于找到了一道模型永远不会做的谜题，而在于他持续检查，测试正在奖励的东西，是否仍值得团队为之招人。</p>
+</section>
+<section class="source-note" id="source-notes"><h2>原文与阅读边界</h2><p>Tristan Hume，Anthropic Engineering，<a href="https://www.anthropic.com/research/AI-resistant-technical-evaluations">Designing AI-resistant technical evaluations</a>，2026 年 1 月 21 日。本文于 2026 年 10 月 31 日重读，不是最新模型能力或当前招聘规则公告。</p><p>本文基于公开官方正文及配图展开分析。原文所述候选人与工程师均为其公开案例；文中的评测设计建议是作者推演，不是 Anthropic 新实验结论。</p></section></article></main><footer class="page-footer"><a href="index.html">系列目录</a><a href="#top">回到顶部 ↑</a></footer></div></body></html>

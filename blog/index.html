@@ -47,8 +47,9 @@
 <div><span class="filter-label" id="filter-label">按主题浏览</span><div class="filters" role="group" aria-labelledby="filter-label"><button type="button" data-filter="全部" aria-pressed="true" aria-controls="article-list">全部</button><button type="button" data-filter="长任务与状态" aria-pressed="false" aria-controls="article-list">长任务与状态</button><button type="button" data-filter="上下文与知识" aria-pressed="false" aria-controls="article-list">上下文与知识</button><button type="button" data-filter="工具与协作" aria-pressed="false" aria-controls="article-list">工具与协作</button><button type="button" data-filter="评测与可靠性" aria-pressed="false" aria-controls="article-list">评测与可靠性</button></div></div>
 <div class="search-box"><label class="search-label" for="article-search">搜索文章</label><input id="article-search" type="search" placeholder="标题、关键词或主题…" autocomplete="off" aria-controls="article-list"></div>
 </div>
-<p class="result-count" id="result-count" role="status" aria-live="polite" aria-atomic="true">共 26 篇文章 · 更新于 2026 年 10 月 28 日</p>
+<p class="result-count" id="result-count" role="status" aria-live="polite" aria-atomic="true">共 27 篇文章 · 更新于 2026 年 10 月 31 日</p>
 <ul class="entries" id="article-list">
+<li class="entry" data-category="评测与可靠性"><article><div class="entry-meta"><span>评测与可靠性</span><span>Anthropic 工程解读</span></div><h3><a href="../articles/ai-resistant-evaluations-human-signal.html">当模型做完了面试题，评测还在区分什么</a></h3><p>重读 Anthropic 三代性能工程评测：模拟加速器、推理预算与陌生指令集，怎样影响人类增量信号。原文发布于 2026 年 1 月 21 日。</p><time datetime="2026-10-31">2026 年 10 月 31 日</time></article><span class="entry-arrow" aria-hidden="true">↗</span></li>
 <li class="entry" data-category="评测与可靠性"><article><div class="entry-meta"><span>评测与可靠性</span><span>OpenAI 工程解读</span></div><h3><a href="../articles/crash-populations-stack-lifetime.html">相同的崩溃栈，可能藏着两种故障</a></h3><p>从故障分群、栈生命周期和信号竞态出发，讨论如何把排障假说变成可复核的修复证据。</p><time datetime="2026-10-28">2026 年 10 月 28 日</time></article><span class="entry-arrow" aria-hidden="true">↗</span></li>
 <li class="entry" data-category="评测与可靠性"><article><div class="entry-meta"><span>评测与可靠性</span><span>Anthropic 工程解读</span></div><h3><a href="../articles/interpretability-explanations-evidence.html">为大模型的解释划定证据边界</a></h3><p>区分模型解释、执行记录与内部机制，设计带证据的字段、反事实测试和可复核的验收。</p><time datetime="2026-10-27">2026 年 10 月 27 日</time></article><span class="entry-arrow" aria-hidden="true">↗</span></li>
 <li class="entry" data-category="工具与协作"><article><div class="entry-meta"><span>工具与协作</span><span>Anthropic 工程解读</span></div><h3><a href="../articles/workflow-control-boundary-effective-agents.html">工作流何时应该交出控制权：重读 Anthropic 的 Agent 架构选择</a></h3><p>从任务可预测性、状态、证据、权限与验收出发，讨论工作流何时需要交出局部控制权。</p><time datetime="2026-10-26">2026 年 10 月 26 日</time></article><span class="entry-arrow" aria-hidden="true">↗</span></li>
@@ -106,7 +107,7 @@
       if (visible) count += 1;
     });
     buttons.forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.filter === active)); });
-    status.textContent = (query || active !== '全部') ? '显示 ' + count + ' / ' + entries.length + ' 篇文章' : '共 ' + entries.length + ' 篇文章 · 更新于 2026 年 10 月 28 日';
+    status.textContent = (query || active !== '全部') ? '显示 ' + count + ' / ' + entries.length + ' 篇文章' : '共 ' + entries.length + ' 篇文章 · 更新于 2026 年 10 月 31 日';
     empty.hidden = count !== 0;
   }
   buttons.forEach(function (button) { button.addEventListener('click', function () { active = button.dataset.filter; update(); }); });
