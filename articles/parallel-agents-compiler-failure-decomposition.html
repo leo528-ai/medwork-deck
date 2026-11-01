@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人"><meta name="description" content="读 Anthropic 的 C 编译器实验：任务锁、分层测试、固定抽样与 GCC 参照，怎样把共享代码库里的失败变成可并行的工作。"><meta name="color-scheme" content="light"><meta name="theme-color" content="#F5F1E8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'"><link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/parallel-agents-compiler-failure-decomposition.html"><title>十六个 Agent，怎样拆开一个失败｜胡浩源</title><style>
+:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:3px solid var(--clay);outline-offset:5px}
+.skip{position:absolute;left:1rem;top:-5rem;background:var(--surface);padding:.5rem 1rem;z-index:5}.skip:focus{top:1rem}
+.shell{width:min(100% - 40px,760px);margin:0 auto}
+.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.masthead a{color:var(--muted)}header{padding:52px 0 26px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);font-weight:700;margin:0 0 20px}
+h1{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif;font-size:clamp(32px,5.8vw,46px);line-height:1.35;font-weight:700;letter-spacing:-.035em;margin:0 0 25px}
+.byline{font-size:14px;margin:0;color:var(--muted)}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}
+.contents{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px;color:var(--muted)}
+.contents summary{cursor:pointer;font-weight:600;color:var(--ink)}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}
+article p{margin:0 0 22px}blockquote{margin:0 0 34px;padding:6px 0 6px 20px;border-left:3px solid var(--clay);font-size:18px;color:var(--muted)}blockquote p:last-child{margin-bottom:0}
+h2{font-size:26px;line-height:1.5;font-weight:700;margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}
+h3{font-size:20px;line-height:1.55;margin:32px 0 18px}strong{font-weight:700}code{font:0.88em/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#EBE5D9;border-radius:3px;padding:.1em .3em;overflow-wrap:anywhere}
+ul,ol{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}
+.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650;color:var(--ink)}tbody th{font-weight:500;width:36%}tr:last-child th,tr:last-child td{border-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:14px;line-height:1.95;color:var(--muted)}hr~h3{font-size:17px;margin-top:0}
+.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){body{font-size:16px;line-height:1.95}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px}header{padding:36px 0 24px}h2{font-size:23px;margin-top:42px}h3{font-size:19px}blockquote{font-size:17px;padding-left:16px}.table-wrap{margin-left:-2px;margin-right:-2px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}h3{font-size:13pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}blockquote{font-size:12pt}}
+
+.subtitle{font-family:ui-serif,"Songti SC","STSong",serif;font-size:21px;line-height:1.65;color:var(--muted);margin:0 0 24px}article a{overflow-wrap:anywhere}.source-heading{font-size:19px;border-top:0;padding-top:0;margin-top:0}#source-notes+ul{font-size:14px;color:var(--muted)}@media(max-width:600px){.subtitle{font-size:19px}.masthead{gap:12px;letter-spacing:.03em}.page-footer{flex-wrap:wrap}}
+
+h1{text-wrap:balance}h1>span{display:block}.contents li{margin:0}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{background:none;padding:0;border-radius:0;font:inherit;overflow-wrap:normal}pre:focus-visible{outline:3px solid var(--clay);outline-offset:3px}#source-notes+ul{line-height:1.9}#source-notes+ul a{display:block}table{min-width:610px}table th:first-child{width:44%}
+@media(max-width:600px){pre{font-size:12px;padding:14px 12px}.masthead{font-size:12px}}
+@media print{pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}table{min-width:0}}
+
+article{overflow-wrap:anywhere}.status{color:var(--clay);font-weight:600}h2{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif}article blockquote{font-size:17px}
+body{font-family:"Noto Serif CJK SC","Songti SC","STSong",serif}.masthead,.byline,.dateline,.contents,.eyebrow,table,.page-footer{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif}table th:first-child{width:auto}table th:first-child,table td:first-child{min-width:120px}table{min-width:620px}caption{text-align:left;padding:12px 15px;font-weight:600} .source-note{font-size:14px;color:var(--muted)}.nowrap{white-space:nowrap}</style></head>
+<body id="top"><a class="skip" href="#main">跳至正文</a><div class="shell"><nav class="masthead" aria-label="站点导航"><span>工程深读 · 工具与协作</span><a href="../blog/">返回博客</a></nav><header><p class="eyebrow">Engineering Notes / Anthropic</p><h1><span>十六个 Agent，</span><span>怎样拆开一个失败</span></h1><p class="subtitle">从共享 Git 到 GCC 参照，重读一次编译 Linux 的多 Agent 实验</p><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-11-01">2026 年 11 月 1 日</time> · 重读 2026 年 2 月 5 日官方文章</p></header><details class="contents" open><summary>本文目录</summary><ol><li><a href="#experiment">一、先给实验结果保留分母</a></li><li><a href="#continuity">二、把一次会话的终点接到下一次的起点</a></li><li><a href="#ownership">三、任务锁登记所有权，合并后仍要验收</a></li><li><a href="#feedback">四、把失败写成能被反复读取的对象</a></li><li><a href="#sampling">五、固定抽样让一次修改有可比较的前后</a></li><li><a href="#oracle">六、让 GCC 暂时接住其余文件</a></li><li><a href="#interactions">七、两个文件分别通过，合在一起仍会失败</a></li><li><a href="#roles">八、分工要绑定不同的失败类型</a></li><li><a href="#toolchain">九、编译链上的例外，决定成果能怎样使用</a></li><li><a href="#evidence">十、账单之外，还要记录谁在维护目标</a></li><li><a href="#capacity">十一、怎样判断还值得再加一个 Agent</a></li></ol></details><main id="main"><article>
+<section class="opening">
+<p>十六个 Agent 同时工作，仍可能一起卡在同一个错误上。Nicholas Carlini 在 Anthropic 的 C 编译器实验里遇到了这个局面：小测试逐渐通过，团队开始编译 Linux，所有代理却反复撞上相同的故障，随后互相覆盖修改。增加并发没有让这个阶段自然变快。</p>
+<p>这段经历让我更关注失败怎样被组织。一个任务如果只向所有参与者显示同一条错误信息，十六个独立会话也很难形成十六条有效调查路径。要让并行发生，环境必须提供足够细的证据，让不同代理能认领不同的问题，并检验各自的修复合到一起之后是否仍然成立。</p>
+<p>Carlini 于 2026 年 2 月 5 日发表的 <a href="https://www.anthropic.com/research/building-c-compiler">Building a C compiler with a team of parallel Claudes</a>，记录了这样一次能力边界实验。</p>
+</section>
+
+<section><h2 id="experiment">一、先给实验结果保留分母</h2>
+<p>这次实验使用 Opus 4.6，以 Rust 从头实现一个 C 编译器。作者先提出目标，包括 GCC 兼容、多后端和用于优化的 SSA 中间表示，再主要通过设计测试、反馈环境与运行框架推动代理继续工作。文章中的自主推进，仍建立在人定义目标和验收方式的基础上。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="原文实验范围与结果，可横向滚动"><table><thead><tr><th scope="col">项目</th><th scope="col">原文报告</th><th scope="col">理解时保留的条件</th></tr></thead><tbody>
+<tr><th scope="row">运行投入</th><td>16 个代理，约两周、近 2,000 次 <span class="nowrap">Claude Code 会话</span></td><td>一次长程原型实验，未提供同预算单代理对照</td></tr>
+<tr><th scope="row">模型用量</th><td>20 亿输入、1.4 亿输出 tokens；API 费用略低于 <span class="nowrap">2 万美元</span></td><td>API 账单没有覆盖全部人工、计算和维护成本</td></tr>
+<tr><th scope="row">产物与集成</th><td>约十万行；能构建可启动的 Linux 6.9，覆盖 x86、ARM、RISC-V</td><td>x86 启动阶段及演示工具链存在后文所述例外</td></tr>
+<tr><th scope="row">测试表现</th><td>多数所用编译器测试集约 99% 通过，包括 GCC torture tests</td><td>分母是所用测试集，不能换算成整个 C 语言的正确率</td></tr>
+</tbody></table></div>
+<p>作者还报告了 QEMU、FFmpeg、SQLite、PostgreSQL、Redis 等项目的编译，以及 Doom 的编译运行。这些结果说明，系统已经跨过仅能处理玩具程序的阶段；但“一个项目完成构建”“它在给定输入上运行正确”“它适合持续承担生产任务”，分别需要不同的证据。</p>
+<p>编译器很适合把这种差异暴露出来。一份 C 程序可能成功生成目标文件，链接后却在运行时给出错误结果；也可能功能正确，产物体积或执行效率不合要求。每增加一种验收条件，原先笼统的成功就会被重新切开。因此，阅读这次实验时，我会把功能覆盖、语义正确性、生成代码质量和工程可维护性分开记录。</p>
+<p>它也延续了作者在 Claude 4 系列上的探索：较早模型难以做出可用编译器，Opus 4.5 已能通过较大测试集，却还无法编译真实的大项目。这个叙述反映作者的观察轨迹；缺少统一预算与完整重复运行数据时，仍不足以据此画出一张严格的代际能力曲线。</p>
+</section>
+
+<section><h2 id="continuity">二、把一次会话的终点接到下一次的起点</h2>
+<p>原文的持续运行骨架很短：一轮会话结束，外层循环就启动下一轮。提示要求代理把问题拆小、跟踪进展、选择下一步。每轮运行记录日志，新容器接着从共享工作状态出发。这种设计解决了代理完成一个局部动作后停下来等待的问题，却把恢复工作所需的信息推到了环境里。</p>
+<p>一个新会话首先需要知道哪些结论已经可靠。如果前一轮只留下“寄存器分配可能有问题”，下一轮仍要重新发现测试入口、复现条件和失败位置。若留下对应提交、最小用例、实际输出以及已否定的解释，后续会话才能直接检查剩余假设。持续运行的收益，很大一部分取决于这些记录是否足以让陌生参与者重新进入现场。</p>
+<p>Carlini 因而要求代理维护 README 和进度文件。对共享代码库而言，文档需要同时承担两种工作：稳定地解释模块怎样协作，及时说明当前哪一部分还不能信任。把临时猜测写进架构说明，会误导后续修改；把已经确认的接口约束埋在某次会话日志里，又会让每个新代理重新付出学习成本。</p>
+<p>我更愿意把交接记录写成可检验的状态，而不是一段鼓励继续努力的话。例如，“该测试在基线提交通过，加入某项优化后失败；关闭该优化恢复；尚未排除调用约定的影响”，就把已知事实与未决问题分开了。即使最初的定位后来被推翻，这份记录仍能告诉接手者哪些实验值得重做。</p>
+<p>循环本身也需要接受故障。作者提到，一次会话误杀了外层 shell，连同自己的持续运行循环一起结束。这件小事提醒人：运行框架也是项目的一部分。代理可以修复任务代码，却未必能够修复承载自己的进程；重启、超时和失败退出，应有独立于任务叙述的可观察状态。</p>
+</section>
+
+<section><h2 id="ownership">三、任务锁登记所有权，合并后仍要验收</h2>
+<p>原文的协作结构也很克制。代理各自在 Docker 容器里持有本地克隆，共享一个 bare Git 上游；认领任务时向 <code>current_tasks/</code> 写文件，完成工作后拉取、合并、推送，再移除认领记录。发生竞争时，Git 的同步让后来的代理换一个任务。作者没有设置中央编排代理，也没有另建高层目标管理流程。</p>
+<p>这种任务锁表达的是“有人正在处理这件事”。它并没有冻结其他人会修改的前提。甲修复整数转换，乙调整中间表示；两人修改不同文件，文本合并可能完全顺利，但甲所依据的表示规则已经被乙改变。<a href="https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging">Git 的合并机制</a>能识别一部分文本冲突，程序行为是否仍满足同一套约束，还得由合并后的验证回答。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="共享代码库中几种状态的含义，可横向滚动"><table><thead><tr><th scope="col">状态</th><th scope="col">已经得到的信息</th><th scope="col">接下来仍要检查</th></tr></thead><tbody>
+<tr><th scope="row">任务已认领</th><td>某个代理承担当前调查</td><td>基线是否变化，其他任务是否触碰同一约束</td></tr>
+<tr><th scope="row">本地测试通过</th><td>某个提交在选定测试条件下通过</td><td>合入其他修改后，结果能否保留</td></tr>
+<tr><th scope="row">文本合并成功</th><td>版本内容已经组合起来</td><td>跨模块行为、回归与全局约束</td></tr>
+<tr><th scope="row">合并后验证通过</th><td>组合提交通过了本次验证</td><td>未覆盖输入、平台与后续变更</td></tr>
+</tbody></table></div>
+<p>我认为，任务粒度应尽量靠近一个可验收的变化。“优化后端”太宽，多个人很难知道自己与他人的边界；“修复一个可复现的参数传递错误，并增加对应回归用例”就更容易认领。任务记录还应保存起始提交，让读者知道结论针对哪一版程序成立。</p>
+<p>锁也有自己的生命周期。如果执行者消失，旧记录会让其他代理持续回避一个已经无人处理的问题。过期时间、接管与撤销是落地时值得补充的机制；原文的简化原型没有完整展开这些设计，不能把它描述成已经具备故障恢复保证的调度系统。</p>
+<p>这套协作方式的吸引力，在于用现有版本历史保留了任务认领和代码变化的关系。随着并发增加，还需要知道一项修改依赖哪些前提。只有“谁在做什么”的表格，解释不了为什么两个分别正确的补丁组合后会出错。</p>
+</section>
+
+<section><h2 id="feedback">四、把失败写成能被反复读取的对象</h2>
+<p>Carlini 把大量精力放在测试环境上：选择编译器测试集，为开源项目编写构建与验证脚本，再针对观察到的失误补测试。项目后期，新功能频繁破坏旧功能，他又增加 CI 和更严格的验证约束。持续推进的方向，由这些检查共同决定。</p>
+<p>编译器验证首先要区分失败发生在哪一层。解析失败，意味着还没有得到可用的程序表示；链接失败，可能与符号或目标文件有关；运行输出不一致，则已经穿过前面多层。把这些情况压成同一个红色状态，会让代理从错误的位置开始搜索。</p>
+<p><a href="https://llvm.org/docs/TestSuiteGuide.html#structure">LLVM 的 test-suite 文档</a>把参考输出与编译时间、运行时间、代码大小等指标分别处理，这种区分也适合用来理解本次实验。能生成一个文件，只完成了构建链中的一步；判断它做得对不对，还要保留输入、退出状态和预期行为。原文没有给出完整验证器实现，不能假定这些维度已经全部覆盖。</p>
+<p>反馈的表达形式同样影响工作。原文要求终端只打印少量有用信息，把详细内容留在文件里；错误行应容易检索，汇总统计尽量提前算好。代理每次都从大量重复日志中寻找第一处异常，会消耗本可用于比较假设的上下文。</p>
+<p>下面是一种可以采用的失败记录示意。字段和值用于说明设计，不是这次实验的原始运行数据：</p>
+<pre tabindex="0" aria-label="失败记录设计示意"><code>case:       aggregate-return-07
+baseline:   已确认通过的提交
+candidate:  待验证的提交
+target:     明确的平台与构建选项
+stage:      run
+expected:   参考输出与退出状态
+observed:   实际输出与退出状态
+evidence:   可重跑命令、完整日志位置</code></pre>
+<p>这份记录的价值，在于让其他代理能够挑战原先的解释。如果实际输出没有变，只是验证脚本读取了旧产物，就应该修复验证过程；如果参考输出来自不适用的平台，就应该修正比较条件。一个能把程序错误与测试错误分开的反馈系统，才有资格持续引导自动修改。</p>
+<p>测试本身也需要稳定的归属。修复某个失败时，如果代理同时改变了成功条件，原先的红灯可能被消除，原先的问题却还在。落地时应保存验证规则的变更理由，并让另一条检查路径审阅这种变化。</p>
+</section>
+
+<section><h2 id="sampling">五、固定抽样让一次修改有可比较的前后</h2>
+<p>完整测试越大，每次修改后的反馈就越慢。原文提供默认的快速选项，运行 1% 或 10% 的随机样本；同一个代理的子集固定，不同虚拟机的子集不同。这个细节同时照顾了比较与覆盖。</p>
+<p>若修改前后使用同一组测试，新增失败更容易归因到代码变化。若两轮都重新随机抽取，第一次没有抽到的旧问题，第二次可能突然出现，看起来就像刚引入的回归。代理随后追查一个与当前补丁无关的现象，既浪费时间，也可能为了消除它改坏别处。</p>
+<p>不同代理使用不同子集，则让团队接触更多测试。这里仍有一个概率边界。假设每个代理独立抽取 10% 的测试，十六份样本中某个用例至少被抽到一次的概率是：</p>
+<pre tabindex="0" aria-label="独立抽样概率示意"><code>1 − (1 − 0.10)^16 ≈ 81.5%</code></pre>
+<p>这是简化假设下的计算，不是原文测得的覆盖率。它说明，即使有不少代理同时工作，一轮抽样仍会遗漏用例；共享的抽样偏好、重复种子或测试依赖，还可能让实际覆盖更集中。因此，快速反馈与完整回归应有不同的职责，不能因为团队总体很忙，就省去稳定基线上的完整检查。</p>
+<p>抽样还会遇到失败类型不均匀的问题。一个只影响罕见数据布局的错误，可能长期躲在常用样本之外；一个影响所有加法的错误，极少量测试就能发现。对已经修复的重要缺陷，保留一组必须运行的回归用例，通常比让它重新回到纯随机池里更便于解释。</p>
+<p>原文把另一个问题称为时间感缺失：代理可能长时间运行测试，持续消耗预算，却没有意识到自己已经很久没有形成新的判断。环境可以定期报告进度与耗时，同时保持摘要简短。让代理知道一次验证还剩多少工作，有助于它决定继续等待、换一个更小的实验，还是先检查已有证据。</p>
+<p>把测试子集、工具链、构建选项和基线随结果保存，下一轮才能重现同一个实验。只留下一个通过比例，会丢掉解释比例变化所需的大部分信息。</p>
+</section>
+
+<section><h2 id="oracle">六、让 GCC 暂时接住其余文件</h2>
+<p>当很多小测试彼此独立时，每个代理处理一个失败，任务自然容易分开。Linux 内核构建把它们重新连成一个整体：某个共同障碍会阻断所有人的进度。代理看到同一个出口失败，便重复调查和修改同一处，队列里可认领的任务名称再多，也无法制造独立性。</p>
+<p>作者引入 GCC 作为已知可用的参照。测试框架让大部分内核文件由 GCC 编译，只把剩余一部分交给新编译器。若混合结果失败，就进一步用 GCC 替换其中一些文件，缩小仍由新编译器处理的集合。这让不同代理能够在不同文件子集上追查问题。</p>
+<p>可以用一个简化例子理解它。假设有四个编译单元，先确认完整的 GCC 构建在选定环境下可运行，再逐步改变新编译器承担的部分：</p>
+<pre tabindex="0" aria-label="混合编译定位示意"><code>基线：A、B、C、D 都由 GCC 编译
+试验甲：A 交给新编译器，其余维持 GCC
+试验乙：B 交给新编译器，其余维持 GCC
+试验丙：C、D 交给新编译器，其余维持 GCC
+
+每次保留所用编译器、输入文件、链接条件和运行结果。</code></pre>
+<p>这个方法把“整个内核为什么失败”改成了对某个替换集合的检验。背景中大部分组件维持在参照状态，调查者能更清楚地观察新编译器负责的那一块。若一个子集通过，得到的是它与这组参照对象在本次测试中的兼容证据；其他组合与输入仍要继续验证。</p>
+<p>参照工具也引入条件。混合目标文件必须在相关接口上兼容，构建选项和运行环境要可比较；如果基线自己不稳定，就无法可靠解释替换后的变化。对涉及未定义行为的 C 程序，两种编译结果不同也不能直接判定其中哪一个编译器有错。这些是使用参照法时应检查的前提，不是原文已经完成的形式化证明。</p>
+<p>GCC 在这里帮助提供了可替换的稳定背景。类似的思路可以用于其他工程系统：先保留大部分已经验证的组件，只替换一块，再扩大替换范围。不过，只有当组件边界足以承载这种比较时，方法才有效；高度依赖共享隐含状态的系统，需要先把那些状态纳入实验记录。</p>
+<p>我认为，这一步对并行最有价值的改变，是让失败附着到一个可以记录、复测、继续拆小的集合上。代理终于能够各自积累证据，随后把这些证据组合起来，而不必一遍遍争抢同一个最终错误。</p>
+</section>
+
+<section><h2 id="interactions">七、两个文件分别通过，合在一起仍会失败</h2>
+<p>原文特别补充：混编方法奏效后，仍要用 delta debugging 寻找单独正常、组合后失败的文件对。这是一个容易在成功叙事中被跳过的阶段。逐个替换全部通过，并不保证全部同时替换后也通过。</p>
+<p>下面的结果是为说明交互故障而构造的例子，并非项目中的实际测试记录。每一行均假定其他条件保持一致：</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="文件交互故障假设示例，可横向滚动"><table><thead><tr><th scope="col">由新编译器处理</th><th scope="col">由 GCC 处理</th><th scope="col">假设结果</th></tr></thead><tbody>
+<tr><th scope="row">无</th><td>A、B、C、D</td><td>通过，作为参照基线</td></tr>
+<tr><th scope="row">A</th><td>B、C、D</td><td>通过</td></tr>
+<tr><th scope="row">B</th><td>A、C、D</td><td>通过</td></tr>
+<tr><th scope="row">A、B</th><td>C、D</td><td>失败，需要调查组合条件</td></tr>
+</tbody></table></div>
+<p>这张表没有告诉我们根因。它可能涉及跨文件调用，也可能涉及两个文件共享的声明、布局或构建配置。把最后一行简单归为 A 的错误或 B 的错误，都比现有证据走得更远。此时有价值的任务，是找到失败所需的更小组合，并把相关约束显式写出来。</p>
+<p>缩减过程需要保留同一个失败判据。删掉某个文件后，程序可能不再链接，或者根本没有执行原先出错的路径；这样的失败不能自动算作原问题仍被重现。每一次缩小输入，都要检查症状是否保持，以及减少的是无关背景还是触发故障的必要条件。</p>
+<p>组合数量也会很快增长。若只考虑两两组合，n 个文件就有 n(n−1)/2 对。逐对穷举通常不划算，因此要利用现有失败、接口关系和分组试验缩小范围。原文没有披露完整的缩减策略，不能为它补上某种已经验证过的最优搜索算法。</p>
+<p>对多 Agent 工作流，这意味着需要一种跨任务的失败身份。甲的本地记录与乙的本地记录都可能写着通过；合并系统还应能记录“A 与 B 一起出现时失败”，避免后续代理把它再次拆回两个互不相关的绿色任务。局部验收越顺利，组合验收越值得单独保留。</p>
+</section>
+
+<section><h2 id="roles">八、分工要绑定不同的失败类型</h2>
+<p>原文还安排了不同职责：合并重复实现，改善编译器自身性能，改善生成代码的效率，从 Rust 开发者角度调整结构，以及维护文档。这些工作共享一个代码库，却不以同一种结果作为成功标准。</p>
+<p>编译器运行得快，意味着开发者等待构建的时间可能缩短；生成的程序运行得快，则影响最终使用者。两个目标甚至会产生取舍：更复杂的优化可能延长编译时间，却改善产物表现。若所有代理都只追一个笼统的性能分数，改动很难被公平比较，也容易在不同指标之间来回摇摆。</p>
+<p>去重工作同样需要证据。两个实现看起来相似，可能分别依赖不同的目标架构、整数宽度或调用约定。安全的合并应先列出各自承诺的行为，保留对应测试，再决定哪些部分确实能够共享。单纯减少行数，无法说明编译器变得更容易维护。</p>
+<p>在这次查阅固定的<a href="https://github.com/anthropics/claudes-c-compiler/blob/6f1b99acb2f4ec2414592136c2009fe7713deec3/DESIGN_DOC.md">设计文档版本</a>中，前端、IR、优化和后端有各自的表示与模块。这份说明有助于提出一个审查问题：跨过阶段边界后，哪些性质必须保持？例如，前端保留的类型区别，在降低为机器层表示时何处被处理；后端若共享一个默认实现，它依赖的架构约束是否真的一致。文档中的架构自述仍须由代码和测试核实。</p>
+<p>我倾向于让每类专门任务保存自己的验收对象。文档任务检查例子能否运行、说明是否对应当前实现；结构任务检查依赖边界与行为回归；性能任务固定输入和测量环境。这样才能看见一项局部改善究竟给其他角色增加了什么负担。</p>
+<p>原型没有中央编排代理，并不意味着目标之间没有协调成本。各个角色对同一条基线作出判断，已经是一种协调。项目变大后，谁能改变公共接口、谁需要复核全局约束，会逐渐成为比角色名称更具体的问题。</p>
+</section>
+
+<section><h2 id="toolchain">九、编译链上的例外，决定成果能怎样使用</h2>
+<p>原文给出的限制十分具体。x86 的 16 位启动代码仍借助 GCC；新编译器生成的相关代码超过 60KB，无法满足 Linux 的 32KB 代码大小限制。演示视频还使用了 GCC 的汇编器和链接器。对 ARM、RISC-V 的编译能力，应与 x86 这一特定启动阶段分别理解。</p>
+<p>从源程序到可启动系统，中间经过预处理、编译、汇编、链接以及目标环境中的执行。某一阶段调用成熟工具，是整个结果成立的条件。说清依赖，才能判断哪一块能力确实由新系统承担，也才能知道把它带到另一套环境时还需要准备什么。</p>
+<p>“仅依赖 Rust 标准库”描述的是文章中编译器实现的依赖口径。它没有消除上述工具链例外，也没有把系统头文件、运行库和目标平台变成不需要解释的背景。把实现依赖与完整构建环境分开，读者才能重建实际使用边界。</p>
+<p>产物质量也仍有明显差距。作者报告，即使打开全部优化，生成代码的效率仍不如关闭优化的 GCC；Rust 代码的质量与专家实现有距离，新功能和修复还会频繁引入回归。这些限制分别涉及优化能力、内部结构和变更稳定性，不能用一次成功启动互相抵消。</p>
+<p>测试通过率尤其需要保留原来的分母。<a href="https://gcc.gnu.org/onlinedocs/gccint/Torture-Tests.html">GCC 文档中的 torture testing</a>会让用例在多组选项下运行。报告这样的测试结果时，编译选项、测试版本、跳过项与目标架构都会影响分母。原文的概述没有给出足以外部重算全部结果的完整明细，读者应把数字放在作者报告的范围内。</p>
+<p>作者明确表示，它并不能成功构建所有项目，当时还不能直接替代成熟编译器。要把它作为长期工具链，还需要更广泛的输入验证、稳定性记录、故障处置和维护安排。</p>
+</section>
+
+<section><h2 id="evidence">十、账单之外，还要记录谁在维护目标</h2>
+<p>API 成本提供了一个有用的资源坐标，却不能独自回答项目是否便宜。人写目标、寻找测试、检查失败，再据此调整环境；容器、构建与回归也消耗计算资源。原文没有把这些投入折算成完整成本，因此不适合据账单直接推导团队预算或岗位替代比例。</p>
+<p>代理数量同样需要放进比较条件。要判断增加并发是否值得，可以比较同一任务集、同一验收规则和相近总预算下，多少缺陷被确认关闭，多少旧功能被破坏，人工需要花多少时间解释冲突。会话数和提交数都容易获取，但其中可能包含大量重复调查与修复回退。</p>
+<p>作者把这项工作定位为能力极限测试，并说明开发期间代理没有互联网访问。这有助于理解现场运行条件；它没有说明模型训练阶段接触过什么知识。把不联网实现称为对全部知识来源的证明，会超出这项实验能够回答的问题。</p>
+<p>公开仓库提供了进一步检查的入口，也带来了文档版本的问题。我在 2026 年 11 月 1 日查阅时，将其固定在 <a href="https://github.com/anthropics/claudes-c-compiler/commit/6f1b99acb2f4ec2414592136c2009fe7713deec3"><code>6f1b99a</code></a>。该提交记录日期为 2026 年 2 月 5 日，与文章同日。它的 README 对独立汇编、链接的自述，与文章对演示工具链的限定存在差别；现有证据不足以解释差别的成因，不能用其中一份文字静默覆盖另一份。</p>
+<p>更应注意的是，<a href="https://github.com/anthropics/claudes-c-compiler/blob/6f1b99acb2f4ec2414592136c2009fe7713deec3/README.md">README 中的人类作者说明</a>明确提醒：代码没有经过正确性验证，不建议直接使用，模型生成文档也可能包含错误。因而，读到一个功能声明之后，仍要寻找对应实现、构建条件和可重复测试。公开可读让复核成为可能，并不会自动完成复核。</p>
+<p>这种来源之间的差别，也应进入工程记录。某次演示说明了什么、某个提交声称支持什么、后续独立验证了什么，适合分别保存。若不区分这些证据，就容易把未经验证的文档自述，当成已经成立的运行结果。</p>
+</section>
+
+<section><h2 id="capacity">十一、怎样判断还值得再加一个 Agent</h2>
+<p>从这次实验出发，我会先观察任务队列里有多少项能够各自验证。如果队列中的每个条目都依赖同一个尚未理解的故障，新增代理大概率只会增加对同一现场的竞争。此时更值得投入的是定位工具、参照基线与失败缩减，让一个大问题产生多个能独立推进的小问题。</p>
+<p>对每项工作，可以至少保存起始提交、失败用例和通过条件，并记录它依赖的公共接口。完成时，再把实际验证过的组合提交附回去。这样能区分“代理认为已经修好”与“合并后的程序在指定条件下保留了修复”，也给后来的回归调查留下入口。</p>
+<p>任务分开之后，还要检查反馈是否足够快。若大部分时间都在等待同一个全量构建，更多会话会先把验证资源耗尽；若摘要里只有通过与失败，没有可查的证据，更多会话又会同时反复阅读同样的日志。并行规模应与验证吞吐、故障分辨能力一起调整。</p>
+<p>最后要看新增代理带来的净变化。可以先在一批明确的任务上，记录已确认关闭的问题、重新打开的问题、冲突处理时间和验证消耗，再决定是否扩大。这样的观察未必能给出适用于所有项目的代理数量，却能告诉团队当前最紧的约束究竟在哪里。</p>
+</section>
+
+<section class="source-note" id="source-notes"><h2>原文与技术核对</h2>
+<p>Nicholas Carlini，Anthropic，<a href="https://www.anthropic.com/research/building-c-compiler">Building a C compiler with a team of parallel Claudes</a>，2026 年 2 月 5 日。本文于 2026 年 11 月 1 日重读，实验数字与能力限制按原文历史口径理解。</p>
+<p>补充核对使用作者链接的<a href="https://github.com/anthropics/claudes-c-compiler/tree/6f1b99acb2f4ec2414592136c2009fe7713deec3">官方编译器仓库固定版本</a>，以及上文所链 Git、GCC、LLVM 官方文档。抽样概率、混编四文件示例、失败记录和团队验收建议为本文分析；它们不是该实验新增测量结果。</p>
+</section>
+</article></main><footer class="page-footer"><a href="index.html">系列目录</a><a href="#top">回到顶部 ↑</a></footer></div></body></html>
