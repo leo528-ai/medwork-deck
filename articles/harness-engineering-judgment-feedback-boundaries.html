@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人"><meta name="description" content="从 OpenAI 的 Harness engineering 经验，分析判断接口、隔离环境、知识失效、可执行规则与合并风险。"><meta name="color-scheme" content="light"><meta name="theme-color" content="#F5F1E8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'"><link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/harness-engineering-judgment-feedback-boundaries.html"><title>当代码不再稀缺，工程判断应该放在哪里｜胡浩源</title><style>
+:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:3px solid var(--clay);outline-offset:5px}
+.skip{position:absolute;left:1rem;top:-5rem;background:var(--surface);padding:.5rem 1rem;z-index:5}.skip:focus{top:1rem}
+.shell{width:min(100% - 40px,760px);margin:0 auto}
+.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.masthead a{color:var(--muted)}header{padding:52px 0 26px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);font-weight:700;margin:0 0 20px}
+h1{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif;font-size:clamp(32px,5.8vw,46px);line-height:1.35;font-weight:700;letter-spacing:-.035em;margin:0 0 25px}
+.byline{font-size:14px;margin:0;color:var(--muted)}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}
+.contents{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px;color:var(--muted)}
+.contents summary{cursor:pointer;font-weight:600;color:var(--ink)}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}
+article p{margin:0 0 22px}blockquote{margin:0 0 34px;padding:6px 0 6px 20px;border-left:3px solid var(--clay);font-size:18px;color:var(--muted)}blockquote p:last-child{margin-bottom:0}
+h2{font-size:26px;line-height:1.5;font-weight:700;margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}
+h3{font-size:20px;line-height:1.55;margin:32px 0 18px}strong{font-weight:700}code{font:0.88em/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#EBE5D9;border-radius:3px;padding:.1em .3em;overflow-wrap:anywhere}
+ul,ol{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}
+.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650;color:var(--ink)}tbody th{font-weight:500;width:36%}tr:last-child th,tr:last-child td{border-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:14px;line-height:1.95;color:var(--muted)}hr~h3{font-size:17px;margin-top:0}
+.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){body{font-size:16px;line-height:1.95}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px}header{padding:36px 0 24px}h2{font-size:23px;margin-top:42px}h3{font-size:19px}blockquote{font-size:17px;padding-left:16px}.table-wrap{margin-left:-2px;margin-right:-2px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}h3{font-size:13pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}blockquote{font-size:12pt}}
+
+.subtitle{font-family:ui-serif,"Songti SC","STSong",serif;font-size:21px;line-height:1.65;color:var(--muted);margin:0 0 24px}article a{overflow-wrap:anywhere}.source-heading{font-size:19px;border-top:0;padding-top:0;margin-top:0}#source-notes+ul{font-size:14px;color:var(--muted)}@media(max-width:600px){.subtitle{font-size:19px}.masthead{gap:12px;letter-spacing:.03em}.page-footer{flex-wrap:wrap}}
+
+h1{text-wrap:balance}h1>span{display:block}.contents li{margin:0}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{background:none;padding:0;border-radius:0;font:inherit;overflow-wrap:normal}pre:focus-visible{outline:3px solid var(--clay);outline-offset:3px}#source-notes+ul{line-height:1.9}#source-notes+ul a{display:block}table{min-width:610px}table th:first-child{width:44%}
+@media(max-width:600px){pre{font-size:12px;padding:14px 12px}.masthead{font-size:12px}}
+@media print{pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}table{min-width:0}}
+
+article{overflow-wrap:anywhere}.status{color:var(--clay);font-weight:600}h2{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif}article blockquote{font-size:17px}
+body{font-family:"Noto Serif CJK SC","Songti SC","STSong",serif}.masthead,.byline,.dateline,.contents,.eyebrow,table,.page-footer{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif}table th:first-child{width:auto}table th:first-child,table td:first-child{min-width:120px}table{min-width:620px}caption{text-align:left;padding:12px 15px;font-weight:600} .source-note{font-size:14px;color:var(--muted)}.nowrap{white-space:nowrap}.fact{font:14px/1.9 -apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif;color:var(--muted);border-left:2px solid var(--line);padding-left:16px}.lead{font-size:20px;line-height:1.8}h2{font-family:ui-serif,"Songti SC","STSong",serif}</style></head>
+<body id="top"><a class="skip" href="#main">跳至正文</a><div class="shell"><nav class="masthead" aria-label="站点导航"><span>工程深读 · 反馈系统</span><a href="../blog/">返回博客</a></nav><header><p class="eyebrow">Engineering Notes / OpenAI</p><h1><span>当代码不再稀缺，</span><span>工程判断应该放在哪里</span></h1><p class="subtitle">从一个零手写代码的团队案例，审视目标、证据与边界</p><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-11-02">2026 年 11 月 2 日</time> · 重读 2026 年 2 月 11 日官方文章</p></header><details class="contents" open><summary>本文目录</summary><ol><li><a href="#experiment">01 / 先把一个成功案例放回它的条件里</a></li><li><a href="#judgment">02 / 人的工作没有消失，而是移到了判断的接口上</a></li><li><a href="#feedback">03 / 一个闭环需要看见结果，不只是看见测试退出码</a></li><li><a href="#isolation">04 / 隔离环境的价值，是让失败能够归因</a></li><li><a href="#knowledge">05 / 知识库首先是一套索引和失效机制</a></li><li><a href="#contracts">06 / 让规则可执行，也让错误可修复</a></li><li><a href="#dependencies">07 / 可理解性，不等于把所有依赖重写一遍</a></li><li><a href="#merge">08 / 合并得更快，前提是错误的代价确实可控</a></li><li><a href="#autonomy">09 / 自主性是一组已接通的环节，不是一个开关</a></li><li><a href="#drift">10 / 自动清理的对象，应当是明确的偏差</a></li><li><a href="#measurement">11 / 用什么指标判断 Harness 真正在变好</a></li><li><a href="#transfer">12 / 从一条真实工作流开始，而不是先造完整平台</a></li></ol></details><main id="main"><article><p class="lead">当代码的生产速度不再是主要约束，工程团队怎样避免把吞吐量变成更快的失控？我的答案是：把判断变成可读取的依据，把要求变成可执行的检查，把失败变成可定位的证据。代码仍然重要，但围绕代码的反馈系统开始决定产能能否兑现。</p>
+<p>这篇思考由 OpenAI 的 <a href="https://openai.com/index/harness-engineering/">Harness engineering: leveraging Codex in an agent-first world</a> 引出。Ryan Lopopolo 于 2026 年 2 月 11 日发表的，是一个内部产品团队的工程经验，不是随机对照实验，也不是“所有团队都应该停止手写代码”的证明。下面先保留这份报告的事实边界，再提出一套用于审视自己系统的设计方法。</p>
+<section id="experiment"><h2>01 / 先把一个成功案例放回它的条件里</h2>
+<p>原文报告：团队从空仓库开始，约五个月形成百万行量级的代码、文档和工具，合入约 1,500 个 PR；最初三位工程师驱动 Agent，后来增至七位。每人每日 3.5 个 PR 是团队报告的平均吞吐，约十分之一的开发时间则是估计。产品有内部用户和外部 alpha 测试者；“零手写代码”不等于无人决策。</p>
+<p>我更在意这个案例没有回答什么。一个 PR 可以是改配置，也可以是增加完整能力；一行代码可以是业务逻辑，也可以是重复生成的配置。行数和合入次数证明系统有持续产出，却不能单独证明它节省了多少总成本，更不能证明产出的边际价值。把开发速度解释为用户价值，需要继续跨过上线、使用、可靠性和维护成本几道关。</p>
+<p>估算开发时间同样有一个反事实问题：如果另一个团队采用相同框架、同等产品范围、同样成熟的工具链，手工开发究竟要多久？没有这样的对照，不能从“十分之一”反推出普遍的十倍效率。报告仍然有价值，只是价值在于给出了值得复制验证的工程机制，而不是给出了可以直接填进预算表的效率系数。</p>
+<p>因此，我建议把这个案例读成一份条件清单。模型能力是一项条件，仓库结构、观测工具、可重复环境、反馈密度和风险预算也是条件。迁移时只复制“让 Agent 写代码”这个表面动作，却不复制这些支撑条件，得到不同结果并不奇怪。真正需要比较的不是谁用了同一个模型，而是谁给模型提供了同等质量的工作条件。</p></section>
+<section id="judgment"><h2>02 / 人的工作没有消失，而是移到了判断的接口上</h2>
+<p>在传统流程里，一个资深工程师会在写代码时顺手完成大量隐性的判断：这次需求是否值得做，异常是否应该吞掉，兼容性到底保留到哪一版，什么情况下需要回滚。代码是显性产物，判断常常藏在编辑过程里。当编辑交给 Agent，这些判断不会自动迁移过去。</p>
+<p>这里至少有三种不同的工作。第一种是目标选择，即为什么做；第二种是约束表达，即哪些结果不能接受；第三种是实现探索，即如何达到目标。模型可能很擅长第三种，但这并不意味着它可以自行决定第一种，也不意味着第二种会从一句“请遵循最佳实践”中完整恢复。</p>
+<p>我把这种变化理解为<strong>判断接口的显式化</strong>。一个目标应当至少包含对象、预期变化、不可改变的性质和验收方法。例如，“优化导出功能”缺少可执行边界；“在既定数据规模下减少等待时间，同时保持字段语义、权限过滤和失败重试行为不变”，才使优化方向和保留条件同时可见。这里的重点不是把提示词写得更长，而是把决定结果的约束写出来。</p>
+<p>还要防止另一种极端：把每个实现细节都由人预先指定。那会把 Agent 降格为昂贵的宏执行器，也让人继续承担所有局部推理。合理的分工是在风险边界、数据契约和验收口径上收紧，在实现空间里放开。遇到失败时先问缺的是知识、工具、权限还是判断依据，再决定是否需要人工介入，而不是无限重复同一句任务。</p></section>
+<section id="feedback"><h2>03 / 一个闭环需要看见结果，不只是看见测试退出码</h2>
+<p class="fact">报告中的做法包括：每个 worktree 启动独立应用，用浏览器检查界面，并提供临时日志、指标和追踪。800 毫秒启动、四条关键用户旅程中各追踪 span 不超过两秒，是可表达的目标示例，不是公布的普遍实测成绩。</p>
+<p>这件事的工程意义，是把“实现已经提交”和“用户真正得到预期结果”之间的距离缩短。单元测试通常描述某个函数的局部行为，浏览器能看到交互后的页面，日志和追踪解释失败发生在哪里。三者不是替代关系，而是不同观测面。</p>
+<p>设想一个表单：前端提交成功，接口返回成功码，数据库确实新增了一条记录，但用户刷新页面后看不到记录。仅看测试退出码，任务可能已经“完成”；加入真实界面和请求链路，才会发现权限过滤、缓存失效或读写路径不一致。这不是模型不懂业务，而是完成判定缺少了最后一段证据。</p>
+<p>然而，更多观测并不总是更好。如果一次排障把所有服务、所有租户和所有时间段的日志塞进上下文，模型只是获得了一堆难以归因的文本。我建议观测接口围绕三个标识组织：变更标识、环境标识和请求标识。先确认当前运行的是哪个版本，再确认问题属于哪个隔离环境，最后沿具体请求展开。让 Agent 能逐层追问，比一次提供全部日志更有解释力。</p>
+<p>这里还有一个必须保留的限制：截图可以证明某个画面出现，不能独自证明数据正确；追踪可以证明请求经过某些服务，不能独自证明权限合法；性能指标可以证明某次运行足够快，不能独自证明高负载下仍成立。完成证据必须与待证明的命题匹配。否则，观测系统只是把“看起来成功”包装得更精致。</p></section>
+<section id="isolation"><h2>04 / 隔离环境的价值，是让失败能够归因</h2>
+<p>并行 Agent 会把共享环境中的问题放大。两个任务同时改配置，一个任务重建数据库，另一个任务的测试突然失败；如果没有边界，后者可能花很长时间修复一个与自身改动无关的问题。更糟的是，它可能为了让测试变绿而修改正确的业务逻辑。</p>
+<p>独立 worktree 解决的是代码工作区冲突，不自动解决全部运行时冲突。端口、缓存、队列、数据库、对象存储前缀和测试账户仍可能共享。因此，“每个任务有独立目录”只是隔离的起点。真正要核实的是：一个任务的写入能否改变另一个任务的观测结果。</p>
+<div class="table-wrap" role="region" aria-label="隔离与归因检查" tabindex="0"><table><thead><tr><th>对象</th><th>需要回答的问题</th><th>遗漏后的典型误判</th></tr></thead><tbody><tr><td>代码与配置</td><td>构建输入能否绑定到本次变更？</td><td>把旧版本行为当成修复结果</td></tr><tr><td>持久化状态</td><td>测试数据是否会被其他任务改写？</td><td>把外部数据变化当成代码回归</td></tr><tr><td>日志与指标</td><td>能否筛出本任务产生的观测？</td><td>将别的运行实例的错误归给自己</td></tr><tr><td>清理与回收</td><td>任务结束后哪些资源应删除？</td><td>遗留任务污染下一轮测试或持续计费</td></tr></tbody></table></div>
+<p>这是本文提出的核查表，不是对原文基础设施实现的补充披露。它强调的是实验设计的一个基本原则：改变一个候选实现时，其他关键因素尽量可控。隔离不是为了让每次测试都成功，而是为了让失败具有信息量。</p>
+<p>在成本有限的环境中，不必执着于每项资源都物理独占。逻辑命名空间、只读共享依赖、可回放的固定输入也能形成有效边界。但共享必须是明确设计的，不能只是“目前没出问题”。对安全敏感数据，测试便利更不能成为降低权限隔离的理由。</p></section>
+<section id="knowledge"><h2>05 / 知识库首先是一套索引和失效机制</h2>
+<p class="fact">原文将约 100 行的 AGENTS.md 用作导航，把细节放入版本化文档；计划、决策与技术债在仓库中留存；质量文档按业务域和架构层记录缺口，文档维护任务发现漂移后提出修复 PR。</p>
+<p>长说明书的问题不只是占用上下文。它往往混合了不同时期、不同适用范围和不同权威等级的规则。模型即使读到了，也未必能判断哪一条应当优先执行。因此，精简入口的核心作用是建立访问路径，而不是神奇地让少量 token 比大量 token 更聪明。</p>
+<p>一条可维护的规则至少应能回答：约束什么对象，为什么存在，由谁维护，什么证据能表明它已经过时。如果只写“此服务必须保持兼容”，实际执行仍需要追问兼容哪种输入、哪一版客户端、哪段迁移窗口。把这些信息组织成可定位的文件，比把所有内容堆在首页更容易核查。</p>
+<p>我建议把知识分成三层。第一层是稳定原则，比如数据边界和安全要求；第二层是当前事实，比如接口契约、部署结构和版本；第三层是任务过程，比如临时假设、排查记录和待决事项。三层都可以持久化，但不能给予同等效力。一个排障时提出的猜测，如果没有明确状态，就可能在下一次运行中被误当作架构事实。</p>
+<p>文档维护也不能只靠更新时间。昨天编辑的文件可能仍然包含错误，半年没改的契约也可能完全有效。更可靠的方式是把文档声明与可检查对象关联起来：链接是否存在，配置字段是否仍有效，示例能否运行，引用的测试是否仍覆盖该约束。无法机械验证的设计理由则应明确责任人或复核条件。<strong>知识新鲜度不是时间戳，而是声明与现实之间的对应关系。</strong></p></section>
+<section id="contracts"><h2>06 / 让规则可执行，也让错误可修复</h2>
+<p class="fact">报告用分层依赖、结构测试和自定义检查约束架构；其层次为 Types、Config、Repo、Service、Runtime、UI，横切能力经 Providers 接入。检查错误还提供修复提示。</p>
+<p>这一思路可以拆成两个问题：怎样拒绝错误，以及怎样让下一次尝试更接近正确。传统规则检查常常只解决前者。对一个自主循环而言，只有“禁止跨层调用”的错误仍然不够，它需要知道违反的是哪条边、允许的替代路径是什么、该去哪里查看一个合格示例。</p>
+<p>但修复提示不能偷偷扩大规则。假如规则只要求通过统一接口访问认证能力，就不应在每次报错时顺便要求重写整个模块。好的反馈是局部、可验证且范围有限的：指出违规对象，说明被破坏的不变量，给出允许的修复方向，再让 Agent 选择具体实现。</p>
+<p>并不是所有偏好都适合变成门禁。可以机械检测的结构约束，与产品体验的判断，不应被粗暴混在一个“质量分数”里。前者适合直接阻断；后者可能更需要对比示例、用户反馈和人工决策。把可检查的事项自动化，是为了把有限的人类注意力留给难以编码的判断，而不是假装所有判断都已经有正确答案。</p>
+<p>同样重要的是规则自身的测试。如果一个检查器只覆盖了正向样例，它可能放过关键违规；如果错误提示建议的修复与其他规则冲突，Agent 会在几种失败之间来回振荡。规则也属于软件，需要版本管理、负向样例和回归检查。系统不能仅仅因为检查器是自己生成的，就把它当成可信裁判。</p></section>
+<section id="dependencies"><h2>07 / 可理解性，不等于把所有依赖重写一遍</h2>
+<p class="fact">原文举了一个自建并发映射工具的例子：它接入观测、行为受控，报告测试覆盖率为 100%。这不是对重写全部第三方库的建议。</p>
+<p>当依赖行为不透明时，调试成本确实可能超过实现一个很小子集的成本。但“我能读懂自写代码”与“我承担得起其维护责任”是两件事。重写意味着接管边界条件、兼容性、漏洞修复、异常语义和未来演进，而不仅仅是接管几百行实现。</p>
+<p>我的判断标准是边界是否足够窄。一个被严格限定的并发辅助函数，可以通过少量明确语义形成闭合测试；密码算法、数据库、身份协议或复杂文件格式则不应因为“模型写起来很快”就被轻率替换。对于后者，成熟实现承载的历史经验远大于接口表面。</p>
+<p>覆盖率也不等于完备性。代码被测试执行过，不能证明测试穷尽了所有状态；断言存在，不能证明断言对应真实业务要求。更有用的追问是：取消、超时、部分失败、资源耗尽、重复回调是否被纳入语义？如果这些行为没有被定义，100% 仍可能只是一个漂亮但有限的数字。</p>
+<p>所以，可理解性的目标应当是让关键行为可以被解释和验证。它既可以通过自建小组件实现，也可以通过给成熟库增加适配层、契约测试和观测实现。先找最小不可理解边界，再决定是否替换，比先宣布“所有依赖都要可内化”更稳健。</p></section>
+<section id="merge"><h2>08 / 合并得更快，前提是错误的代价确实可控</h2>
+<p class="fact">该团队采用较少阻塞的合并门禁，并对部分不稳定测试做后续处理；原文强调这种取舍依赖高吞吐环境，不能无条件推广。</p>
+<p>这可能是整篇报告最容易被误读的地方。“等待昂贵、修正便宜”只在一组条件下成立：错误能够被及时发现，影响可以限制，回滚可以执行，修正不会抹掉数据，而且用户损失可以接受。一旦某项条件不成立，快速合入就可能把局部开发效率换成全局事故成本。</p>
+<p>我建议把合并风险拆成可逆性和可发现性两条轴。一个只影响内部展示、能够立即回滚、拥有完整监测的改动，可以采用较短反馈周期；一个改变账务、权限、数据迁移或临床输出的改动，即使代码很少，也不能因 Agent 修复速度快而降低审查要求。规模不是风险的充分代理变量。</p>
+<div class="table-wrap" role="region" aria-label="合并风险判断" tabindex="0"><table><thead><tr><th>错误特征</th><th>合理反馈策略</th><th>不能省略的条件</th></tr></thead><tbody><tr><td>容易发现、容易回滚</td><td>缩小变更，快速验证与回收</td><td>明确监测信号与回滚负责人</td></tr><tr><td>难以发现、容易回滚</td><td>延长观测或加入对照验证</td><td>证明观测确实覆盖待保护性质</td></tr><tr><td>容易发现、难以回滚</td><td>先验证可恢复路径，再发布</td><td>数据保护和迁移演练</td></tr><tr><td>难以发现、难以回滚</td><td>保留严格门禁与独立判断</td><td>不能用高吞吐替代风险论证</td></tr></tbody></table></div>
+<p>这是本文提出的决策框架，不是原团队已经执行的风险分类。它的目的，是把“更快合并”的争论从风格偏好拉回损失函数。优化吞吐量之前，先明确什么错误可以事后修，什么错误一旦发生就无法用下一个 PR 抵消。</p></section>
+<section id="autonomy"><h2>09 / 自主性是一组已接通的环节，不是一个开关</h2>
+<p class="fact">原文展示的端到端链路，从复现问题、录制失败，到实现、验证、录制修复、处理评审与构建失败，最后合入；评审包含本地自审、额外 Agent 评审和反馈迭代；团队也报告过超过六小时的单任务运行。这些都属于该团队的运行描述。</p>
+<p>多个 Agent 互相评审可以增加检查路径，但如果它们共享同一错误假设，也可能一致地遗漏问题。因此，评审闭环仍需独立的验收证据，不能把多次赞同当成正确性证明。“自主运行六小时”本身不是价值指标。它可能代表完成了一项困难工作，也可能代表重复失败六小时。真正值得关注的是运行过程是否不断获得新证据，是否能识别卡住的原因，以及是否知道什么时候应该停止。当系统无法区分有效推进和无效循环时，延长运行时间只是放大成本。</p>
+<p>我建议把自主程度表示成一条环节清单，而不是给整个 Agent 一个统一等级。它能不能发现失败？能不能定位到本次变更？能不能提出修复？能不能在独立条件下验证？能不能恢复运行环境？能不能识别需要人的判断？这些能力可以逐个成熟，也可以在不同任务中有不同边界。</p>
+<p>这还会改变人类介入的方式。一个好的升级请求不是“失败了，请帮忙”，而应包含已确认的事实、排除的假设、仍然存在的冲突，以及必须由人决定的那个问题。把事实整理和决策本身分开，可以减少人重新调查的成本，又不把应由人承担的责任伪装成技术故障。</p>
+<p>尤其不能把工具能够执行等同于任务已经授权。技术上能合入代码，并不意味着每个仓库都允许自动合入；能够访问生产系统，也不意味着每次变更都可以直接执行。自主工作流应继承现有权限与审批边界，而不是因为反馈环更完整就自动获得更大的权力。工程闭环解决能否可靠完成，授权流程决定是否应该执行，两者需要同时成立。</p></section>
+<section id="drift"><h2>10 / 自动清理的对象，应当是明确的偏差</h2>
+<p class="fact">原文描述人工曾集中用周五整理代码，约占一周的20%，后来转向周期性整理任务，针对偏离约定的模式生成小规模修复；同时承认多年架构一致性尚未得到验证。</p>
+<p>生成式系统容易沿用仓库中已经出现的模式，无论那个模式是否合理。一个临时补丁如果被多次模仿，就可能变成事实上的架构惯例。问题不只是代码越来越多，而是后来者把偶然性当成了规则。</p>
+<p>周期性清理能打断这种放大，但前提是有一个稳定的比较基准。“让代码更优雅”不足以支持无人值守的重构。一个清理任务应当明确偏差类型，比如重复的边界校验、绕过统一日志接口、失效的文档链接；同时说明不应改变的行为，以及如何证明改动没有扩大范围。</p>
+<p>还需要警惕清理任务之间的相互抵消。一个 Agent 把函数抽成公共工具，另一个为减少间接层又把它内联；两个局部优化各自合理，却让系统持续震荡。解决办法不是再加一个更强的 Agent，而是明确决策的有效期、适用范围和优先级，让清理依据可追溯。</p>
+<p>在这样的系统里，技术债不只是待办列表中的条目，也包括没有结论的假设和失去解释的例外。例外可以存在，但应当附着在它解决的问题上。没有原因、没有责任边界、没有退出条件的例外，才最容易在下一轮生成中扩散。</p></section>
+<section id="measurement"><h2>11 / 用什么指标判断 Harness 真正在变好</h2>
+<p>如果只看代码行数和合入速度，团队可能不知不觉奖励了错误行为：拆更多 PR、生成更多包装层、把失败延后处理。更合理的衡量方式，是同时看交付、纠错和人工介入的成本，而不把某个单一数字当成全部价值。</p>
+<p>我会至少保留四类指标。第一类是任务结果：预先定义的验收条件有多少真正成立。第二类是证据质量：结果有多少能被独立重复确认。第三类是返工：多少修复引入回归，多少任务因环境污染而重跑。第四类是人工注意力：人到底是在做高价值决策，还是在替 Agent 搬运上下文、解释日志和收拾未完成步骤。</p>
+<p>这些指标之间必须能关联。例如，人工介入减少但严重问题增加，不是成功；测试通过率提高但测试范围缩小，也不是进步。比较不同版本的 Harness 时，应尽量固定任务集合、模型版本、工具权限、运行预算和评价方式。无法固定的变化应被记录，而不是让它们悄悄混入“效果提升”。</p>
+<p>一个实际可行的起点，是保留一组具有代表性的任务：简单修复、跨模块修改、带界面的功能、数据迁移和权限相关变更。它们不必数量巨大，但必须覆盖不同失败机制。对每个任务保存输入、约束、运行环境、产生的证据和人工介入原因。这样，改进才有机会从偶然的成功故事变成可比较的工程事实。</p>
+<p>还应区分能力上限与交付稳定性。一次复杂任务成功说明系统可能具备某种能力；多次不同输入下仍能控制失败，才说明它开始具有可依赖的稳定性。两者都重要，但不能相互替代。</p></section>
+<section id="transfer"><h2>12 / 从一条真实工作流开始，而不是先造完整平台</h2>
+<p>读完这样的案例，很容易想先建设一个覆盖所有任务的 Agent 平台。但真正有信息量的起点，通常是一条足够具体、能跑完整闭环的工作流。选一个真实问题，明确输入和验收，打通观测、实现、检查、反馈和恢复，再从反复出现的阻塞中提炼公共能力。</p>
+<p>假设要改善一个内部查询页面。第一步不是增加十个 Agent 角色，而是确认它能否在独立环境中启动、能否访问经过授权的测试数据、能否重现失败、能否观察查询与界面的对应关系。第二步才是把成功修复过的问题归纳成检查和文档。只有当多个任务反复需要同一能力，抽象才有充分依据。</p>
+<p>医疗相关软件更应坚持这一顺序。这里讨论的隔离、契约和证据方法，可以用于改善软件工程过程；它们不能证明临床建议安全，也不能替代医学评测、数据授权和专业责任。一个页面能成功显示答案，与答案适合某位患者，是不同层面的命题，必须有不同层面的验证。</p>
+<p>OpenAI 的这份报告给我的启发，不是工程师可以退场，而是工程师需要更明确地选择自己把判断放在哪里。把一条规则只讲给某一次会话，它很容易消失；把它写成可定位的知识、可重复的环境和可解释的检查，它才可能在下一次工作中继续发挥作用。</p>
+<p><strong>当 Agent 可以更快地产生改动，工程能力的稀缺部分，就从“产生一个答案”转向“建立一个能够发现自己错误的系统”。</strong>这不是一次性搭好脚手架就结束的工作，而是持续维护目标、证据和边界之间关系的工作。</p></section>
+<hr><h2 class="source-heading" id="sources">来源与阅读边界</h2>
+<p>主要原文：Ryan Lopopolo，<a href="https://openai.com/index/harness-engineering/">Harness engineering: leveraging Codex in an agent-first world</a>，OpenAI，2026-02-11。本文于 2026-11-02 阅读核对，按历史工程案例讨论，不视为当天新发布消息。</p>
+<p>原文提供的是特定团队自述经验，未公开足以独立复现完整生产系统的全部配置与实验对照。本文中的归因核查表、风险矩阵、指标体系和迁移路径是作者提出的工程分析；不表示 OpenAI 采用了这些具体方案，也不代表京东健康的已上线实现或实验结论。</p>
+</article></main><footer class="page-footer"><a href="index.html">系列目录</a><a href="#top">回到顶部 ↑</a></footer></div></body></html>
