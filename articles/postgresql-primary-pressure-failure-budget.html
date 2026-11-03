@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人"><meta name="description" content="重读 OpenAI 的 PostgreSQL 扩容案例，分析主库余量、缓存回源、连接队列、复制扇出与变更预算。"><meta name="color-scheme" content="light"><meta name="theme-color" content="#F5F1E8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'"><link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/postgresql-primary-pressure-failure-budget.html"><title>读请求扩容以后，主库的余量留给谁｜胡浩源</title><style>
+:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:3px solid var(--clay);outline-offset:5px}
+.skip{position:absolute;left:1rem;top:-5rem;background:var(--surface);padding:.5rem 1rem;z-index:5}.skip:focus{top:1rem}
+.shell{width:min(100% - 40px,760px);margin:0 auto}
+.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.masthead a{color:var(--muted)}header{padding:52px 0 26px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);font-weight:700;margin:0 0 20px}
+h1{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif;font-size:clamp(32px,5.8vw,46px);line-height:1.35;font-weight:700;letter-spacing:-.035em;margin:0 0 25px}
+.byline{font-size:14px;margin:0;color:var(--muted)}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}
+.contents{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px;color:var(--muted)}
+.contents summary{cursor:pointer;font-weight:600;color:var(--ink)}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}
+article p{margin:0 0 22px}blockquote{margin:0 0 34px;padding:6px 0 6px 20px;border-left:3px solid var(--clay);font-size:18px;color:var(--muted)}blockquote p:last-child{margin-bottom:0}
+h2{font-size:26px;line-height:1.5;font-weight:700;margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}
+h3{font-size:20px;line-height:1.55;margin:32px 0 18px}strong{font-weight:700}code{font:0.88em/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#EBE5D9;border-radius:3px;padding:.1em .3em;overflow-wrap:anywhere}
+ul,ol{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}
+.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650;color:var(--ink)}tbody th{font-weight:500;width:36%}tr:last-child th,tr:last-child td{border-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:14px;line-height:1.95;color:var(--muted)}hr~h3{font-size:17px;margin-top:0}
+.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){body{font-size:16px;line-height:1.95}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px}header{padding:36px 0 24px}h2{font-size:23px;margin-top:42px}h3{font-size:19px}blockquote{font-size:17px;padding-left:16px}.table-wrap{margin-left:-2px;margin-right:-2px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}h3{font-size:13pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}blockquote{font-size:12pt}}
+
+.subtitle{font-family:ui-serif,"Songti SC","STSong",serif;font-size:21px;line-height:1.65;color:var(--muted);margin:0 0 24px}article a{overflow-wrap:anywhere}.source-heading{font-size:19px;border-top:0;padding-top:0;margin-top:0}#source-notes+ul{font-size:14px;color:var(--muted)}@media(max-width:600px){.subtitle{font-size:19px}.masthead{gap:12px;letter-spacing:.03em}.page-footer{flex-wrap:wrap}}
+
+h1{text-wrap:balance}h1>span{display:block}.contents li{margin:0}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{background:none;padding:0;border-radius:0;font:inherit;overflow-wrap:normal}pre:focus-visible{outline:3px solid var(--clay);outline-offset:3px}#source-notes+ul{line-height:1.9}#source-notes+ul a{display:block}table{min-width:610px}table th:first-child{width:44%}
+@media(max-width:600px){pre{font-size:12px;padding:14px 12px}.masthead{font-size:12px}}
+@media print{pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}table{min-width:0}}
+
+article{overflow-wrap:anywhere}.status{color:var(--clay);font-weight:600}h2{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif}article blockquote{font-size:17px}
+body{font-family:"Noto Serif CJK SC","Songti SC","STSong",serif}.masthead,.byline,.dateline,.contents,.eyebrow,table,.page-footer{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif}table th:first-child{width:auto}table th:first-child,table td:first-child{min-width:120px}table{min-width:620px}caption{text-align:left;padding:12px 15px;font-weight:600} .source-note{font-size:14px;color:var(--muted)}.nowrap{white-space:nowrap}.fact{font:14px/1.9 -apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif;color:var(--muted);border-left:2px solid var(--line);padding-left:16px}.lead{font-size:20px;line-height:1.8}h2{font-family:ui-serif,"Songti SC","STSong",serif}</style></head>
+<body id="top"><a class="skip" href="#main">跳至正文</a><div class="shell"><nav class="masthead" aria-label="站点导航"><span>工程深读 · 容量与可靠性</span><a href="../blog/">返回博客</a></nav><header><p class="eyebrow">Engineering Notes / OpenAI</p><h1><span>读请求扩容以后，</span><span>主库的余量留给谁</span></h1><p class="subtitle">从 PostgreSQL 的读扩展，追问故障、复制与变更共同需要的空间</p><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-11-03">2026 年 11 月 3 日</time> · 重读 2026 年 1 月 22 日官方文章</p></header><details class="contents" open><summary>本文目录</summary><ol><li><a href="#topology">一、先辨认请求走到哪里，再谈还能扩多少</a></li><li><a href="#headroom">二、余量应当分给故障、维护和正在发生的业务</a></li><li><a href="#writes">三、少一次不必要的写入，收益可能沿整条链路展开</a></li><li><a href="#queries">四、复杂查询的风险，取决于它能把多少工作带进主库</a></li><li><a href="#pooling">五、连接池能复用连接，也必须决定谁可以等待</a></li><li><a href="#cache">六、缓存命中率的变化，会被数据库看到成倍的流量</a></li><li><a href="#isolation">七、故障隔离应当按可继续提供的能力来设计</a></li><li><a href="#replication">八、副本越多，传播变更这件事越值得单独计量</a></li><li><a href="#admission">九、限流要阻止工作进入瓶颈，而不是只统计入口人数</a></li><li><a href="#changes">十、变更预算，应当先于上线速度被确定</a></li><li><a href="#migration">十一、保住旧系统，与停止扩大旧系统的职责可以同时进行</a></li><li><a href="#verification">十二、衡量扩容成果，还要看系统怎样经历不正常的一天</a></li></ol></details><main id="main"><article>
+<section>
+<p class="lead">读请求被分散到越来越多的机器之后，一套数据库还会因为什么倒下？重读 OpenAI 的 PostgreSQL 扩容记录，我最关心的是那些没有被副本数量消除的约束：谁继续承担写入，谁负责把变更传出去，以及系统在缓存失效、某个区域不可用，或执行一次正常变更时，还剩多少可支配的能力。</p>
+<p>Bohan Zhang 于 2026 年 1 月 22 日发表的 <a href="https://openai.com/index/scaling-postgresql/">《Scaling PostgreSQL to power 800 million ChatGPT users》</a>，描述了一套单主库、跨区域近 50 个读副本的 Azure PostgreSQL 部署。文中的百万级每秒查询属于整个读密集部署，“8 亿用户”也不等于同时在线人数。这是当时的工程记录，不能据标题推成单台主库的写入能力，更不能当作今天的实时容量。</p>
+<p>文章吸引我的地方，在于它把扩容写成了一组持续收紧的约束。副本、连接池和缓存都能改善某些路径，却也会改变故障时的流量去向。</p>
+</section>
+
+<section>
+<h2 id="topology">一、先辨认请求走到哪里，再谈还能扩多少</h2>
+<p>“数据库能扛多少 QPS”省略了太多前提。一次只读查询、一笔需要读后写的事务、一项后台回填，都可能被统计成数据库活动，却不能互相替换。把只读请求移到副本，并不会给主库增加一个可以提交事务的伙伴；如果事务必须在同一处读取并修改状态，那部分读取也不能仅凭“SELECT”这个词就随意迁走。</p>
+<p>我会先画请求路径，而不是先画机器数量。入口收到请求后，是否先读缓存？未命中去哪个池？事务在哪个节点开始？后续读取有没有一致性要求？一张图若只写“应用—数据库”，最需要评估的流量转换恰好被藏起来了。两个看起来访问同一张表的接口，可能有完全不同的扩容边界。</p>
+<p>例如，一个页面展示允许稍旧的汇总信息，另一个接口确认刚刚提交的修改。前者可以选择延迟容忍范围内的副本，后者必须检查写后读一致性、路由和可见性。这个例子是设计推演，并非 OpenAI 披露的业务接口。它说明容量规划首先需要业务契约：允许多旧、允许缺什么、什么操作必须成功，都会改变基础设施的可选方案。</p>
+<p>因此，读扩容的成绩应当带着拓扑一起阅读。若新增副本后写延迟仍然上升，第一步未必是继续加副本；需要查清主库还在接收哪些查询，以及每次写入还触发了哪些工作。吞吐量可以汇总，约束必须沿路径拆开。</p>
+</section>
+
+<section>
+<h2 id="headroom">二、余量应当分给故障、维护和正在发生的业务</h2>
+<p>正常运行时的空闲能力容易被理解为浪费。对有故障切换、后台维护和快速增长的系统来说，这部分空间有明确用途。如果平时已经把所有节点安排得接近极限，一次节点退出就会把同样的工作压到更少的节点上；随后超时和重试，又可能增加原本没有的工作。</p>
+<p>我更愿意把容量看成几类会重叠的预算，而不是一个平均 CPU 百分比。下面的划分是分析工具，不是原文提供的资源配额。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="容量预算分析表，可横向滚动"><table>
+<caption>同一份余量，会被不同事件同时使用</caption>
+<thead><tr><th scope="col">预算用途</th><th scope="col">可能消耗它的事件</th><th scope="col">需要提前回答的问题</th></tr></thead>
+<tbody>
+<tr><th scope="row">前台请求</th><td>流量上涨、热点变化、查询变贵</td><td>增长来自请求数量，还是每次请求做了更多工作？</td></tr>
+<tr><th scope="row">故障接管</th><td>副本退出、区域不可达、缓存失效</td><td>转移后的请求落到哪里，剩余节点能接多少？</td></tr>
+<tr><th scope="row">数据维护</th><td>清理旧版本、复制追赶、统计更新</td><td>维护被延后后，会不会反过来拖慢前台？</td></tr>
+<tr><th scope="row">持续变更</th><td>索引构建、回填、流量迁移</td><td>遇到业务高峰能否暂停，恢复是否需要从头开始？</td></tr>
+</tbody></table></div>
+<p>这几项不能简单相加成一个固定数字，因为它们共享 CPU、内存、I/O、网络和锁等不同资源，也不一定同时到达峰值。真正有用的是列出可信的并发场景：一个副本维护期间缓存命中率下滑，或者回填进行时业务流量上涨。资源余量必须在这些场景中仍然能发挥作用。</p>
+<p>平均值尤其会遮住危险。一个节点平均不忙，某条连接队列却可能已经排长；一个区域整体有空闲，承担特定产品的那组实例却可能饱和。容量判断需要落到实际隔离单元上，否则总量充足也无法兑现关键请求的承诺。</p>
+</section>
+
+<section>
+<h2 id="writes">三、少一次不必要的写入，收益可能沿整条链路展开</h2>
+<p class="fact">原文把减轻主库压力列为重点：卸载合适的读取，避免冗余写入，并控制后台回填。写事务内部的一部分读取仍须留在主库。</p>
+<p>写入不能只按“改了几个业务字段”计算成本。PostgreSQL 的 <a href="https://www.postgresql.org/docs/18/storage-hot.html">HOT 文档</a>说明，更新会产生新的行版本；满足相关列与页内空间等条件时，HOT 可以避免新增普通索引条目。因而，“每次更新都重写所有索引”是过度概括，但“很小的业务修改就一定很便宜”同样站不住。</p>
+<p>版本产生以后还需要维护。按照 <a href="https://www.postgresql.org/docs/18/routine-vacuuming.html">常规清理文档</a>，已失去可见性的旧版本占用空间，需要 VACUUM 等机制处理。维护与前台共享资源，不能因为它没有出现在用户请求的同步调用栈里，就从容量账上消失。这里引用 PostgreSQL 18 解释机制，并不据此推定案例运行的服务器版本。</p>
+<p>这让我更重视写入的业务理由。假设一个接口每次读取都更新“最近访问”字段，即使产品只需要粗粒度活跃信息，系统也可能不断制造低价值写入。能否降低精度、合并更新、改变触发条件，要由业务语义决定；这些方案不是任意延迟持久化的许可，更不能把必须可靠记录的状态一并省略。</p>
+<p>另一个容易漏算的对象是空闲事务。<a href="https://www.postgresql.org/docs/18/runtime-config-client.html">客户端超时文档</a>指出，事务内长时间空闲可能持有锁，也可能妨碍旧元组回收。表面上“没有执行 SQL”，不表示没有系统影响。超时策略应与调用链和连接池一起验证：终止会话后的错误处理、事务重试与连接恢复，都需要应用理解。</p>
+</section>
+
+<section>
+<h2 id="queries">四、复杂查询的风险，取决于它能把多少工作带进主库</h2>
+<p class="fact">OpenAI 提到过涉及 12 张表的连接查询与严重事故的关联，并强调检查 ORM 生成的 SQL、简化查询。这是其负载经验，不能变成禁止所有 JOIN 的通则。</p>
+<p>一条 SQL 的长度不是代价单位。少量高选择性数据之间的连接，和过滤不足、产生大量中间结果的连接，可能长得很像，却有不同的执行行为。业务层看到“一次数据库调用”，数据库可能已经处理了大量页面、排序或中间行。减少调用次数可以降低往返开销，却不保证总工作量更少。</p>
+<p>将连接拆到应用层也有代价：更多往返、更大的传输量、跨查询一致性问题，以及应用内存占用。我的判断标准会是，在实际数据分布下，哪种方案的资源消耗和尾部延迟更可预测；不能只比较代码看起来是否清爽。尤其要测试热点数据和少见的大对象，平均样本往往不足以揭示最昂贵的路径。</p>
+<p>ORM 在这里更像一个需要审查的编译过程。接口代码中增加一个关联字段，可能改变 SQL 形状，却没有明显增加代码行数。代码审查若只看业务函数，可能错过真正进入数据库的工作。对关键路径保留代表性执行计划、返回行数和资源指标，比单独规定“每个接口最多几次查询”更接近问题本身。</p>
+<p>还要追踪请求之间的耦合。一条偶发重查询若长期占住池中连接，其他本来很便宜的请求也可能排队。优化重查询的收益不只属于它自己的延迟曲线，也可能来自被它挤占的共享资源。评估时应同时看该查询和旁路流量，而不是只截图展示一次执行变快了多少。</p>
+</section>
+
+<section>
+<h2 id="pooling">五、连接池能复用连接，也必须决定谁可以等待</h2>
+<p class="fact">原文使用 PgBouncer，并把应用、代理与副本的区域位置纳入部署设计。池化改善连接管理，并不直接增加数据库执行 SQL 的能力。</p>
+<p><a href="https://www.pgbouncer.org/features.html">PgBouncer 的官方功能说明</a>把模式差别写得很清楚：会话池、事务池和语句池，分别在不同边界归还服务器连接；语句池不支持跨多条语句的事务，事务池也需要检查会话状态的兼容性。选择更积极的复用方式，等于要求应用放弃一部分连接绑定假设，不能只改配置而不核语义。</p>
+<p>连接数与并发工作量也不是一回事。允许更多客户端连接，可以避免连接建立失败，却可能把等待从入口搬到数据库。若下游已饱和，扩大队列通常只能容纳更多尚未完成的承诺。请求在队列里等到上游已经超时，即使最终执行成功，也未必还有用户在等待结果。</p>
+<p>可以用一个简化的稳态算例帮助判断：若平均每秒完成 1,000 个请求、每个请求在某一池中占用连接 20 毫秒，平均在用连接约为 20。这里用的是“并发量约等于完成速率乘占用时间”的关系，假设系统稳定、统计边界一致；它不是池大小建议，也没有覆盖突发、长尾和故障接管。若占用时间翻倍，维持相同速率所需的平均并发也会翻倍。</p>
+<p>因此，池的配置要同时回答三个问题：允许多少活跃工作、最多等多久、超过以后怎样失败。区域内就近连接可以减少不必要的往返，但不能修复慢事务。若只看连接建立耗时，而不看排队、占用和超时，池化的局部改善很容易被误读成整条请求路径的改善。</p>
+</section>
+
+<section>
+<h2 id="cache">六、缓存命中率的变化，会被数据库看到成倍的流量</h2>
+<p class="fact">针对同一 key 的并发缓存未命中，原文采用锁或租约，让一个读者回源，其他读者等待填充。这处理的是同一项数据的重复回源，并非所有请求共用一把全局锁。</p>
+<p>缓存的容量收益是有条件的。做一个完全假设的计算：入口每秒 1,000 次读取，命中率从 90% 降到 70%，数据库回源从每秒 100 次变为 300 次。入口没有增长，下游压力已经变成三倍。它只是命中率算术，不代表 OpenAI 的实测流量，也未计算重试和查询成本的差异。</p>
+<p>如果这 300 次集中到同一热门 key，合并回源可能非常有效；如果它们来自 300 个不同冷 key，单 key 协调就不能消除这些独立读取。一个方案是否能保护主库，取决于未命中的结构。只展示全站平均命中率，会把热点同时失效和大量新数据这两种问题混在一起。</p>
+<p>协调本身也需要失败语义。持有租约的读者超时了，其他人什么时候接手？等待者的期限是否短于用户请求期限？缓存填充成功后，原先失败的读取会不会再次发起？这些都是从机制推出的设计问题，不是原文披露的实现细节。若忽略它们，防止重复回源的控制逻辑可能变成新的等待点。</p>
+<p>缓存故障时还需要主动选择产品行为。允许短时陈旧、返回部分结果、拒绝低优先级请求，适用于不同的数据契约。把所有未命中无条件转成数据库访问，相当于默认后者有能力接下缓存原来吸收的全部工作。这个默认值必须经过验证，不能靠平日命中率很高来替它作证。</p>
+</section>
+
+<section>
+<h2 id="isolation">七、故障隔离应当按可继续提供的能力来设计</h2>
+<p class="fact">案例让部分关键只读路径在主库故障时仍可由副本服务；写入仍然会失败。主库另设高可用热备。它还按优先级、产品与服务隔离负载，并为故障接管保留余量。</p>
+<p>这里有一个值得坚持的问法：当某个依赖失效，用户还能完成什么？“数据库高可用”太笼统。读取旧记录、提交新状态、确认刚才的写入，可能是三种不同承诺。把它们拆开，才有机会让已经具备独立条件的能力继续服务，而不是让每个页面都等待同一个失效节点。</p>
+<p>但读副本并不自动独立。应用可能先访问主库确认权限、获取路由元数据，或者在展示前完成某项同步操作。表面上只读的页面，仍可能隐藏主库依赖。需要沿完整调用链检查，不能仅凭最后一条 SQL 是 SELECT，就宣布主库故障不会影响它。</p>
+<p>副本还涉及数据时效。<a href="https://www.postgresql.org/docs/18/warm-standby.html">PostgreSQL 的备用服务器文档</a>说明了流复制及其延迟、故障切换等机制。允许读副本承担业务，必须把可接受的可见性差异纳入接口约定；“读得出来”与“读到了刚刚提交的状态”不是同一项保证。</p>
+<p>隔离也有明确边界。专用读实例能减少不同产品争夺读资源，却不意味着共享写主库已经解耦。一次共同的回填或写入高峰，仍可能穿过这些边界。隔离设计需要画出剩余的共享部分，并为它们保留共同治理机制，否则局部独立容易被误认为端到端独立。</p>
+</section>
+
+<section>
+<h2 id="replication">八、副本越多，传播变更这件事越值得单独计量</h2>
+<p class="fact">原文的主库直接向大量副本发送 WAL，复制扇出带来 CPU、网络与延迟压力。通过中间副本级联、进一步增加副本数量的方案，当时仍在测试，不能写成已上线成果。</p>
+<p>这说明读扩容存在反向作用。每增加一个读节点，能够接纳更多查询，同时也增加了维护这份副本的要求。若只计入新增的读取能力，把复制支出归入一个不随规模变化的后台常数，就容易高估继续水平扩展的收益。</p>
+<p><a href="https://www.postgresql.org/docs/18/warm-standby.html#CASCADING-REPLICATION">级联复制</a>允许中间备用节点转发 WAL，从而改变主库承担的连接与传输拓扑。它没有让变更传播消失，而是重新分配了传播职责。讨论方案时，应该同时画正常路径和中间节点失效后的路径：下游怎样重新连接、追赶期间能否继续承担读流量、角色变化由谁控制。</p>
+<p>我会把复制延迟当作动态信号，而不只看一个静态“很低”的数字。流量平稳时追得上，不等于写入突然增加时仍能追上；故障后恢复的节点也可能需要额外带宽。观察窗口要覆盖增长和恢复过程，才能判断平日的余量是否足够。</p>
+<p>因而，副本数量不是孤立的成功指标。更值得比较的是：每增加一组副本，读路径得到多少收益，主库与复制链多承担多少工作，以及故障处理是否仍然可理解。拓扑复杂度也是容量成本的一部分，只是它往往在最忙、最不适合排查问题的时候才兑现。</p>
+</section>
+
+<section>
+<h2 id="admission">九、限流要阻止工作进入瓶颈，而不是只统计入口人数</h2>
+<p class="fact">案例采用应用、连接池、代理与查询等多层限制，并能针对特定 query digest 阻断问题查询。重试也是需要控制的流量来源。</p>
+<p>入口速率相同，不代表数据库负担相同。一个请求可能命中缓存，另一个可能触发昂贵查询；限制每秒请求数，并不能据此保证数据库资源消耗可控。若能定位危险的查询形状，针对性阻断可能比整项服务降速更准确，但前提是识别规则可靠、观测足够及时。</p>
+<p>多层限制需要相互配合。应用接受了大量任务、池只允许少量执行，这本身可以是合理设计；若应用排队很久，池再排一遍，代理又有自己的期限，用户最终只会经历更长的失败。每层都配置“保护”并不等于总路径受保护，需要核对等待时间和失败如何向上传递。</p>
+<p>重试则可能改变负载方向。下游变慢后，上游若立刻重发，数据库面对的工作会更多。退避、次数上限和总期限有助于约束它，但写操作还必须检查幂等性与提交结果不确定的情形。不能把所有超时一律当作没有执行，也不能靠一个统一重试装饰器替代业务判断。</p>
+<p>我会要求每个降级动作说明要保住什么：是关键事务的完成率，是某类读取的时延，还是防止整个实例失去响应。目标明确以后，舍弃哪些工作才有依据。否则系统可能认真限制了低成本流量，却让少量最昂贵的任务继续穿过所有入口。</p>
+</section>
+
+<section>
+<h2 id="changes">十、变更预算，应当先于上线速度被确定</h2>
+<p class="fact">原文对现有表只允许轻量变更，设置严格的 5 秒变更超时，避免表重写，并对回填限速。5 秒不是所有 DDL 或回填的完成保证；原文也未据此指定某一个 PostgreSQL 超时参数。</p>
+<p>“只是加一个字段”描述的是需求大小，未描述执行代价。<a href="https://www.postgresql.org/docs/18/sql-altertable.html">ALTER TABLE 文档</a>表明，是否需要重写取决于具体操作、类型和默认表达式等条件；不重写也不等于不需要锁。上线评审需要知道数据库实际将执行什么，而不能只根据迁移文件的行数估计风险。</p>
+<p><a href="https://www.postgresql.org/docs/18/sql-createindex.html#SQL-CREATEINDEX-CONCURRENTLY">并发建索引</a>可以避免普通建索引对写入的那种阻塞，但仍需扫描、等待并消耗 CPU 与 I/O，完成时间甚至可能更长。这里的“并发”说明与业务共存的方式，不能读成资源免费。选择变更窗口时，仍要把它放回前面的容量预算。</p>
+<p>对大规模回填，我更看重可暂停与可恢复，而不是只看最快速度。任务应能记录进度，控制批量，在业务压力上升时降低负载，并在中断后识别已经完成的部分。这些是分析建议；具体实现依赖数据语义，尤其要检查并发写入时怎样避免把新值覆盖成旧值。</p>
+<p>迁移还需要回滚边界。代码能回滚，不代表数据格式和约束已经恢复；停止回填，也不代表已写入的内容可以自动撤回。把结构变化、兼容代码、数据迁移和旧路径退役拆成可观察的步骤，会延长日历时间，却能减少一次动作同时改变太多条件的问题。速度应当由可承受的风险决定。</p>
+</section>
+
+<section>
+<h2 id="migration">十一、保住旧系统，与停止扩大旧系统的职责可以同时进行</h2>
+<p class="fact">OpenAI 将适合分片的写密集负载迁往其他系统，既有 PostgreSQL 仍由单主承接写入，并停止在其中新增表；历史接口迁移仍在继续。这不是“单机无限扩展”的结论。</p>
+<p>这一选择有现实含义：存量系统继续服务，并不要求所有新需求继续进入同一套边界。若一边迁移、一边让新业务不断增加依赖，迁移目标会持续后退。冻结某类新增职责，可以让工程团队逐渐把一个开放增长的问题，变成范围能够收敛的问题。</p>
+<p>但“换成分布式数据库”并不会自动完成职责划分。首先要确定哪些数据应当一起修改、哪些查询跨越边界、失败时谁拥有最终状态。分片键如果只根据均匀分布选择，却忽略业务事务，可能把原来本地完成的判断搬成跨节点协调。这些是迁移设计的基本问题，不能从一次成功案例直接抄出答案。</p>
+<p>存量迁移的难处也经常在接口，而不仅在数据搬运。旧客户端的行为、后台任务、报表和隐含一致性假设，都可能继续依赖原来的读写方式。需要逐步确认哪些路径已经切换、哪些仍须回退，以及双路径运行期间怎样比较结果。只验证新数据库中的行数，未必能验证业务已经迁过去。</p>
+<p>我认为这篇案例最有价值的克制，是承认当前架构仍有明确上限。把旧系统稳定运行的能力，与为新负载选择不同结构的能力放在一起，才是一条可以持续的扩容路径。继续优化旧系统与逐步减少它的职责，并不互相抵消。</p>
+</section>
+
+<section>
+<h2 id="verification">十二、衡量扩容成果，还要看系统怎样经历不正常的一天</h2>
+<p class="fact">团队报告了低两位数毫秒的客户端 p99、很低的复制延迟与五个九可用性，并称过去一年有一次 PostgreSQL SEV0 事故。这些是其部署的自述指标，未给出完整测量口径，不能扩展成整个 ChatGPT 的端到端承诺，也不能读成没有其他等级事故。</p>
+<p>读这些结果时，我会把吞吐、时延和可用性分别追问。吞吐在哪一层计数，包含哪些请求？时延是否包含池中等待？可用性对应哪些操作与统计窗口？当系统选择拒绝低优先级工作来保住关键路径，汇总指标又怎样表达这种取舍？没有这些定义，不同团队即使报出相同数字，也未必在描述相同能力。</p>
+<p>真正可迁移的方法，是让容量假设接受有限、可控制的验证。下面这张表是我根据前文提出的演练问题，并不是 OpenAI 公布的实验方案或结果。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="故障与变更验证表，可横向滚动"><table>
+<caption>验证余量时，要同时观察受保护路径与被转移的工作</caption>
+<thead><tr><th scope="col">受控场景</th><th scope="col">重点观察</th><th scope="col">它要检验的假设</th></tr></thead>
+<tbody>
+<tr><th scope="row">部分缓存未命中增加</th><td>回源速率、热点分布、等待与超时</td><td>合并回源和限流能否在数据库饱和前生效</td></tr>
+<tr><th scope="row">一个读节点退出</th><td>剩余节点负载、重路由、关键读取</td><td>隔离单元内部确实留有接管能力</td></tr>
+<tr><th scope="row">低速后台变更运行</th><td>前台尾延迟、锁等待、复制追赶</td><td>任务能否按预设条件降速或暂停</td></tr>
+<tr><th scope="row">主库暂时不可用</th><td>可继续的读取、明确失败的写入、恢复行为</td><td>产品降级承诺与完整调用链相符</td></tr>
+</tbody></table></div>
+<p>这些演练应当有受控范围、停止条件和恢复验证。结果既用于发现瓶颈，也用于修正产品承诺：原来以为能继续读的路径，可能仍藏着一次主库访问；以为可以暂停的任务，可能还会让数据库长时间处理已经提交的工作。问题被提前暴露，余量才从图表上的空白变成真正可用的能力。</p>
+<p>读扩容容易展示新增了多少节点，难的是知道关键路径还剩多少选择。缓存失效时可以少做什么，主库失效时还能提供什么，变更遇到高峰时怎样退让，这些决定了系统能否承受下一次增长。对于已经有复杂存量的团队，我会从一条关键读写路径开始，把正常、故障与变更三种状态画在同一张图上，再讨论该增加哪一种资源。</p>
+</section>
+
+<section class="source-note" id="source-notes">
+<h2>来源与时间范围</h2>
+<p>Bohan Zhang，OpenAI，<a href="https://openai.com/index/scaling-postgresql/">Scaling PostgreSQL to power 800 million ChatGPT users</a>，2026 年 1 月 22 日。本文于 2026 年 11 月 3 日重读；案例规模、部署状态与结果均按原文发表时理解。</p>
+<p>数据库机制参照文中所链 PostgreSQL 18 与 PgBouncer 官方文档。容量预算、算例、迁移判断和演练表为本文分析；未将官方案例的指标推定为其他系统的适用参数。</p>
+</section>
+</article></main><footer class="page-footer"><a href="./">系列目录</a><a href="#top">回到顶部 ↑</a></footer></div></body></html>

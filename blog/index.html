@@ -47,8 +47,9 @@
 <div><span class="filter-label" id="filter-label">按主题浏览</span><div class="filters" role="group" aria-labelledby="filter-label"><button type="button" data-filter="全部" aria-pressed="true" aria-controls="article-list">全部</button><button type="button" data-filter="长任务与状态" aria-pressed="false" aria-controls="article-list">长任务与状态</button><button type="button" data-filter="上下文与知识" aria-pressed="false" aria-controls="article-list">上下文与知识</button><button type="button" data-filter="工具与协作" aria-pressed="false" aria-controls="article-list">工具与协作</button><button type="button" data-filter="评测与可靠性" aria-pressed="false" aria-controls="article-list">评测与可靠性</button></div></div>
 <div class="search-box"><label class="search-label" for="article-search">搜索文章</label><input id="article-search" type="search" placeholder="标题、关键词或主题…" autocomplete="off" aria-controls="article-list"></div>
 </div>
-<p class="result-count" id="result-count" role="status" aria-live="polite" aria-atomic="true">共 29 篇文章 · 更新于 2026 年 11 月 2 日</p>
+<p class="result-count" id="result-count" role="status" aria-live="polite" aria-atomic="true">共 30 篇文章 · 更新于 2026 年 11 月 3 日</p>
 <ul class="entries" id="article-list">
+<li class="entry" data-category="评测与可靠性"><article><div class="entry-meta"><span>评测与可靠性</span><span>OpenAI 工程解读</span></div><h3><a href="../articles/postgresql-primary-pressure-failure-budget.html">读请求扩容以后，主库的余量留给谁</a></h3><p>读 OpenAI 的 PostgreSQL 扩容：主库余量、缓存回源、连接队列、复制扇出与变更预算，怎样共同约束读扩展。原文发布于 2026 年 1 月 22 日。</p><time datetime="2026-11-03">2026 年 11 月 3 日</time></article><span class="entry-arrow" aria-hidden="true">↗</span></li>
 <li class="entry" data-category="评测与可靠性"><article><div class="entry-meta"><span>评测与可靠性</span><span>OpenAI 工程解读</span></div><h3><a href="../articles/harness-engineering-judgment-feedback-boundaries.html">当代码不再稀缺，工程判断应该放在哪里</a></h3><p>读 OpenAI 的 Harness engineering：判断接口、隔离观测、知识维护与可执行规则，怎样共同约束 Agent 的交付。原文发布于 2026 年 2 月 11 日。</p><time datetime="2026-11-02">2026 年 11 月 2 日</time></article><span class="entry-arrow" aria-hidden="true">↗</span></li>
 <li class="entry" data-category="工具与协作"><article><div class="entry-meta"><span>工具与协作</span><span>Anthropic 工程解读</span></div><h3><a href="../articles/parallel-agents-compiler-failure-decomposition.html">十六个 Agent，怎样拆开一个失败</a></h3><p>读 Anthropic 的 C 编译器实验：共享 Git、固定抽样与 GCC 参照，怎样把耦合故障拆成可并行验证的任务。原文发布于 2026 年 2 月 5 日。</p><time datetime="2026-11-01">2026 年 11 月 1 日</time></article><span class="entry-arrow" aria-hidden="true">↗</span></li>
 <li class="entry" data-category="评测与可靠性"><article><div class="entry-meta"><span>评测与可靠性</span><span>Anthropic 工程解读</span></div><h3><a href="../articles/ai-resistant-evaluations-human-signal.html">当模型做完了面试题，评测还在区分什么</a></h3><p>重读 Anthropic 三代性能工程评测：模拟加速器、推理预算与陌生指令集，怎样影响人类增量信号。原文发布于 2026 年 1 月 21 日。</p><time datetime="2026-10-31">2026 年 10 月 31 日</time></article><span class="entry-arrow" aria-hidden="true">↗</span></li>
@@ -109,7 +110,7 @@
       if (visible) count += 1;
     });
     buttons.forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.filter === active)); });
-    status.textContent = (query || active !== '全部') ? '显示 ' + count + ' / ' + entries.length + ' 篇文章' : '共 ' + entries.length + ' 篇文章 · 更新于 2026 年 11 月 2 日';
+    status.textContent = (query || active !== '全部') ? '显示 ' + count + ' / ' + entries.length + ' 篇文章' : '共 ' + entries.length + ' 篇文章 · 更新于 2026 年 11 月 3 日';
     empty.hidden = count !== 0;
   }
   buttons.forEach(function (button) { button.addEventListener('click', function () { active = button.dataset.filter; update(); }); });
