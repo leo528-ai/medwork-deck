@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="author" content="胡浩源"><meta name="description" content="从 GPT-6 Astra 直接编辑 Qwen3.5-0.8B 少量权重的实验出发，核对循环修复的结果、对照条件与适用边界。"><meta name="color-scheme" content="light"><meta name="theme-color" content="#F5F1E8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'"><link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/gpt-qwen-weight-space-programming.html"><title>GPT 改了 Qwen 的权重，究竟改好了什么｜胡浩源</title><style>
+:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:3px solid var(--clay);outline-offset:5px}
+.skip{position:absolute;left:1rem;top:-5rem;background:var(--surface);padding:.5rem 1rem;z-index:5}.skip:focus{top:1rem}
+.shell{width:min(100% - 40px,760px);margin:0 auto}
+.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.masthead a{color:var(--muted)}header{padding:52px 0 26px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);font-weight:700;margin:0 0 20px}
+h1{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif;font-size:clamp(32px,5.8vw,46px);line-height:1.35;font-weight:700;letter-spacing:-.035em;margin:0 0 25px}
+.byline{font-size:14px;margin:0;color:var(--muted)}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}
+.contents{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px;color:var(--muted)}
+.contents summary{cursor:pointer;font-weight:600;color:var(--ink)}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}
+article p{margin:0 0 22px}blockquote{margin:0 0 34px;padding:6px 0 6px 20px;border-left:3px solid var(--clay);font-size:18px;color:var(--muted)}blockquote p:last-child{margin-bottom:0}
+h2{font-size:26px;line-height:1.5;font-weight:700;margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}
+h3{font-size:20px;line-height:1.55;margin:32px 0 18px}strong{font-weight:700}code{font:0.88em/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#EBE5D9;border-radius:3px;padding:.1em .3em;overflow-wrap:anywhere}
+ul,ol{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}
+.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650;color:var(--ink)}tbody th{font-weight:500;width:36%}tr:last-child th,tr:last-child td{border-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:14px;line-height:1.95;color:var(--muted)}hr~h3{font-size:17px;margin-top:0}
+.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){body{font-size:16px;line-height:1.95}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px}header{padding:36px 0 24px}h2{font-size:23px;margin-top:42px}h3{font-size:19px}blockquote{font-size:17px;padding-left:16px}.table-wrap{margin-left:-2px;margin-right:-2px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}h3{font-size:13pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}blockquote{font-size:12pt}}
+
+.subtitle{font-family:ui-serif,"Songti SC","STSong",serif;font-size:21px;line-height:1.65;color:var(--muted);margin:0 0 24px}article a{overflow-wrap:anywhere}.source-heading{font-size:19px;border-top:0;padding-top:0;margin-top:0}#source-notes+ul{font-size:14px;color:var(--muted)}@media(max-width:600px){.subtitle{font-size:19px}.masthead{gap:12px;letter-spacing:.03em}.page-footer{flex-wrap:wrap}}
+
+h1{text-wrap:balance}h1>span{display:block}.contents li{margin:0}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{background:none;padding:0;border-radius:0;font:inherit;overflow-wrap:normal}pre:focus-visible{outline:3px solid var(--clay);outline-offset:3px}#source-notes+ul{line-height:1.9}#source-notes+ul a{display:block}table{min-width:610px}table th:first-child{width:44%}
+@media(max-width:600px){pre{font-size:12px;padding:14px 12px}.masthead{font-size:12px}}
+@media print{pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}table{min-width:0}}
+
+article{overflow-wrap:anywhere}.status{color:var(--clay);font-weight:600}h2{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif}article blockquote{font-size:17px}
+body{font-family:"Noto Serif CJK SC","Songti SC","STSong",serif}.masthead,.byline,.dateline,.contents,.eyebrow,table,.page-footer{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif}table th:first-child{width:auto}table th:first-child,table td:first-child{min-width:120px}table{min-width:620px}caption{text-align:left;padding:12px 15px;font-weight:600} .source-note{font-size:14px;color:var(--muted)}.nowrap{white-space:nowrap}.fact{font:14px/1.9 -apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif;color:var(--muted);border-left:2px solid var(--line);padding-left:16px}.lead{font-size:20px;line-height:1.8}h2{font-family:ui-serif,"Songti SC","STSong",serif}
+.sources{font:14px/1.9 -apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif;color:var(--muted)}.sources li{margin:12px 0}.sources a{overflow-wrap:anywhere}
+</style></head>
+<body id="top"><a class="skip" href="#main">跳至正文</a><div class="shell"><nav class="masthead" aria-label="站点导航"><span>模型与 Agent 研究 · 权重编辑</span><a href="../blog/">返回博客</a></nav><header><p class="eyebrow">Research Notes / Weight-Space Programming</p><h1><span>GPT 改了 Qwen 的<span class="nowrap">权重，</span></span><span>究竟改好了什么</span></h1><p class="subtitle">直接修改少量权重之后，怎样理解修复、收益与实验边界</p><p class="byline">胡浩源</p><p class="dateline"><time datetime="2026-11-04">2026 年 11 月 4 日</time> · 模型与 Agent 研究</p></header><details class="contents"><summary>本文目录</summary><ol><li><a href="#results">7.9% 是怎样变成 48.1% 的</a></li><li><a href="#edit">它改的是哪些权重</a></li><li><a href="#feedback">提示和反馈也参与了这次修复</a></li><li><a href="#limits">失败实验让结果更清楚</a></li><li><a href="#next">我会怎样继续验证</a></li></ol></details><main id="main"><article>
+<p>93%。这是理解这次实验时，我最想先看的数字。</p>
+<p>在作者的评测设置下，原版 Qwen3.5-0.8B 在 MATH-500 上有 93% 的输出碰到了 32,768 token 上限。大量回答困在重复推理里，迟迟交不出答案。GPT-6 Astra 修改了它的少量权重后，触及上限的比例降到 33.1%，数学分数从 7.9% 升到 48.1%。涨分很大，背后首先发生的变化，是模型终于能把更多答案写完。<a href="#ref-1">[1]</a></p>
+<p>MIT CSAIL 的 Rikiya Takehi、Jayden Teoh、Alex Zhang 和 Omar Khattab 在 2026 年 11 月 2 日发布了这份研究，称它为 Weight-Space Programming，权重空间编程。它提出了一个值得认真对待的可能性：给足工具和反馈，一个通用模型已经可以参与另一个模型的内部排障。接下来需要问清楚，排障完成了什么，哪些能力仍没有得到证明。</p>
+
+<h2 id="results">7.9% 是怎样变成 48.1% 的</h2>
+<p>作者让 Astra 通过一个 Python 环境检查、修改 Qwen 的权重，同时给它有限次数的前向调用，用来观察目标模型的表现。任务禁止梯度下降和训练循环。Astra 可以从 GSM8K、MATH 的训练集挑练习题，最终测试集不对它开放。<a href="#ref-2">[2]</a></p>
+<p>下表是作者报告的结果。原版和编辑版都开启 thinking，使用相同采样设置和输出上限；数字是每题多次采样的平均准确率，不是“多试几次，只要答对一次就算成功”。MATH-500 每题采样四次，GSM8K 和 IFEval 各两次。<a href="#ref-1">[1]</a><a href="#ref-2">[2]</a></p>
+<div class="table-wrap"><table>
+<thead><tr><th>指标</th><th>原版</th><th>50 次前向调用预算下的编辑版</th></tr></thead>
+<tbody>
+<tr><td>MATH-500</td><td>7.9%</td><td>48.1%</td></tr>
+<tr><td>GSM8K</td><td>13.8%</td><td>67.1%</td></tr>
+<tr><td>IFEval 指令遵循</td><td>21.0%</td><td>62.3%</td></tr>
+<tr><td>MATH-500 输出触及 token 上限</td><td>93.0%</td><td>33.1%</td></tr>
+</tbody></table></div>
+<p>MATH-500 增加了 40.2 个百分点，编辑后的分数约为原版的 6.1 倍。“数学能力提升六倍”省掉了一个很重要的条件：作为比较起点的模型，在这套设置下有非常严重的输出循环。</p>
+<p>作者的练习集配对验证也支持这个解释。补丁救回的 579 个回答里，576 个原本被截断；原本能正常结束的回答，其总体准确率没有变化。这组统计来自留出的练习题，不能与最终 MATH-500 测试结果混用。它说明大量收益来自排除生成过程中的障碍。<a href="#ref-3">[3]</a><a href="#ref-11">[11]</a></p>
+
+<h2 id="edit">它改的是哪些权重</h2>
+<p>Qwen 有数亿参数，Astra 并没有把所有数字逐个读进对话。它编写 Python，检查权重和运行中的激活，比较正常推进与反复打转的上下文，再定位与重复行为相关的方向。</p>
+<p>最终补丁落在代码索引为 15 和 19 的两个层。每层选中 MLP 输出投影矩阵的 64 列，沿测得的重复方向做定向修正。矩阵的输出维度是 1,024，因此处理的权重槽位是：</p>
+<p><code>2 × 64 × 1,024 = 131,072</code></p>
+<p>对一列权重 <code>w</code>，修改形式可以写成 <code>w_new = w_original − 6u(uᵀw_original)</code>，其中 <code>u</code> 是该层测得的单位方向。这里的系数、方向和列选择，来自实验中的检查与比较。它把发现落实成了一个可以保存、分发的权重补丁。<a href="#ref-3">[3]</a></p>
+<p>还有一个小细节：131,072 是被处理的槽位数。公开差异清单记录的实际 BF16 位模式变化数是 130,188，部分值经过舍入后没有改变。两种计数都对应约 0.016% 的规模，但口径不同。<a href="#ref-4">[4]</a></p>
+<p>这确实属于直接编辑目标模型权重。常见的蒸馏会用教师模型的输出形成训练信号，再更新学生模型；让 GPT 写微调脚本，权重更新通常仍交给优化器。这里由 Astra 提出并实施数值修正，再检查补丁效果。GPT 自身的权重没有在这个实验中被修改。</p>
+
+<h2 id="feedback">提示和反馈也参与了这次修复</h2>
+<p>“没有训练”很容易被读成“没有样本、没有试验，凭空写出了答案”。Qwen 这项实验有练习题、激活检查、输出反馈，也有多次修改和回退。一次前向工具调用可以产生最多 512 份生成样本，数量按题数乘以每题采样数计算；同时比较原版与编辑版时，各最多 256 份。另一类调用可以对最多 1,024 段文本做 teacher-forced 检查，即给定文本后检查模型内部响应。50 次是计入预算的成功调用，不等于 50 道题，也不包含失败请求。</p>
+<p>日志记载，这次运行跨了 158 轮交互，墙钟时间约 20.3 小时，其中包含约 4.7 小时的服务不可达。这个时间不能直接拿来和训练任务比较成本，却足以提醒我们：调用预算、token 消耗、目标模型推理和失败重试，都要算进这类方法的成本。<a href="#ref-2">[2]</a></p>
+<p>提示本身也有相当多的方法指导。公开版本提到了反复推理、不结束的失败模式，并要求定位组件、比较修正强度、做配对验证和留出确认。Lucas Beyer 的质疑正落在这里：项目很有意思，但把它传播成模型在完全开放的条件下独立发现问题，会夸大实验。<a href="#ref-5">[5]</a><a href="#ref-6">[6]</a></p>
+<p>共同作者 Jayden Teoh 随后解释，他们把简短任务交给 Claude Code，让它为 Astra 扩写和优化提示，过程中没有额外的人类反馈；他认为值得关注的是，Astra 能结合激活定位具体的 MLP，并决定怎样改。这是作者对工作过程的说明。它让我们看到一个由提示生成、工具环境和执行模型共同组成的研究流程，不能单独归结为“GPT 看懂了八亿个数字”。<a href="#ref-7">[7]</a></p>
+<p>公开仓库提供了博文所报告实验的轨迹，也说明更早提示版本的试运行没有收录。因此，可以检查这些结果怎样产生，还不能据此算出任意一次尝试成功的概率。<a href="#ref-8">[8]</a></p>
+
+<h2 id="limits">失败实验让结果更清楚</h2>
+<p>作者补做了 Gemma 3 270M 的实验。这个模型很少陷入同样的循环，错误更多是算术和代数推理错误。原版 MATH-500 为 6.8%，50 次调用预算的编辑版为 7.0%；几个预算下的变动都没有建立明确提升。这一结果把“修复反复打转”和“获得新的数学能力”分开了。它不证明权重编辑永远不能增加能力，但这些数学实验尚未证明模型获得了新的数学能力。<a href="#ref-1">[1]</a></p>
+<p>另一个实验也有类似边界。只给两个 Gemma 模型的权重，Astra 在四次尝试中没能识别哪个被训练得更迎合用户；放开注意力模式检查后，才在三组模型中选对。对于真实语言模型，运行中的信息依然很重要。</p>
+<p>Qwen 的比较基线也值得继续完善。官方模型卡写明，0.8B 默认使用 non-thinking 模式，并提示 thinking 容易进入循环。当前模型卡对文本 thinking 推荐的温度是 1.0，这次实验使用 0.6。同设置下比较原版和补丁版，能够说明补丁在这个条件下有效；要判断部署收益，还应与调好采样参数的原版、non-thinking 模式及循环检测策略比较。仅凭设置差异不能判定结果无效，同样也不能把六倍分数解释成相对最佳原版的收益。<a href="#ref-9">[9]</a></p>
+<p>公开重建提供了一些额外支持。Hugging Face 模型卡报告，重建后的编辑版在 500 道 MATH-500 题、每题四次采样上得到 51.0%，触及上限的比例为 31.6%。它的原版检查只用了 25 题，因此这支持了编辑模型能被重建、收益方向能重现，还不构成原版与编辑版完整配对结果的独立复现。<a href="#ref-10">[10]</a></p>
+
+<h2 id="next">我会怎样继续验证</h2>
+<p>我愿意投入时间复现这条路线。模型可以把一种已知的失败模式变成关于内部组件的假设，编写分析代码，试着干预，再用结果决定是否保留。这些工作与研究工程师的日常已经有了相当多的重叠。</p>
+<p>下一组实验，我会先补对照：保留相同的模型、题目和推理预算，比较权重补丁、采样调整、推理过程中的干预与适量微调；再去掉提示里的循环线索，看定位能力还能保留多少。评估时同时记录失败率、答案质量、全部调用成本和无关任务的退化。改动的参数少，并不保证行为影响的范围也小。</p>
+<p>对于垂直模型，我会从可重复出现的具体故障开始，例如已定位的输出循环或格式异常。领域知识错误和推理错误要另行分类，不能指望一个补丁同时解决。每次修改都保留原权重、变更记录和独立回归集，才有机会把一次漂亮实验变成可靠工具。</p>
+<p>我最想看到的后续结果，是另一个团队在不同模型、不同故障上重复完成诊断和修复，并报告那些没有修好的案例。那时我们才能知道，哪些模型维护工作已经可以交给智能体，以及研究者还必须在哪里介入。</p>
+
+<h2 id="sources">资料与来源</h2>
+<p class="source-note">核验于 2026 年 11 月 4 日。主体来源是作者公开博客、实验日志、模型卡及研究者本人评论；文中分别标明作者报告、公开重建结果和个人判断。本文未自行运行模型评测。作者主文以博客报告形式发布。</p>
+<ol class="sources">
+<li id="ref-1"><a href="https://rikiyat.github.io/blog/weight-space-programming/" target="_blank" rel="noopener noreferrer">Takehi 等：Sparks of Weight-Space Programming</a>，实验设置、主结果与负例。</li>
+<li id="ref-2"><a href="https://github.com/RikiyaT/lm_understand-logs/blob/4d09ba6d6a7e891dd8063974dfe81b3d78e3494f/exp8_math/README.md" target="_blank" rel="noopener noreferrer">实验八 README</a>，前向调用预算、运行记录和评测口径。</li>
+<li id="ref-3"><a href="https://github.com/RikiyaT/lm_understand-logs/blob/4d09ba6d6a7e891dd8063974dfe81b3d78e3494f/exp8_math/runs/p50c/work_notes/final_report.md" target="_blank" rel="noopener noreferrer">p50c 最终报告</a>，补丁公式及留出练习题的配对验证。</li>
+<li id="ref-4"><a href="https://github.com/RikiyaT/lm_understand-logs/blob/4d09ba6d6a7e891dd8063974dfe81b3d78e3494f/exp8_math/runs/p50c/edit/manifest.json" target="_blank" rel="noopener noreferrer">权重差异清单</a>，矩阵形状与实际变化数。</li>
+<li id="ref-5"><a href="https://github.com/RikiyaT/lm_understand-logs/blob/4d09ba6d6a7e891dd8063974dfe81b3d78e3494f/exp8_math/runs/p50c/turns/t001/prompt.txt" target="_blank" rel="noopener noreferrer">公开运行的初始提示</a>。</li>
+<li id="ref-6"><a href="https://x.com/giffmana/status/2117346161866514524" target="_blank" rel="noopener noreferrer">Lucas Beyer 的评论</a>，对提示线索和传播表述的质疑。</li>
+<li id="ref-7"><a href="https://x.com/jayden_teoh_/status/2117363471008350347" target="_blank" rel="noopener noreferrer">Jayden Teoh 的回应</a>，作者对提示生成过程的说明。</li>
+<li id="ref-8"><a href="https://github.com/RikiyaT/lm_understand-logs/blob/4d09ba6d6a7e891dd8063974dfe81b3d78e3494f/README.md" target="_blank" rel="noopener noreferrer">日志仓库 README</a>，发布范围及未收录的早期试运行。</li>
+<li id="ref-9"><a href="https://huggingface.co/Qwen/Qwen3.5-0.8B/blob/2fc06364715b967f1860aea9cf38778875588b17/README.md" target="_blank" rel="noopener noreferrer">Qwen3.5-0.8B 官方模型卡</a>，默认模式、采样建议和循环提示。</li>
+<li id="ref-10"><a href="https://huggingface.co/RikiyaT/Qwen3.5-0.8B-weight-space-programming" target="_blank" rel="noopener noreferrer">编辑模型及公开重建说明</a>。</li>
+<li id="ref-11"><a href="https://github.com/RikiyaT/lm_understand-logs/blob/4d09ba6d6a7e891dd8063974dfe81b3d78e3494f/exp8_math/runs/p50c/work_notes/submission_evidence.json" target="_blank" rel="noopener noreferrer">练习题配对验证的分层统计</a>，原先截断与原先结束的样本分别核对。</li>
+</ol>
+</article></main><footer class="page-footer"><a href="./">系列目录</a><a href="#top">回到顶部 ↑</a></footer></div></body></html>
