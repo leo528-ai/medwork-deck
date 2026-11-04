@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="author" content="胡浩源"><meta name="description" content="从研究设计、数据适用性与证据追溯出发，比较院内科研平台、研究执行工具和数据网络，并给出可复核试点的验收要点。"><meta name="color-scheme" content="light"><meta name="theme-color" content="#F5F1E8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'"><link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/real-world-research-ai-agents-evidence.html"><title>真实世界研究进入智能体时代：从临床数据到可信证据｜胡浩源</title><style>
+:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:3px solid var(--clay);outline-offset:5px}
+.skip{position:absolute;left:1rem;top:-5rem;background:var(--surface);padding:.5rem 1rem;z-index:5}.skip:focus{top:1rem}
+.shell{width:min(100% - 40px,760px);margin:0 auto}
+.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.masthead a{color:var(--muted)}header{padding:52px 0 26px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);font-weight:700;margin:0 0 20px}
+h1{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif;font-size:clamp(32px,5.8vw,46px);line-height:1.35;font-weight:700;letter-spacing:-.035em;margin:0 0 25px}
+.byline{font-size:14px;margin:0;color:var(--muted)}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}
+.contents{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px;color:var(--muted)}
+.contents summary{cursor:pointer;font-weight:600;color:var(--ink)}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}
+article p{margin:0 0 22px}blockquote{margin:0 0 34px;padding:6px 0 6px 20px;border-left:3px solid var(--clay);font-size:18px;color:var(--muted)}blockquote p:last-child{margin-bottom:0}
+h2{font-size:26px;line-height:1.5;font-weight:700;margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}
+h3{font-size:20px;line-height:1.55;margin:32px 0 18px}strong{font-weight:700}code{font:0.88em/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#EBE5D9;border-radius:3px;padding:.1em .3em;overflow-wrap:anywhere}
+ul,ol{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}
+.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650;color:var(--ink)}tbody th{font-weight:500;width:36%}tr:last-child th,tr:last-child td{border-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:14px;line-height:1.95;color:var(--muted)}hr~h3{font-size:17px;margin-top:0}
+.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){body{font-size:16px;line-height:1.95}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px}header{padding:36px 0 24px}h2{font-size:23px;margin-top:42px}h3{font-size:19px}blockquote{font-size:17px;padding-left:16px}.table-wrap{margin-left:-2px;margin-right:-2px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}h3{font-size:13pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}blockquote{font-size:12pt}}
+
+.subtitle{font-family:ui-serif,"Songti SC","STSong",serif;font-size:21px;line-height:1.65;color:var(--muted);margin:0 0 24px}article a{overflow-wrap:anywhere}.source-heading{font-size:19px;border-top:0;padding-top:0;margin-top:0}#source-notes+ul{font-size:14px;color:var(--muted)}@media(max-width:600px){.subtitle{font-size:19px}.masthead{gap:12px;letter-spacing:.03em}.page-footer{flex-wrap:wrap}}
+
+h1{text-wrap:balance}h1>span{display:block}.contents li{margin:0}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{background:none;padding:0;border-radius:0;font:inherit;overflow-wrap:normal}pre:focus-visible{outline:3px solid var(--clay);outline-offset:3px}#source-notes+ul{line-height:1.9}#source-notes+ul a{display:block}table{min-width:610px}table th:first-child{width:44%}
+@media(max-width:600px){pre{font-size:12px;padding:14px 12px}.masthead{font-size:12px}}
+@media print{pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}table{min-width:0}}
+
+article{overflow-wrap:anywhere}.status{color:var(--clay);font-weight:600}h2{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif}article blockquote{font-size:17px}
+body{font-family:"Noto Serif CJK SC","Songti SC","STSong",serif}.masthead,.byline,.dateline,.contents,.eyebrow,table,.page-footer{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif}table th:first-child{width:auto}table th:first-child,table td:first-child{min-width:120px}table{min-width:620px}caption{text-align:left;padding:12px 15px;font-weight:600} .source-note{font-size:14px;color:var(--muted)}.nowrap{white-space:nowrap}.fact{font:14px/1.9 -apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif;color:var(--muted);border-left:2px solid var(--line);padding-left:16px}.lead{font-size:20px;line-height:1.8}h2{font-family:ui-serif,"Songti SC","STSong",serif}</style></head>
+<body id="top"><a class="skip" href="#main">跳至正文</a><div class="shell"><nav class="masthead" aria-label="站点导航"><span>医疗 AI 调研 · 真实世界研究</span><a href="../blog/">返回博客</a></nav><header><p class="eyebrow">Research Notes / Real-World Evidence</p><h1><span>真实世界研究进入智能体时代：</span><span>从临床数据到可信证据</span></h1><p class="subtitle">研究设计、数据质量、产品路线与可复核的试点</p><p class="byline">胡浩源</p><p class="dateline"><time datetime="2026-11-04">2026 年 11 月 4 日</time> · 医疗AI调研</p></header><details class="contents"><summary>本文目录</summary><ol><li><a href="#question">一、先区分数据、研究与证据</a></li><li><a href="#design">二、研究设计决定结论能够回答什么</a></li><li><a href="#workflow">三、智能体可以接手具体工作，证据链必须留下</a></li><li><a href="#landscape">四、竞品沿着三条不同路径进入科研</a></li><li><a href="#pilot">五、用一个可复核的闭环验收产品</a></li><li><a href="#limits">六、让研究者知道何时不能回答</a></li></ol></details><main id="main"><article>
+<section aria-labelledby="question"><h2 id="question">一、先区分数据、研究与证据</h2>
+<p class="lead">一家医院想知道：接受治疗 A 的患者，半年后的再住院风险是否低于接受治疗 B 的患者？过去，这个问题可能要经过病历检索、数据整理、统计分析和多轮沟通。如今，越来越多产品允许研究者直接提问，由智能体寻找患者、生成变量、运行分析，再交付一份报告。</p>
+<p>这个变化值得关注。我更关心的是，研究者能否看清每一步发生了什么：哪些患者被纳入，为什么被排除，某个变量从哪里来，哪些信息被抽取或转换，分析是否回答了最初的问题。自动化带来的速度，只有放进可检查的研究过程，才可能转化为可信证据。</p>
+<p>先把三个经常混用的词分开。RWD，即真实世界数据，是常规诊疗和健康管理中收集的数据，例如电子病历、医保理赔、登记资料和随访记录。RWS，即真实世界研究，是利用真实世界数据、围绕研究问题设计并实施研究的过程。RWE，即真实世界证据，则是分析这些数据后形成的、有关医疗产品使用及潜在获益或风险的临床证据。可以从 <a href="https://www.fda.gov/science-research/science-and-research-special-topics/real-world-evidence">FDA 的定义与指南入口</a>查看 RWD 与 RWE 的定义。</p>
+<p>数据库里有十万名患者，说明有研究资源；能够选出几千名符合条件的患者，说明队列工具在工作。要判断一种治疗是否有效，还需要处理治疗选择、疾病严重程度、随访完整性等问题。患者更多，可以提高估计的精度，也可能让一个存在系统偏差的结论显得更加确定。</p>
+</section>
+
+<section aria-labelledby="design"><h2 id="design">二、研究设计决定结论能够回答什么</h2>
+<p>回到治疗 A 和 B 的例子。若医生更愿意给病情较轻的人使用 A，直接比较两组再住院率，就可能把患者原本的差异算成治疗效果。如果把“出院后 30 天内曾使用 A”作为分组依据，却从出院当天开始计时，还可能把用药前的时间错误地计入 A 组。时间起点和分组规则的一个小差别，就会改变结果。</p>
+<p>因此，我会先要求研究团队写清目标人群、治疗策略、对照、结局、随访起点和要估计的效应。目标试验模拟为这类问题提供了有用的组织方式，但它仍然依赖混杂、测量和缺失等方面的假设。2025 年发表的 <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC13084563/">TARGET 声明</a>提出了报告清单，适用于以观察性数据模拟平行组、个体随机目标试验，并通过调整基线混杂进行分析的研究报告。它有助于说明研究选择，但并不保证因果结论有效。</p>
+<p>这种谨慎有实证依据。RCT-DUPLICATE 使用真实世界数据模拟 32 项经过可行性筛选的随机试验，其中 66% 的效应点估计落入对应随机试验的 95% 置信区间。这个数字来自特定研究集合，不能解释为“真实世界研究的通用准确率”。我更愿意用它提醒自己：研究问题、数据条件和实施细节必须逐项对应。<a href="https://www.fda.gov/media/170837/download">原始论文的 FDA 托管版本</a>保留了这些限制。</p>
+<p>监管案例也应这样读。2021 年，FDA 批准 Prograf（他克莫司）与其他免疫抑制药联合，用于成人及儿童肺移植受者的排斥反应预防，使用了美国移植受者登记系统等来源的观察性证据，同时结合其他实体器官移植的随机试验和已发表临床试验资料。这证明适合研究目的的数据可以参与重要决策；把它概括成“真实世界数据全面替代随机试验”，会丢掉决定证据强度的条件。<a href="https://www.fda.gov/drugs/news-events-human-drugs/fda-approves-new-use-transplant-drug-based-real-world-evidence">FDA 原始说明</a>对此写得很清楚。</p>
+</section>
+
+<section aria-labelledby="workflow"><h2 id="workflow">三、智能体可以接手具体工作，证据链必须留下</h2>
+<p>智能体可以从这些具体环节切入。病历中的一次“否认胸痛”，不能只因出现“胸痛”二字就变成阳性记录；既往史、家族史和当前诊断也需要区分。抽取结果应该保留原始位置、时间、上下文以及不确定性，允许研究者复核。FDA 关于 <a href="https://www.fda.gov/media/152503/download">电子病历与理赔数据的指南</a>建议评估数据适用性并验证抽取方法。</p>
+<p>队列构建同样需要可追溯。一次自然语言提问，应该落成明确、可执行的入排条件，并展示逐步筛选人数。统一数据结构可以降低重复开发成本，但采用 <a href="https://ohdsi.github.io/CommonDataModel/">OMOP 通用数据模型</a>之后，临床表型是否准确、结局是否完整、不同医院的记录习惯是否一致，仍然需要验证。</p>
+<p>研究方案还应保留修改历史。看到初步结果后调整结局或筛选条件，可能是合理的探索，也可能改变原有问题。产品应该记录修改理由，区分事先约定的分析和后来追加的探索，并帮助团队检查不同定义下的结果是否稳定。一个只展示最终图表的界面，会把这些影响解释的重要选择藏起来。</p>
+</section>
+
+<section aria-labelledby="landscape"><h2 id="landscape">四、竞品沿着三条不同路径进入科研</h2>
+<p>从公开产品看，这个市场已经有几条不同路径。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="真实世界研究产品路线比较，可横向滚动"><table>
+<caption>按主要进入环节归类，便于确定比较范围</caption>
+<thead><tr><th scope="col">主要路线</th><th scope="col">代表产品</th><th scope="col">首先要验证什么</th></tr></thead>
+<tbody>
+<tr><th scope="row">医院科研与数据治理</th><td>森亿智能、医渡</td><td>院内接入、数据治理、专病库及实际研究交付</td></tr>
+<tr><th scope="row">研究交互与执行</th><td>ClinLens AI、Atropos Health、HealthVerity eXOs、Datavant</td><td>方案、变量、代码与报告是否一致，人工修改后能否重跑</td></tr>
+<tr><th scope="row">跨机构数据网络</th><td>TriNetX LIVE</td><td>目标患者、关键结局与随访是否在可用数据中</td></tr>
+</tbody></table></div>
+<p class="source-note">以上为按公开产品重点作出的分析归类，各路线可能交叉，不代表完整功能清单或产品效果排名。</p>
+<p>国内院内科研平台通常从医院的数据基础出发。<a href="https://www.synyi.com/solution?id=34">森亿智能的临床科研智能体</a>覆盖自然语言检索、专病入排、表单填充、数据治理以及统计和研究规划。<a href="https://www.yiducloud.com.cn/">医渡的智慧大科研体系</a>更突出数据治理、专病库与多中心科研，并通过<a href="https://www.hltpharma.com/index.html">医渡的生命科学服务</a>提供真实世界研究服务。它们的竞争力需要放到实际医院的数据接入、治理质量和研究交付中衡量。</p>
+<p><a href="https://clinlens.ai/">ClinLens AI</a>采用更直观的研究角色划分，将研究方案、数据质量与适用性、统计分析、医学报告组织成不同的 AI 角色。这种界面对研究者容易理解。角色齐全之后，仍要检查它们共享了哪些研究定义，怎样处理修改，能否从报告追回原始数据和分析代码。</p>
+<p>海外产品中，<a href="https://www.atroposhealth.com/chatrwd/">Atropos Health 的 ChatRWD 与 GENEVA OS</a>将临床问题、队列定义和观察性分析组织成对话式工作流，提供分析及研究报告。这是官方介绍的产品定位；在具体疾病、数据源与研究设计中的表现，需要结合实际任务评估。</p>
+<p><a href="https://healthverity.com/exos/">HealthVerity eXOs</a>把问题细化、方案、可行性、分析以及可审计代码放进智能体工作流，并支持使用自有数据。这对已有数据资产的团队有吸引力。试用时，我会要求它处理一项定义清楚的研究，并检查中间产物：研究假设、变量、代码和报告是否一致，人工修改后能否完整重跑。</p>
+<p><a href="https://www.datavant.com/press-release/datavant-completes-acquisition-of-aetion?hsLang=en">Aetion 已于 2025 年 7 月完成并入 Datavant</a>。它积累了人群探索、研究变量、描述性与因果分析等能力。Datavant 在 <a href="https://www.datavant.com/blog/datavant-life-sciences-ai-platform-scientific-rigor-at-scale">2026 年的官方说明</a>中介绍了 Explore Assistant、Measures Builder，并明确智能体按阶段开发部署，科学家在关键节点保留决策权。这个边界很有参考价值：研究团队需要能介入流程的工具，也需要承担设计和解释责任。</p>
+<p><a href="https://trinetx.com/solutions/trinetx-live/">TriNetX LIVE</a>则体现了数据网络的价值，提供无代码队列、可行性分析、队列比较及卫生经济学和流行病学工具。若目标问题必须跨机构寻找患者，网络的覆盖和数据条件会直接影响可研究的范围。聊天入口可以降低操作门槛，却不能补上数据库中从未记录的关键结局。</p>
+<p>这些产品不能只放在一张“谁的模型更强”的榜单里。有的擅长医院数据治理，有的擅长研究交互和执行，有的拥有数据网络或长期积累的分析基础设施。采购和试点前，最好先确定自己卡在哪一步，再用同一研究问题检查候选产品。以上能力来自官网与官方材料，我尚未对这些产品进行独立实测。</p>
+</section>
+
+<section aria-labelledby="pilot"><h2 id="pilot">五、用一个可复核的闭环验收产品</h2>
+<p>如果今天从头设计一款 AI 辅助 RWS 产品，我会优先做一个范围窄、能够复核的闭环。例如，在一个定义清楚的病种中，完成带来源定位的变量抽取、可复用的队列构建和预先约定的分析。每次运行都留下数据版本、研究定义、排除规则、代码和输出，让另一位研究者能够重现结果。</p>
+<p>试点验收也应具体。抽取环节看漏抽、误抽和人工复核负担；队列环节看人数差异能否解释；分析环节看代码和结果是否一致；报告环节看每个结论能否找到依据。完整交付时间可以计入收益，但固定提效比例、发表数量和商业回报，需要在真实项目中测量。</p>
+<p>进入医院场景后，还要确认数据使用边界、访问权限和结果导出规则。智能体能查询哪些表，谁可以查看患者级记录，何时只返回汇总结果，都应该在执行前确定。抽取在一家医院通过了验证，迁移到另一家的病历模板和编码习惯时，也应重新检查。用人工复核形成的样本检验表型，往往比再增加一个自动写作角色更有助于判断系统能否投入研究。</p>
+</section>
+
+<section aria-labelledby="limits"><h2 id="limits">六、让研究者知道何时不能回答</h2>
+<p>我认为，接下来有价值的产品，会让研究团队更早发现不能回答的问题：样本不足，结局缺失，治疗时间不清，或两组缺少可比较性。此时，系统应展示缺口，帮助修改方案，必要时结束分析。能生成一份漂亮报告只是起点；让研究者知道这份报告可以支持哪一种判断、还欠缺什么证据，才值得长期使用。</p>
+<p>因此，数据缺口、失败状态和修改依据也应成为研究交付的一部分。团队据此决定补充数据、调整问题，或保留无法回答的结论，才能让自动执行与研究责任保持一致。</p>
+</section>
+<aside class="source-note" id="source-notes" aria-labelledby="sources-title"><h2 id="sources-title">来源与时间范围</h2><p>资料截至 2026 年 11 月 4 日，基于文中链接的官方资料与原始文献。产品功能按官网公开定位理解；研究案例的结果限于各自问题、样本与实施条件。产品归类、试点设计与验收建议为作者分析。</p><p>本文是公开资料的案头调研，未对所述产品进行独立实测。</p><ul><li><a href="https://www.fda.gov/science-research/science-and-research-special-topics/real-world-evidence">FDA 的定义与指南入口</a></li><li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC13084563/">TARGET 声明</a></li><li><a href="https://www.fda.gov/media/170837/download">原始论文的 FDA 托管版本</a></li><li><a href="https://www.fda.gov/drugs/news-events-human-drugs/fda-approves-new-use-transplant-drug-based-real-world-evidence">FDA 原始说明</a></li><li><a href="https://www.fda.gov/media/152503/download">电子病历与理赔数据的指南</a></li><li><a href="https://ohdsi.github.io/CommonDataModel/">OMOP 通用数据模型</a></li><li><a href="https://www.synyi.com/solution?id=34">森亿智能的临床科研智能体</a></li><li><a href="https://www.yiducloud.com.cn/">医渡的智慧大科研体系</a></li><li><a href="https://www.hltpharma.com/index.html">医渡的生命科学服务</a></li><li><a href="https://clinlens.ai/">ClinLens AI</a></li><li><a href="https://www.atroposhealth.com/chatrwd/">Atropos Health 的 ChatRWD 与 GENEVA OS</a></li><li><a href="https://healthverity.com/exos/">HealthVerity eXOs</a></li><li><a href="https://www.datavant.com/press-release/datavant-completes-acquisition-of-aetion?hsLang=en">Aetion 已于 2025 年 7 月完成并入 Datavant</a></li><li><a href="https://www.datavant.com/blog/datavant-life-sciences-ai-platform-scientific-rigor-at-scale">2026 年的官方说明</a></li><li><a href="https://trinetx.com/solutions/trinetx-live/">TriNetX LIVE</a></li></ul></aside>
+</article></main><footer class="page-footer"><a href="./">系列目录</a><a href="#top">回到顶部 ↑</a></footer></div></body></html>
