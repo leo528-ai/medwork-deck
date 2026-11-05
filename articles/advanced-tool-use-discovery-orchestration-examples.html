@@ -1,6 +1,6 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>工具越来越多，Agent 不该先背完整本说明书｜胡浩源</title><meta name="description" content="读 Anthropic advanced tool use：按需发现、程序化编排与参数示例的具体机制、代码路径与实验边界。">
-<meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人">
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>工具越来越多，Agent 不该先背完整本说明书｜leo528</title><meta name="description" content="读 Anthropic advanced tool use：按需发现、程序化编排与参数示例的具体机制、代码路径与实验边界。">
+<meta name="author" content="leo528｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人">
 <meta name="color-scheme" content="light">
 <link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/advanced-tool-use-discovery-orchestration-examples.html">
 <style>
@@ -44,7 +44,7 @@ aside{border-top:1px solid var(--line);margin-top:40px;padding-top:24px;font-siz
 <header>
 <h1>工具越来越多，Agent 不该先背完整本说明书</h1>
 <p class="subtitle">读 Anthropic 的 advanced tool use：把工具发现、程序化执行与参数示例分开设计</p>
-<p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人<br><time datetime="2026-10-19">2026 年 10 月 19 日</time> · 工具与协作</p></header>
+<p class="byline">leo528｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人<br><time datetime="2026-10-19">2026 年 10 月 19 日</time> · 工具与协作</p></header>
 <p>一个 Agent 接入了几十种工具，为什么反而更容易选错？直觉上，能力更多，应该更容易办事。但模型真正面对的，并不是一排整齐的按钮，而是一段段名称、描述、参数定义，以及调用之后不断涌入的结果。工具增加，首先增加的可能不是能力，而是辨认和组织能力的负担。</p>
 <p>Anthropic 在 2025 年 11 月 24 日发表的 <a href="https://www.anthropic.com/engineering/advanced-tool-use">《Introducing advanced tool use on the Claude Developer Platform》</a>，把这个问题拆成了三个部分：如何找到合适的工具，如何组织多次调用，如何把参数填对。我更愿意把它看成一篇接口架构文章，而不只是三个功能的发布说明。</p>
 <p>原文以 beta 形式介绍这些功能。下文保留其机制和实验条件；版本化接口仅用于解释当时的设计，实施时应核对最新文档。</p>

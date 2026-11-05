@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
-<title>MedWork 健康管理 Personal Agent 的实现｜胡浩源</title>
+<title>MedWork 健康管理 Personal Agent 的实现｜leo528</title>
 <meta name="description" content="以虚构用户陈晨的一年为线索，设计多模态事件、分层记忆、证据检索、MedCode 与 Harness 协作、授权执行和长程回放评测的完整闭环。">
-<meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人">
+<meta name="author" content="leo528｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人">
 <meta name="color-scheme" content="light">
 <link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/medwork-personal-health-agent-implementation.html">
 <style>
@@ -49,7 +49,7 @@ table{min-width:610px}tbody th{width:26%}td{width:37%}
 </head>
 <body id="top"><a class="skip" href="#main">跳至正文</a><div class="shell">
 <nav class="masthead" aria-label="站点导航"><span>架构设计 · 个人健康 Agent</span><a href="../blog/">返回博客</a></nav>
-<header><p class="eyebrow">MedWork / Engineering Notes</p><h1>MedWork 健康管理 Personal Agent 的实现</h1><p class="subtitle">从一张午餐照片，到一整年可追溯、可调整的个人健康陪伴</p><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-10-17">2026 年 10 月 17 日</time></p></header>
+<header><p class="eyebrow">MedWork / Engineering Notes</p><h1>MedWork 健康管理 Personal Agent 的实现</h1><p class="subtitle">从一张午餐照片，到一整年可追溯、可调整的个人健康陪伴</p><p class="byline">leo528｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-10-17">2026 年 10 月 17 日</time></p></header>
 <details class="contents"><summary>文章目录</summary><nav aria-label="文章目录"><ol><li><a href="#section-1">一、先定义一个具体的人，再定义系统要承担什么</a></li><li><a href="#section-2">二、架构要把理解、决策和行动分开</a></li><li><a href="#section-3">三、多模态输入首先变成事件，不直接变成事实</a></li><li><a href="#section-4">四、长期记忆必须分层，并允许真正忘记</a></li><li><a href="#section-5">五、结构化档案保存数据，检索负责带回证据</a></li><li><a href="#section-6">六、Rubrics、MedGuide、MedCode 各自承担一件事</a></li><li><a href="#section-7">七、规划不是一次排满日历，而是滚动选择下一步</a></li><li><a href="#section-8">八、Harness 管好状态、幂等与恢复，才谈得上跨天执行</a></li><li><a href="#section-9">九、主动服务要有同意、节制和退出机制</a></li><li><a href="#section-10">十、把陈晨的一周跑通，尤其要跑通出错的那一周</a></li><li><a href="#section-11">十一、长程回放要测状态与行动，不能只评分回答好不好</a></li><li><a href="#section-12">十二、MVP 按完整闭环切分，研发按契约交付</a></li><li><a href="#references">公开资料与阅读说明</a></li></ol></nav></details>
 <main id="main"><article>
 <blockquote><p>架构设计围绕 MedWork、Rubrics、MedGuide 和 MedCode 的组合展开，供研发协作与评审。陈晨及相关事件、数值和对话均为虚构示例。</p></blockquote>

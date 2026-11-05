@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
-<title>一段财报为什么检索不到：重读 Anthropic 的 Contextual Retrieval｜胡浩源</title>
+<title>一段财报为什么检索不到：重读 Anthropic 的 Contextual Retrieval｜leo528</title>
 <meta name="description" content="重读 Anthropic Contextual Retrieval：切块为何丢失身份，针对性上下文如何改善向量与 BM25 检索，以及 49%、67% 和重排背后的实验条件。">
-<meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人">
+<meta name="author" content="leo528｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人">
 <meta name="color-scheme" content="light">
 <link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/contextual-retrieval-chunk-context.html">
 <style>
@@ -50,7 +50,7 @@ h1{text-wrap:balance}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;ove
 <header>
 <p class="eyebrow">MedWork / Engineering Notes</p>
 <h1>一段财报为什么检索不到：重读 Anthropic 的 Contextual Retrieval</h1>
-<p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p>
+<p class="byline">leo528｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p>
 <p class="dateline"><time datetime="2026-10-18">2026 年 10 月 18 日</time></p>
 </header>
 <details class="contents"><summary>文章目录</summary><nav aria-label="文章目录"><ol><li><a href="#section-1">1. 切块的时候，究竟丢掉了什么</a></li><li><a href="#section-2">2. 给每一块补一段针对它的说明</a></li><li><a href="#section-3">3. 为什么还需要 BM25</a></li><li><a href="#section-4">4. 49% 和 67%，实际测量的是什么</a></li><li><a href="#section-5">5. 重排能筛选候选，但救不了没有召回的证据</a></li><li><a href="#section-6">6. 每百万 tokens 1.02 美元，不能脱离条件引用</a></li><li><a href="#section-7">7. 真正上线时，需要保留哪些东西</a></li><li><a href="#section-8">8. 怎样判断这次改造有没有用</a></li><li><a href="#section-9">9. 先检查送进索引的那一小段文字</a></li><li><a href="#source-notes">原文与实验资料</a></li></ol></nav></details>
