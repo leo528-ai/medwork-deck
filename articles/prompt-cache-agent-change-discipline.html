@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人"><meta name="description" content="重读 Anthropic 的 Claude Code 缓存工程，结合 OpenAI 当前文档，讨论前缀稳定、工具权限、模型切换、压缩和真实成本的联合验收。"><meta name="color-scheme" content="light"><meta name="theme-color" content="#F5F1E8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'"><link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/prompt-cache-agent-change-discipline.html"><meta property="og:type" content="article"><meta property="og:title" content="缓存命中率背后，是 Agent 的变更纪律"><meta property="og:description" content="重读 Anthropic 的 Claude Code 缓存工程，结合 OpenAI 当前文档，讨论前缀稳定、工具权限、模型切换、压缩和真实成本的联合验收。"><meta property="og:url" content="https://leo528-ai.github.io/medwork-deck/articles/prompt-cache-agent-change-discipline.html"><title>缓存命中率背后，是 Agent 的变更纪律｜胡浩源</title><style>
+:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:3px solid var(--clay);outline-offset:5px}
+.skip{position:absolute;left:1rem;top:-5rem;background:var(--surface);padding:.5rem 1rem;z-index:5}.skip:focus{top:1rem}
+.shell{width:min(100% - 40px,760px);margin:0 auto}
+.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.masthead a{color:var(--muted)}header{padding:52px 0 26px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);font-weight:700;margin:0 0 20px}
+h1{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif;font-size:clamp(32px,5.8vw,46px);line-height:1.35;font-weight:700;letter-spacing:-.035em;margin:0 0 25px}
+.byline{font-size:14px;margin:0;color:var(--muted)}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}
+.contents{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px;color:var(--muted)}
+.contents summary{cursor:pointer;font-weight:600;color:var(--ink)}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}
+article p{margin:0 0 22px}blockquote{margin:0 0 34px;padding:6px 0 6px 20px;border-left:3px solid var(--clay);font-size:18px;color:var(--muted)}blockquote p:last-child{margin-bottom:0}
+h2{font-size:26px;line-height:1.5;font-weight:700;margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}
+h3{font-size:20px;line-height:1.55;margin:32px 0 18px}strong{font-weight:700}code{font:0.88em/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#EBE5D9;border-radius:3px;padding:.1em .3em;overflow-wrap:anywhere}
+ul,ol{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}
+.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650;color:var(--ink)}tbody th{font-weight:500;width:36%}tr:last-child th,tr:last-child td{border-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:14px;line-height:1.95;color:var(--muted)}hr~h3{font-size:17px;margin-top:0}
+.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){body{font-size:16px;line-height:1.95}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px}header{padding:36px 0 24px}h2{font-size:23px;margin-top:42px}h3{font-size:19px}blockquote{font-size:17px;padding-left:16px}.table-wrap{margin-left:-2px;margin-right:-2px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}h3{font-size:13pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}blockquote{font-size:12pt}}
+
+.subtitle{font-family:ui-serif,"Songti SC","STSong",serif;font-size:21px;line-height:1.65;color:var(--muted);margin:0 0 24px}article a{overflow-wrap:anywhere}.source-heading{font-size:19px;border-top:0;padding-top:0;margin-top:0}#source-notes+ul{font-size:14px;color:var(--muted)}@media(max-width:600px){.subtitle{font-size:19px}.masthead{gap:12px;letter-spacing:.03em}.page-footer{flex-wrap:wrap}}
+
+h1{text-wrap:balance}h1>span{display:block}.contents li{margin:0}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{background:none;padding:0;border-radius:0;font:inherit;overflow-wrap:normal}pre:focus-visible{outline:3px solid var(--clay);outline-offset:3px}#source-notes+ul{line-height:1.9}#source-notes+ul a{display:block}table{min-width:610px}table th:first-child{width:44%}
+@media(max-width:600px){pre{font-size:12px;padding:14px 12px}.masthead{font-size:12px}}
+@media print{pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}table{min-width:0}}
+
+article{overflow-wrap:anywhere}.status{color:var(--clay);font-weight:600}h2{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif}article blockquote{font-size:17px}
+body{font-family:"Noto Serif CJK SC","Songti SC","STSong",serif}.masthead,.byline,.dateline,.contents,.eyebrow,table,.page-footer{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif}table th:first-child{width:auto}table th:first-child,table td:first-child{min-width:120px}table{min-width:620px}caption{text-align:left;padding:12px 15px;font-weight:600} .source-note{font-size:14px;color:var(--muted)}.nowrap{white-space:nowrap}.fact{font:14px/1.9 -apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif;color:var(--muted);border-left:2px solid var(--line);padding-left:16px}.lead{font-size:20px;line-height:1.8}h2{font-family:ui-serif,"Songti SC","STSong",serif}</style></head>
+<body id="top"><a class="skip" href="#main">跳至正文</a><div class="shell"><nav class="masthead" aria-label="站点导航"><span>工程深读 · 上下文与成本</span><a href="../blog/">返回博客</a></nav><header><p class="eyebrow">Engineering Notes / Anthropic · OpenAI</p><h1><span>缓存命中率背后，</span><span>是 Agent 的变更纪律</span></h1><p class="subtitle">从前缀复用、工具边界与会话压缩，追问长任务怎样真正省下重复工作</p><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-11-05">2026 年 11 月 5 日</time> · 重读 4 月 30 日官方工程文章，核对当前 API 文档</p></header><details class="contents" open><summary>本文目录</summary><ol><li><a href="#reuse">一、先分清复用了什么</a></li><li><a href="#changes">二、把变化放到哪里，是一种接口设计</a></li><li><a href="#tools">三、工具目录稳定，不等于执行权限不变</a></li><li><a href="#routing">四、换小模型之前，先算一次迁移</a></li><li><a href="#compaction">五、压缩有两笔账，不能只看摘要那一次</a></li><li><a href="#economics">六、命中率提升几个点，为什么不能直接换算成降本</a></li><li><a href="#controls">七、新接口给了更多选择，也要求更精确的版本意识</a></li><li><a href="#diagnostics">八、把一次未命中变成可以排查的差异</a></li><li><a href="#healthcare">九、放进医疗科研流程，首先检查信息边界</a></li><li><a href="#verification">十、上线前，我会验证四条路径</a></li></ol></details><main id="main"><article>
+<section>
+<p class="lead">一个 Agent 没有换模型，没有增加工具调用，为什么在一次小版本发布后突然变慢、变贵？我会先检查每一轮请求之间究竟改了什么。长任务反复携带的上下文，既是模型理解任务的依据，也是系统可能反复支付的一笔账。</p>
+<p>这次重读的是 Thariq Shihipar 于 2026 年 4 月 30 日发表的 <a href="https://claude.dev/blog/lessons-from-building-claude-code-prompt-caching-is-everything/">《Lessons from building Claude Code: Prompt caching is everything》</a>。它把缓存放进了 Agent 的核心工程设计：稳定内容排在前面，更新尽量追加，分支与压缩也要照顾已有前缀。我的兴趣不只是省下一次输入费用，而是这些约束怎样改变系统处理状态变化的方式。</p>
+<p>本文同时核对 OpenAI 9 月 22 日的缓存发布说明，以及 11 月 5 日可访问的 API 文档。两家接口并不相同，半年前的产品实现也不能直接当作今天所有模型的用法。以下官方案例均标明来源；算例、验收方案及医疗科研场景是我的分析，没有引用任何企业内部运行结果。</p>
+</section>
+
+<section><h2 id="reuse">一、先分清复用了什么</h2>
+<p>Prompt caching 容易和另外两件事混淆：把上一次答案直接返回，以及把某段内容保存为长期记忆。按 <a href="https://developers.openai.com/api/docs/guides/prompt-caching">OpenAI 当前文档</a>，这里复用的是匹配前缀的 KV 中间状态，后续仍生成新回答。内容相同也不保证回答完全相同。它降低了重复处理输入的成本，没有替代结果验收。前缀相同也只是必要条件，还要满足模型的最小缓存长度，并在本轮可查找的断点处匹配；保留相同开头不保证命中。</p>
+<p>这个区别会影响产品指标。假设一次研究任务要读取十份资料、校对引用，再生成报告。共享前缀命中以后，任务仍要等待检索、执行代码和检查证据。如果耗时主要在外部工具，输入处理变快未必能显著缩短整个任务。把首个 token 的延迟、一次模型调用的延迟和任务交付时长合成一个“提速比例”，很容易让局部优化冒充整体收益。</p>
+<p>我会先划出三个边界：本轮哪些输入被复用，哪些输出仍要生成，哪些外部工作必须重新执行。每一类有不同的费用和正确性要求。尤其不能因为历史上下文仍在，就假定历史工具结果仍然有效。缓存解决的是计算重复，数据新鲜度必须另外判断。</p>
+</section>
+
+<section><h2 id="changes">二、把变化放到哪里，是一种接口设计</h2>
+<p class="fact">Claude Code 原文列出过三个实际破坏前缀的原因：把精细时间戳放进静态提示词、工具定义顺序不稳定、工具参数发生变化。其布局依次放置公共规则与工具、项目材料、会话信息和不断增长的消息。</p>
+<p>这些失误的共同点，是把低频与高频变化混在了同一个位置。一个每分钟都会更新的字段如果出现在前部，后面大量本来没变的内容也可能失去复用机会。相反，一个很长但稳定的项目约定，未必比一段很短、却每轮重写的状态描述昂贵。</p>
+<p>因此，我会要求上下文构造器回答两个问题：这项信息由谁维护，什么时候允许变化？通用规则、项目说明、当前文件版本和本轮检索结果，生命周期不同，最好不要在同一个字符串模板里随意拼接。序列化的稳定性也应该接受测试：同一组工具连续构造两次，顺序、描述和 schema 是否保持一致？</p>
+<p>追加更新同样需要纪律。假设报告标题被修改，追加一条“标题版本 3，替代版本 2”比让模型自行判断两处文字更可靠。但若旧信息涉及已撤回的授权、错误数据或必须移除的敏感内容，就应重建相应上下文，并接受缓存损失。<strong>保住前缀不能成为保留错误状态的理由。</strong></p>
+<p>我更愿意把缓存友好看成一项可解释的副产品：系统先把状态变更表示清楚，再尽可能保存没有变化的部分。为了命中而把过时事实层层堆在后面，只会把输入账单的问题变成推理和审计的问题。</p>
+</section>
+
+<section><h2 id="tools">三、工具目录稳定，不等于执行权限不变</h2>
+<p class="fact">原文的 Plan Mode 保留工具定义，通过模式消息表达当前应如何行动；工具搜索则延后加载详细定义。这两种设计都在减少对既有前缀的改写。它们是产品实现案例，不能据此认定提示词本身就是安全边界。</p>
+<p>这里至少有三层需要拆开：工具是否出现在目录里，模型当前能否选择它，执行端是否允许实际动作。目录可以稳定，权限必须即时生效。假设一个科研 Agent 从方案讨论进入数据处理阶段，看到“导出数据”的工具，并不意味着获得导出任意数据的许可。执行端仍应核对用户、项目、目标文件、允许字段和目的地。</p>
+<p><a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool">Claude 当前工具搜索文档</a>还补充了一个容易读错的细节：<code>defer_loading</code> 控制的是定义何时进入模型上下文，客户端仍须在请求中提交包括延迟工具在内的完整定义，供服务端搜索与展开。不能把博客对轻量占位信息的概括，机械实现成向 API 只传工具名。</p>
+<p>我的设计检查会包含两项相反的测试。第一，切换到只读阶段时，不应无意重写全部工具定义。第二，即使模型发出了写入调用，执行端也必须拒绝未获授权的动作。前者保护性能，后者保护边界，任何一项通过都不能替另一项作证。</p>
+<p>同理，用户撤销权限后，不能等缓存自然过期才生效。模型可能仍保有旧说明，授权服务必须以当前状态判定；界面也应清楚展示哪些能力已经关闭。这是我从案例提出的工程要求，并非对 Claude Code 内部权限实现的复述。</p>
+</section>
+
+<section><h2 id="routing">四、换小模型之前，先算一次迁移</h2>
+<p class="fact">Claude Code 文中用一个已有约 10 万 token 上下文的 Opus 会话说明：为简单问题切到 Haiku，需要重新建立另一模型的缓存，因此未必便宜。原文提出用精简交接让子任务切换模型，并以 Explore agents 为例；它没有给出适用于所有价格和任务的临界点。</p>
+<p>我会把决策写成一笔完整的账：留在原模型的后续费用，与新模型的上下文建立费用、交接生成费用、后续费用和返工风险相比较。较低的每 token 单价只是其中一项。若只需再回答一个短问题，迁移成本可能没有机会摊薄；若还有很多独立步骤，新模型即使先付一次启动成本，也可能更划算。</p>
+<p>可以做一个不对应任何厂商价格的假设：迁移和交接额外花 12 个成本单位，此后每一步节省 2 个单位。在任务质量相同、每步费用稳定、没有额外重试的条件下，做满 6 步才刚好打平；少于 6 步更贵。这个算例说明为什么路由器需要估计剩余工作，而不能只读当前问题难不难。</p>
+<p>交接内容也不是越短越好。若子任务需要一个关键约束，而摘要把它省略了，后续返工足以吞掉单价优势。我会明确交接中的目标、输入版本、禁止事项、输出验收条件，以及必须回查的证据。节省的应该是不相关历史，不是判断任务是否合格所需的信息。</p>
+</section>
+
+<section><h2 id="compaction">五、压缩有两笔账，不能只看摘要那一次</h2>
+<p class="fact">原文的 cache-safe forking 沿用父会话的规则、工具和历史，在末尾追加压缩要求，避免为了生成摘要先把整段历史按陌生前缀重算；同时预留容纳压缩指令与输出的空间。</p>
+<p>这只解释了“怎样生成摘要”这一笔账。摘要替换旧历史以后，后续请求面对的是新的上下文结构。不能从摘要调用命中父前缀，进一步推断压缩后的全部历史也继续命中。<a href="https://platform.claude.com/docs/en/build-with-claude/compaction">Claude 的压缩文档</a>将其定位为长上下文管理能力；压缩后的工作是否仍然正确，还需要业务侧验收。</p>
+<p>我会把一次压缩的效果跨越几个后续步骤观察：摘要生成花了多少，恢复后首轮花了多少，新上下文在接下来几轮能否再次复用，以及有没有丢失关键状态。只截取压缩前的高命中率与压缩后首轮的低命中率，会误判一个可能降低总成本的动作。</p>
+<p>摘要还应当是可核对的交接件。对于科研资料整理任务，至少要保留已采用的文献版本、尚未解决的矛盾、已经执行的动作与待执行动作的区别。一个“已完成清洗”的句子不够，最好有可回查的输出文件与检验记录。否则系统省去了输入，却把确认工作重新转给人。</p>
+<p>这里存在一个有益的取舍：较短上下文可能降低后续费用，也可能损失细节；保留更多原文方便追溯，却会持续占用窗口。选择不应该由缓存命中率单独决定。我会在同一任务集上同时检查费用、关键约束保留率和最终产物，而不是让压缩模块只对摘要长度负责。</p>
+</section>
+
+<section><h2 id="economics">六、命中率提升几个点，为什么不能直接换算成降本</h2>
+<p><a href="https://openai.com/index/better-prompt-caching-for-gpt-6/">OpenAI 2026 年 9 月 22 日的发布说明</a>给出了几组客户自述结果。阅读时，最重要的是不要把不同分母拼成一场统一实验。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="官方客户案例及解释边界，可横向滚动"><table><caption>发布说明中的结果，保留各自口径</caption><thead><tr><th scope="col">案例</th><th scope="col">原文报告</th><th scope="col">不能据此推定</th></tr></thead><tbody>
+<tr><th scope="row">GitHub Copilot</th><td>数月、数十亿请求中，相对此前基线，需要重新处理的 prompt token 占比下降超过 50%</td><td>总账单下降 50%，或每项任务都快一倍</td></tr>
+<tr><th scope="row">Strawberry Browser</th><td>命中率提高几个百分点，成本下降 20%</td><td>任意应用提高相同百分点就有相同降幅</td></tr>
+<tr><th scope="row">Manus</th><td>不到一周，从约 85% 提升到持续超过 90%</td><td>已公布精确的成本降幅或独立对照试验</td></tr>
+<tr><th scope="row">Wordsmith</th><td>相同工作负载的评测中，命中率由 83% 到 91%，写缓存约减少三分之二，推理成本下降 36%</td><td>其他任务和模型也能复制 36%</td></tr>
+</tbody></table></div>
+<p>这些信息提供了可调查的方向，没有提供复算所有账单所需的完整数据。是否同时改变断点、写入频率、请求组合，输入和输出各占多少，都影响成本。百分点是命中比例的差，百分比降本是账单相对基线的差，两者不能直接替换。</p>
+<p>下面给出一个独立的简化算例，不拟合上述客户。假设只计算输入，命中部分单价是普通输入的 0.1 倍，未命中部分都按普通输入计费，暂不含写缓存溢价。90% 命中时，每单位输入的相对费用为 0.90 × 0.1 + 0.10 = 0.19；95% 命中时为 0.95 × 0.1 + 0.05 = 0.145。提高 5 个百分点，对应这项费用下降约 23.7%。若输入只占原总费用的一半、其他项不变，总费用降幅则约 11.8%。</p>
+<p>真实账单还要加入写入。按 <a href="https://developers.openai.com/api/docs/guides/prompt-caching#cache-lifetime">核对日的 OpenAI 文档</a>，适用模型的默认 30 分钟缓存写入按普通输入的 1.25 倍计，12 小时按 2.5 倍计；这是总写入单价，不是在普通输入上再加一次。缓存读单价随模型而异，不能把某个倍率当成全平台永久规则。</p>
+<p>因此，一个只用一次的内容若被写入缓存，未必有经济收益。预热同样是在把工作提前，并非让工作免费消失。对频繁复用的公共材料，提前准备可能改善等待体验；对一次性问题，则要确认后续是否真有请求使用这份前缀。计费、实际计算复用和用户体感，应分别记录。</p>
+</section>
+
+<section><h2 id="controls">七、新接口给了更多选择，也要求更精确的版本意识</h2>
+<p>OpenAI 的 9 月发布说明把显式断点、诊断和预热放到了一起；还说明 GPT-6 可在保持请求级推理强度不变时，通过追加 <code>configuration_update</code> 调整后续推理强度，工具调用范围则可用 <code>allowed_tools</code> 等方式控制。这里谈的是特定接口能力，不宜把它概括成“所有配置都能随便改”。</p>
+<p>我从这些设计中看到的共同方向，是把“描述有哪些能力”与“本轮怎样使用能力”分开。这使得系统不必为每次模式变化重写全部开场材料。但配置仍有兼容范围，某项参数在新模型中支持追加更新，不代表旧模型也支持，更不代表换一个服务端实现后行为完全一致。</p>
+<p>实际维护时，我会给上下文构造器保留一个清楚的版本标识，记录模型、工具目录、提示词模板与缓存策略的版本。遇到命中率变化，先确认是业务材料不同，还是序列化方式、模型路由或接口升级改变了行为。没有这些信息，团队很容易把基础设施变化误判成模型质量变化。</p>
+<p>不过，版本标识本身也应放在适当位置。把每次构建的随机编号硬塞进全部请求最前面，可能正好破坏想观察的复用。稳定版本用于分组，逐请求追踪信息尽量留在独立观测字段；具体字段是否进入模型上下文，要以实际 API 行为验证。</p>
+</section>
+
+<section><h2 id="diagnostics">八、把一次未命中变成可以排查的差异</h2>
+<p><a href="https://developers.openai.com/api/docs/guides/prompt-caching/diagnostics">OpenAI 的诊断文档</a>提供了一个明确流程：选同组织内近期完成的响应作基线，用 <code>comparison_response_id</code> 请求比较，检查原因，再用 usage 计量报告的缓存读取量和计费。这个比较 ID 不会加载旧会话，也不保证命中；诊断的 token 估计不能代替计费字段。计费上的缓存读取也不必然表示本次物理复用了 KV，不能据此保证延迟下降。</p>
+<p>原文示例把工具名从 <code>get_time</code> 改为 <code>get_date</code>，得到可能的 <code>tools_changed</code> 诊断。示例中的 5,629 token 不是固定损失值。文档还说明诊断只报告第一个已分类原因，记录会过期，<code>unavailable</code> 不能解释成命中或未命中。这些边界决定了排查应该迭代，而不是拿一个标签当完整根因。</p>
+<p>我的排查顺序会从最近发布开始：固定一条代表性任务，比较相邻请求的稳定区；确认工具列表是否排序一致、模型是否被回退路由切换、历史消息是否被原地改写；修正一项后，再用同一个基线复测。这样才能分清“一处变化导致后面全失效”和“若干独立问题同时存在”。</p>
+<p>指标也要按任务群看。少数超长会话可能主导 token 加权命中率，掩盖大量短会话首次响应变慢；反过来，大量短请求也可能让按请求数计算的比例很好看，却漏掉最昂贵的长任务。至少应分开看缓存读取量、写入量、普通输入量、输出量，以及按任务统计的完成成本和失败率。</p>
+<p>排查日志本身需要最小化。记录版本、长度、摘要哈希和差异位置，通常比把所有病历或合同原文写进观测平台更合适。需要查看原文的少数故障，应使用受控流程。为了查一笔重复计算费用而扩大敏感数据暴露范围，得不偿失。</p>
+</section>
+
+<section><h2 id="healthcare">九、放进医疗科研流程，首先检查信息边界</h2>
+<p>设想一个完全虚构的工作流：Agent 先阅读研究方案与字段字典，再逐步整理去标识化数据，最后生成需要人工审阅的报告。这里可能有三类可复用材料：通用方法规则、项目级约定和本次任务的工作记录。它们适合有不同的更新周期，却不应因此被默认放进同一个共享范围。</p>
+<p>我会先问材料是否允许进入该模型服务，再问同一项目内哪些任务可以复用。缓存配置不授予数据处理权限，租户标识也不替代访问控制。一个项目能读到的文件，不能因为和另一个项目使用相同模板，就进入后者的上下文。本文讨论的是工程设计，不构成任何产品的隐私、合规或临床安全认证。</p>
+<p>数据修订也需要独立处理。字段字典新增了排除条件，后续任务必须使用新版本；已经完成的分析是否要重跑，则取决于变更影响。单纯追加“请注意更新”不能证明此前结果仍有效。系统应能找到哪些产物依赖旧定义，并把待复核项交给负责人。</p>
+<p>这个场景最值得缓存的，往往是已经确认、频繁复用的工作约定。最值得重新核对的，则是会改变结论的输入与约束。两者可以共存：稳定部分少做重复计算，变化部分明确留下证据。省下来的时间应该用于更扎实的核对，而不是让系统更快输出无法追溯的结论。</p>
+</section>
+
+<section><h2 id="verification">十、上线前，我会验证四条路径</h2>
+<p>与其给团队一个统一的命中率目标，我更愿意先拿出少量可重复的任务，覆盖正常推进、状态变更、上下文压缩和边界收回。下面是我的验收建议，不是两家厂商公开的实验结果。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="缓存与行为联合验收表，可横向滚动"><table><caption>费用改善与正确行为一起验收</caption><thead><tr><th scope="col">路径</th><th scope="col">控制条件</th><th scope="col">检查结果</th></tr></thead><tbody>
+<tr><th scope="row">重复推进</th><td>固定模型、材料、工具和任务，仅追加新一轮</td><td>预期前缀能否复用，任务产物是否仍通过原验收</td></tr>
+<tr><th scope="row">合法变更</th><td>分别改变时间、文件版本、工具范围和推理强度</td><td>新状态是否生效，哪些前缀应保留、哪些应主动失效</td></tr>
+<tr><th scope="row">压缩恢复</th><td>固定压缩前状态，继续完成相同剩余工作</td><td>跨多轮总成本、关键约束保留、引用与产物完整性</td></tr>
+<tr><th scope="row">权限撤回</th><td>保留历史上下文，但执行前撤销目标动作许可</td><td>工具层能否阻止动作，界面是否准确报告未执行</td></tr>
+</tbody></table></div>
+<p>测量时应分别保留冷启动和可复用状态，不要先把所有样本预热，再宣称首次响应也同样改善。两组应使用相同任务与质量门槛，记录重试、失败和中断；对有随机性的生成，重复运行并报告分布，不能只挑最快的一次。工具耗时也要单列，避免外部服务波动遮住输入处理变化。</p>
+<p>我还会设置回退条件。若优化后费用下降，但遗漏约束、使用旧数据或越权尝试增加，就应暂停推广。反之，某次必要的上下文重建让命中率下降，却纠正了错误状态，应当被记录为合理成本，而不是逼团队把它“优化”掉。</p>
+<p>这也是我重读这篇文章后的主要判断：缓存命中率能暴露 Agent 如何管理变化。规则放在哪里，状态怎样更新，工具怎样被允许使用，摘要怎样交接，都会进入这笔账。一个可持续的系统，需要让这些变化有明确含义，再让没有变化的部分获得复用。这样省下来的，才是重复工作，而不是必要判断。</p>
+</section>
+
+<section class="source-note" id="source-notes"><h2>来源与时间范围</h2>
+<p>主读：Thariq Shihipar，Anthropic，<a href="https://claude.dev/blog/lessons-from-building-claude-code-prompt-caching-is-everything/">Lessons from building Claude Code: Prompt caching is everything</a>，2026 年 4 月 30 日。原 claude.com 博客地址核对时已跳转至此官方开发者站点。</p>
+<p>对照：OpenAI，<a href="https://openai.com/index/better-prompt-caching-for-gpt-6/">Better prompt caching for GPT-6</a>，2026 年 9 月 22 日。客户数字为该发布说明中的自述案例，不是本文复现实验。</p>
+<p>机制与接口：<a href="https://developers.openai.com/api/docs/guides/prompt-caching">OpenAI Prompt caching</a>、<a href="https://developers.openai.com/api/docs/guides/prompt-caching/diagnostics">Prompt cache diagnostics</a>、<a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool">Claude Tool search tool</a>及<a href="https://platform.claude.com/docs/en/build-with-claude/compaction">Compaction overview</a>。动态文档核对日期为 2026 年 11 月 5 日；模型支持、价格与参数应在实际接入时再次确认。</p>
+<p>本文算例、任务拆分、权限设计、医疗科研示例与验收表均为作者分析或假设，不代表任何企业的内部架构、经营数据或临床效果。</p>
+</section>
+
+</article></main><footer class="page-footer"><a href="./">系列目录</a><a href="#top">回到顶部 ↑</a></footer></div></body></html>
