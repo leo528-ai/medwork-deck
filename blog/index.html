@@ -47,8 +47,10 @@
 <div><span class="filter-label" id="filter-label">按主题浏览</span><div class="filters" role="group" aria-labelledby="filter-label"><button type="button" data-filter="全部" aria-pressed="true" aria-controls="article-list">全部</button><button type="button" data-filter="长任务与状态" aria-pressed="false" aria-controls="article-list">长任务与状态</button><button type="button" data-filter="上下文与知识" aria-pressed="false" aria-controls="article-list">上下文与知识</button><button type="button" data-filter="工具与协作" aria-pressed="false" aria-controls="article-list">工具与协作</button><button type="button" data-filter="评测与可靠性" aria-pressed="false" aria-controls="article-list">评测与可靠性</button></div></div>
 <div class="search-box"><label class="search-label" for="article-search">搜索文章</label><input id="article-search" type="search" placeholder="标题、关键词或主题…" autocomplete="off" aria-controls="article-list"></div>
 </div>
-<p class="result-count" id="result-count" role="status" aria-live="polite" aria-atomic="true">共 33 篇文章 · 更新于 2026 年 11 月 5 日</p>
+<p class="result-count" id="result-count" role="status" aria-live="polite" aria-atomic="true">共 34 篇文章 · 更新于 2026 年 11 月 6 日</p>
 <ul class="entries" id="article-list">
+<li class="entry" data-category="评测与可靠性"><article><div class="entry-meta"><span>评测与可靠性</span><span>Anthropic 工程解读</span></div><h3><a href="../articles/code-review-risk-evidence-convergence.html">代码审查的终点，应该由什么决定</a></h3><p>读 Claude Code 团队的分层审查：证据、风险审批、审查收敛、事故评测与上线责任，怎样共同决定一项修改可以交付。</p><time datetime="2026-11-06">2026 年 11 月 6 日</time></article><span class="entry-arrow" aria-hidden="true">↗</span></li>
+
 <li class="entry" data-category="上下文与知识"><article><div class="entry-meta"><span>上下文与知识</span><span>Anthropic 工程解读</span></div><h3><a href="../articles/prompt-cache-agent-change-discipline.html">缓存命中率背后，是 Agent 的变更纪律</a></h3><p>重读 Anthropic 的 Claude Code 缓存工程，结合 OpenAI 当前文档，讨论前缀稳定、工具权限、模型切换、压缩和真实成本的联合验收。</p><time datetime="2026-11-05">2026 年 11 月 5 日</time></article><span class="entry-arrow" aria-hidden="true">↗</span></li>
 
 <li class="entry" data-category="评测与可靠性"><article><div class="entry-meta"><span>评测与可靠性</span><span>模型与 Agent 研究</span></div><h3><a href="../articles/gpt-qwen-weight-space-programming.html">GPT 改了 Qwen 的权重，究竟改好了什么</a></h3><p>从 GPT-6 Astra 直接编辑 Qwen3.5-0.8B 少量权重的实验出发，核对循环修复的结果、对照条件与适用边界。</p><time datetime="2026-11-04">2026 年 11 月 4 日</time></article><span class="entry-arrow" aria-hidden="true">↗</span></li>
@@ -114,7 +116,7 @@
       if (visible) count += 1;
     });
     buttons.forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.filter === active)); });
-    status.textContent = (query || active !== '全部') ? '显示 ' + count + ' / ' + entries.length + ' 篇文章' : '共 ' + entries.length + ' 篇文章 · 更新于 2026 年 11 月 5 日';
+    status.textContent = (query || active !== '全部') ? '显示 ' + count + ' / ' + entries.length + ' 篇文章' : '共 ' + entries.length + ' 篇文章 · 更新于 2026 年 11 月 6 日';
     empty.hidden = count !== 0;
   }
   buttons.forEach(function (button) { button.addEventListener('click', function () { active = button.dataset.filter; update(); }); });

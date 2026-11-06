@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="author" content="胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人"><meta name="description" content="读 Claude Code 团队的分层审查：证据、风险审批、审查收敛、事故评测与上线责任，怎样共同决定一项修改可以交付。"><meta name="color-scheme" content="light"><meta name="theme-color" content="#F5F1E8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'"><link rel="canonical" href="https://leo528-ai.github.io/medwork-deck/articles/code-review-risk-evidence-convergence.html"><meta property="og:type" content="article"><meta property="og:title" content="代码审查的终点，应该由什么决定"><meta property="og:description" content="读 Claude Code 团队的分层审查：证据、风险审批、审查收敛、事故评测与上线责任，怎样共同决定一项修改可以交付。"><meta property="og:url" content="https://leo528-ai.github.io/medwork-deck/articles/code-review-risk-evidence-convergence.html"><title>代码审查的终点，应该由什么决定｜胡浩源</title><style>
+:root{--paper:#F5F1E8;--surface:#FAF7F0;--ink:#27251F;--muted:#625D54;--clay:#955039;--line:#D9D0C2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.95 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--clay);text-underline-offset:.23em;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:3px solid var(--clay);outline-offset:5px}
+.skip{position:absolute;left:1rem;top:-5rem;background:var(--surface);padding:.5rem 1rem;z-index:5}.skip:focus{top:1rem}
+.shell{width:min(100% - 40px,760px);margin:0 auto}
+.masthead{padding:32px 0 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.masthead a{color:var(--muted)}header{padding:52px 0 26px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--clay);font-weight:700;margin:0 0 20px}
+h1{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif;font-size:clamp(32px,5.8vw,46px);line-height:1.35;font-weight:700;letter-spacing:-.035em;margin:0 0 25px}
+.byline{font-size:14px;margin:0;color:var(--muted)}.dateline{font-size:12px;color:var(--muted);margin:5px 0 0}
+.contents{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:0 0 38px;font-size:14px;color:var(--muted)}
+.contents summary{cursor:pointer;font-weight:600;color:var(--ink)}.contents ol{list-style:none;padding:8px 0 0;margin:0;display:grid;gap:5px}.contents a{text-decoration:none;color:var(--muted)}.contents a:hover{text-decoration:underline;color:var(--clay)}
+article p{margin:0 0 22px}blockquote{margin:0 0 34px;padding:6px 0 6px 20px;border-left:3px solid var(--clay);font-size:18px;color:var(--muted)}blockquote p:last-child{margin-bottom:0}
+h2{font-size:26px;line-height:1.5;font-weight:700;margin:54px 0 22px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:-.025em}
+h3{font-size:20px;line-height:1.55;margin:32px 0 18px}strong{font-weight:700}code{font:0.88em/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#EBE5D9;border-radius:3px;padding:.1em .3em;overflow-wrap:anywhere}
+ul,ol{margin:0 0 26px;padding-left:1.45em}li{padding-left:.15em;margin:9px 0}
+.table-wrap{overflow-x:auto;margin:28px 0 30px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface);scrollbar-color:var(--clay) var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px;line-height:1.75}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}thead th{background:#EDE6D9;font-weight:650;color:var(--ink)}tbody th{font-weight:500;width:36%}tr:last-child th,tr:last-child td{border-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:48px 0 28px}hr~p{font-size:14px;line-height:1.95;color:var(--muted)}hr~h3{font-size:17px;margin-top:0}
+.page-footer{border-top:1px solid var(--line);margin:44px 0 0;padding:24px 0 42px;display:flex;justify-content:space-between;gap:20px;font-size:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){body{font-size:16px;line-height:1.95}.shell{width:calc(100% - 36px)}.masthead{padding-top:22px}header{padding:36px 0 24px}h2{font-size:23px;margin-top:42px}h3{font-size:19px}blockquote{font-size:17px;padding-left:16px}.table-wrap{margin-left:-2px;margin-right:-2px}th,td{padding:11px 13px}.contents{margin-bottom:28px}.page-footer{font-size:13px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:white;color:black;font-size:11pt;line-height:1.75}.shell{width:auto;max-width:none}.skip,.masthead,.contents,.page-footer{display:none}header{padding:0 0 20px}h1{font-size:27pt}h2{font-size:17pt;break-after:avoid}h3{font-size:13pt;break-after:avoid}table{min-width:0;font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}blockquote{font-size:12pt}}
+
+.subtitle{font-family:ui-serif,"Songti SC","STSong",serif;font-size:21px;line-height:1.65;color:var(--muted);margin:0 0 24px}article a{overflow-wrap:anywhere}.source-heading{font-size:19px;border-top:0;padding-top:0;margin-top:0}#source-notes+ul{font-size:14px;color:var(--muted)}@media(max-width:600px){.subtitle{font-size:19px}.masthead{gap:12px;letter-spacing:.03em}.page-footer{flex-wrap:wrap}}
+
+h1{text-wrap:balance}h1>span{display:block}.contents li{margin:0}pre{margin:26px 0 32px;padding:18px 20px;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#EEE8DC;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;scrollbar-color:var(--clay) #EEE8DC}pre code{background:none;padding:0;border-radius:0;font:inherit;overflow-wrap:normal}pre:focus-visible{outline:3px solid var(--clay);outline-offset:3px}#source-notes+ul{line-height:1.9}#source-notes+ul a{display:block}table{min-width:610px}table th:first-child{width:44%}
+@media(max-width:600px){pre{font-size:12px;padding:14px 12px}.masthead{font-size:12px}}
+@media print{pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}table{min-width:0}}
+
+article{overflow-wrap:anywhere}.status{color:var(--clay);font-weight:600}h2{font-family:ui-serif,"Songti SC","STSong","Noto Serif CJK SC",serif}article blockquote{font-size:17px}
+body{font-family:"Noto Serif CJK SC","Songti SC","STSong",serif}.masthead,.byline,.dateline,.contents,.eyebrow,table,.page-footer{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif}table th:first-child{width:auto}table th:first-child,table td:first-child{min-width:120px}table{min-width:620px}caption{text-align:left;padding:12px 15px;font-weight:600} .source-note{font-size:14px;color:var(--muted)}.nowrap{white-space:nowrap}.fact{font:14px/1.9 -apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif;color:var(--muted);border-left:2px solid var(--line);padding-left:16px}.lead{font-size:20px;line-height:1.8}h2{font-family:ui-serif,"Songti SC","STSong",serif}</style></head>
+<body id="top"><a class="skip" href="#main">跳至正文</a><div class="shell"><nav class="masthead" aria-label="站点导航"><span>工程深读 · 审查与交付</span><a href="../blog/">返回博客</a></nav><header><p class="eyebrow">Engineering Notes / Anthropic</p><h1><span>代码审查的终点，</span><span>应该由什么决定</span></h1><p class="subtitle">从分层检查到风险审批，让 Agent 的相互审查有证据、有边界，也有明确的结束条件</p><p class="byline">胡浩源｜京东健康 AI 副总裁，医疗专病大模型 &amp; AI 产品线负责人</p><p class="dateline"><time datetime="2026-11-06">2026 年 11 月 6 日</time> · 深读 10 月 15 日官方工程文章，核对当前产品文档</p></header><details class="contents" open><summary>本文目录</summary><ol><li><a href="#denominators">一、先看清数字在描述哪一套系统</a></li><li><a href="#attention">二、优化目标应当覆盖人的整段工作</a></li><li><a href="#evidence">三、在 PR 出现之前，先让“完成”带上证据</a></li><li><a href="#findings">四、发现问题和验证问题，需要不同的工作</a></li><li><a href="#security">五、安全审查要有独立问题集，也要有关闭理由</a></li><li><a href="#risk">六、风险分级要决定谁判断，不能替人作出判断</a></li><li><a href="#commit">七、批准的是哪一份代码，必须说得清楚</a></li><li><a href="#convergence">八、审查必须收敛，三轮上限不是自动放行</a></li><li><a href="#evals">九、用事故训练审查流程，也要测试它会不会误伤好代码</a></li><li><a href="#integration">十、分别通过的修改，还需要一起接受检查</a></li><li><a href="#recovery">十一、恢复能力越强，越要说清不能恢复什么</a></li><li><a href="#adoption">十二、少读无关 diff，仍然要维护团队理解</a></li></ol></details><main id="main"><article>
+<section>
+<p class="lead">当一个 Agent 写代码，另一个 Agent 找问题，第三个 Agent 继续修改，审查似乎可以一直进行下去。但评论更多、修改更多、复查更多，并不自动意味着系统更接近可以上线的状态。代码审查需要回答一个很实际的问题：哪些证据已经足够，哪些风险仍然需要人来承担？</p>
+<p>2026 年 10 月 15 日，Addy Osmani、Morgan Westlee Lunt 和 Qing Wang 发表了 <a href="https://claude.dev/blog/solving-code-review-at-anthropic/">《How the Claude Code team does code review》</a>。这篇文章讨论的不是给原有流程增加一个机器人，而是把检查分布到修改前后，再重新分配人的注意力。它也坦率记录了自动审查不收敛、知识传递没有正式流程、自动收紧审批尚未实现等缺口。</p>
+<p>我最关注的是其中一个张力：团队希望减少人工阅读，却不能把省下的时间变成上线后的救火时间。本文沿着证据、风险、反馈与恢复四条线展开。官方数字按原文范围理解，补充核对的产品和 GitHub 文档截至 2026 年 11 月 6 日；推演、算例与验收建议均为我的分析，不代表企业内部实践或实测结果。</p>
+</section>
+
+<section><h2 id="denominators">一、先看清数字在描述哪一套系统</h2>
+<p>原文开篇同时出现 Anthropic 的 monorepo 和 Claude Code 的独立仓库。前者 2026 年 5 月每天约 2,500 次落地变更，9 月超过 30,000 次；后者从 6 月到 9 月合并 PR 数量超过翻倍，需要回退的 PR 占比下降超过 40%。这两组数字不能拼成“Claude Code 每天合并三万次，而且事故减少四成”。</p>
+<p>还有一个重要分母：回退占比下降，不等于回退绝对数量下降。做一个完全假设的计算，某团队从 1,000 个 PR、5% 回退，变成 2,200 个 PR、3% 回退，占比下降了 40%，回退数量却由 50 变成 66。它不是原文数据的还原，只说明吞吐增加时，比例与绝对工作量可能向不同方向移动。</p>
+<p>回退也不是事故的完整替身。有的错误通过追加修复解决，有的被功能开关拦在小范围内，有的很久以后才暴露。反过来，一次主动回退也可能说明发现和恢复机制有效。若把“零回退”设成唯一目标，团队可能更晚承认错误，或者把本来直接的回滚拖成风险更大的在线修补。</p>
+<p>因此，我会把原文结果看作一个值得研究的团队观察，而不是已完成因果识别的实验。期间模型、人员、任务组合、测试和发布方式都可能变化。要判断审查改造贡献了多少，还需要样本定义、风险构成、观察窗口和事故统计。它展示了可行路径，没有证明所有团队照做都会得到相同幅度。</p>
+</section>
+
+<section><h2 id="attention">二、优化目标应当覆盖人的整段工作</h2>
+<p>作者把人的时间视为稀缺资源，并用审批次数、评论、等待人的时间观察审查负担，以回退和事故作为约束。我认同这个方向，但会进一步把检查成本写完整：提交前准备、阅读评论、判断误报、修改与复查，以及上线后的调查和恢复，最终都由同一支团队支付。</p>
+<p>自动审查尤其容易把“模型生成评论的成本”和“组织消化评论的成本”混为一谈。一个评论只花几秒钟产生，却可能需要工程师阅读相关模块、确认历史决策，再解释为什么不改。假设每天出现 50 条无效评论，每条只需要两分钟处理，也已经占去 100 分钟；如果随后触发自动修改和新一轮 CI，费用与等待还会继续增加。这只是负担算例，不是对任何产品误报率的估计。</p>
+<p>我会把评论当成一种需要质量控制的工作请求。它至少要说明触发条件、失败表现、证据位置和影响范围。只说“这里可能有问题”，等于把调查任务转交给作者。对于真正高风险的未知项，可以要求进一步检查；对于没有依据的风格偏好，不宜和阻断上线的缺陷挤在同一优先级。</p>
+<p>还有一笔更难看见的成本是上下文切换。让一位熟悉支付链路的工程师反复处理格式问题，损失的不仅是点击批准的几十秒，也可能是被打断的设计判断。机器适合提前吸收可重复检查，但人的注意力被释放以后，需要明确流向需求、架构和风险取舍，否则只会被更多低价值通知重新填满。</p>
+</section>
+
+<section><h2 id="evidence">三、在 PR 出现之前，先让“完成”带上证据</h2>
+<p><a href="https://code.claude.com/docs/en/best-practices">Claude Code 的最佳实践文档</a>区分了模型读取的说明与执行框架强制的规则：提示词、项目说明和 Skills 可以指导行为，测试、类型检查、hooks 与分支保护承担不同的约束职责。这里的强制约束还取决于 hook 类型与失败处理配置，模型判断型 hook 不提供确定性保证。这个区分比把一条“务必测试”重复写得更醒目更有用。</p>
+<p>对于一次修改，我会先定义最小的可验收证据包：改动针对什么问题，原来怎样失败，执行了什么检查，结果对应哪个提交，哪些范围没有覆盖。界面变化可以附实际画面，数据处理变化可以附输入与输出的校验，异常修复最好有能区分修复前后的复现条件。证据的形式依领域变化，但不能只剩一句“测试通过”。</p>
+<p>新上下文审查也值得保留。实现者已经沿着某条假设走了很远，换一个没有参与推导的审查者，可能更容易问出“为什么一定这样做”。不过，新上下文不是没有上下文。审查仍需要任务意图、设计约束和相关代码，否则会把已知取舍当成问题，或者只围着局部 diff 作判断。</p>
+<p>项目说明文件同样需要控制密度。把所有历史事故堆进一个大文件，会让维护困难，也会让真正关键的规则淹没。我更倾向于把全局目标和入口写短，把局部失败模式放在对应模块的审查指引里；稳定、可机械判断的问题，则尽量下沉为测试或 lint。一次有效评论如果每周重复出现，就值得问：为什么它仍然只能靠评论发现？</p>
+<p>对证据还要保留反问：这项测试可能漏掉什么？一个只检查返回状态码的测试，未必发现返回内容错误；一张正常状态截图，也未必覆盖取消、重试或空数据。审查者的任务不是收集更多绿色标记，而是判断这些标记是否对应本次最可能出问题的地方。</p>
+</section>
+
+<section><h2 id="findings">四、发现问题和验证问题，需要不同的工作</h2>
+<p><a href="https://code.claude.com/docs/en/code-review">Code Review 产品文档</a>将流程分为并行寻找、核验候选问题、去重排序和发布评论。审查读取 diff 及周边代码，但服务本身不构建或运行代码。因此，文中的“核验”不能读成每条发现都已通过运行时复现，也不能替代 CI。</p>
+<p>作为时间更早的补充，<a href="https://claude.com/resources/articles/code-review">2026 年 3 月 9 日的预览发布说明</a>报告，获得实质性审查评论的内部 PR 占比从 16% 到 54%；它还举了一行修改可能破坏服务鉴权的例子。这说明短 diff 也值得检查，但“得到评论”并不等于“发现了真实缺陷”，更不能直接当成缺陷召回率。评论的有效性还要另外核实。</p>
+<p>这种分工的价值，是把寻找阶段的广度与提交给人的精度分开。寻找者可以大胆提出假说，验证者要把假说收窄为能被证据支持的结论。如果二者都只重复同一句猜测，多几个 Agent 并没有增加多少信息。</p>
+<p>我会要求一个候选问题通过几项检查：相关路径是否真的可达，输入前提是否可能成立，上游有没有已经处理这一条件，下游是否确实受到影响，以及问题是不是这次修改引入。对于无法运行的情形，应该清楚标注推理依据和待验证项，而不是把代码阅读推断写成已经复现的故障。</p>
+<p>多方同意也有相关性问题。几个模型若看到相同的片段、使用相近的提示词，可能重复同一种误解。票数可以帮助筛选，不能直接当成独立证据的数量。我更看重它们是否检查了不同的调用路径、契约和反例。最终结论应回到代码与行为，而不是“多数审查者觉得不对”。</p>
+<p>这里还必须区分内部流程与对外产品。本文主源描述 Claude Code 团队会阻止带有未解决发现的 PR 合并；当前产品文档则明确，Code Review 本身不批准、也不阻断 PR，其 check run 不以失败结束。团队若希望某类发现成为合并门槛，需要自行配置和治理相应流程，安装审查服务不等于自动拥有了文章中的全部内部机制。Quick、Standard、Deep 也只是不同审查深度与成本的选择，不是低、中、高风险的同义词。</p>
+</section>
+
+<section><h2 id="security">五、安全审查要有独立问题集，也要有关闭理由</h2>
+<p><a href="https://support.claude.com/en/articles/11932705-automated-security-reviews-in-claude-code">官方安全审查说明</a>列出身份鉴别、授权、注入、不安全数据处理等检查，并明确自动审查应补充而非替代现有安全实践。把安全从普通缺陷审查中单列出来，可以改变寻找问题的视角；不能因此声称已经穷尽攻击路径。</p>
+<p>普通功能测试常问“合法用户能不能完成操作”，安全审查还要问“没有权限的人能不能跨过边界”。一个下载接口返回了正确文件，仍可能允许请求者改一个标识后读取别人的文件。这个例子只是说明两类问题的差别，不对应原文披露的事故。</p>
+<p>我会让安全发现携带明确的资产、进入点、前置权限和影响链。单独出现一个危险函数名，不一定构成漏洞；同样，函数名看起来无害，也不能证明跨租户访问得到限制。证据应该支持完整路径，至少说明已验证部分与仍需确认的环节。</p>
+<p>发现被关闭，也应留下可复核的状态。“已修复”“不是本次引入”“前提不成立”“接受剩余风险”有不同含义。尤其最后一种不能被当成普通线程清理，它需要有权承担该风险的人做决定。自动化可以帮助整理理由，却不应把作者的一句“不重要”自动升级成组织层面的风险接受。</p>
+<p>我也会把修改审查规则本身作为敏感变化。当前 Code Review 文档说明，使用的是基础或默认分支上的 <code>REVIEW.md</code>，而不是 PR 自己修改的版本。这个设计避免待审修改顺手降低自身标准。扩展到其他工具时，也应检查谁能改评测、跳过路径和阻断条件；否则审查越来越自动化，控制标准却可能越来越容易被改写。</p>
+</section>
+
+<section><h2 id="risk">六、风险分级要决定谁判断，不能替人作出判断</h2>
+<p class="fact">原文把内部变更分为低、中、高风险，对应零、一、两个人工审批；分类之外还有二次判断和固定敏感路径。轻审批只给可信作者，Agent 批准不计入人工名额；指挥 Agent 的人在其内部流程中可计入所需人工审查人数，同时承担作者责任。审批绑定具体提交，系统无法担保的新提交需要重新批准。</p>
+<p>我读这段时，最在意的不是“低风险可以无人审批”，而是低风险如何成立。代码行数、修改者资历、是否由 AI 生成，都不足以独立决定风险。一行路由配置可能改变大量请求的去向，一段很长的隔离测试代码反而可能不进入生产路径。分类应以行为变化与影响范围为核心。</p>
+<p>下面是我会用来讨论风险的维度，不是对原文分级器的复刻，也不是一套可直接照搬的放行规则。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="变更风险判断表，可横向滚动"><table><caption>先说明后果，再讨论审查强度</caption><thead><tr><th scope="col">维度</th><th scope="col">需要问的问题</th><th scope="col">可能提高门槛的情况</th></tr></thead><tbody>
+<tr><th scope="row">影响范围</th><td>错误会影响一个试验入口，还是共同依赖？</td><td>鉴权、计费、更新器、共享配置或发布链路</td></tr>
+<tr><th scope="row">可发现性</th><td>失败会立即报错，还是生成看似合理的错误结果？</td><td>静默计算错误、遗漏记录、错误归属</td></tr>
+<tr><th scope="row">可恢复性</th><td>关掉功能就能恢复，还是已产生外部效果？</td><td>数据迁移、通知发送、权限或状态变更</td></tr>
+<tr><th scope="row">验证充分性</th><td>关键前提已有测试，还是只能凭经验猜测？</td><td>新架构、陌生依赖、缺少代表性测试环境</td></tr>
+</tbody></table></div>
+<p>这些维度之间也会相互作用。一个只对少量用户开放的功能，如果会不可逆地修改数据，仍不能因为用户少就轻率放行。反之，某个共享模块变化虽然范围大，但有清楚的兼容性证明和回退路径，可能比表面上更小、却难以观测的改动更容易控制。</p>
+<p>自动分类器适合帮助一致地应用规则，但它也会漏判。对必须人工参与的路径，应该有独立于模型判断的约束。人收到审查请求时，任务也要明确：是确认业务必要性、验证安全边界，还是评估架构影响？没有明确责任的第二个批准，可能只是把同一次模糊判断复制了一遍。</p>
+</section>
+
+<section><h2 id="commit">七、批准的是哪一份代码，必须说得清楚</h2>
+<p>一个 PR 可以在被批准后继续变化。新的提交可能修复评论，也可能改变原来已经看过的行为。如果界面仍显示绿色批准，却没有说明批准覆盖哪个版本，人很容易把历史信任误当成当前保证。</p>
+<p><a href="https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches">GitHub 分支保护文档</a>提供了撤销过期审批、要求最近一次可审查推送获批等不同选项。它们解决的不是完全相同的问题，团队需要按实际协作方式选择，并检查谁拥有绕过规则的权限。不能仅凭仓库里有 CODEOWNERS 文件，就假定所有相关变更都被强制审核。</p>
+<p>我会把审查对象写成一个明确的版本关系：变更提交、对比基线、审查使用的规则版本，以及运行检查的提交。对于手工解决的合并冲突，还要确认解决后的结果是否仍然被检查覆盖。形式上“只解决冲突”，也可能实际删除分支、改变条件或选错数据结构。</p>
+<p>审批范围清楚，也有利于减少不必要的重复劳动。如果新增内容只是已被机械验证的格式变化，团队可以设计相应策略；但这种策略应该可审计、可验证，不能让 Agent 仅凭“我只改了一点”自行延续旧批准。是否需要重审，应由规则和变化内容共同决定。</p>
+<p>这同样要求把人的角色说清楚。一个人指挥 Agent 编写改动，可以承担作者责任；另一个人被要求作独立审查时，需要有足够的时间与信息作出不同判断。把机器签名填进人工审批名额，或者把“作者看过”包装成独立复核，都会让流程看起来完整，却失去原来设置这层检查的理由。</p>
+</section>
+
+<section><h2 id="convergence">八、审查必须收敛，三轮上限不是自动放行</h2>
+<p>原文记录了一次超过 50 轮的夜间审查与修复。团队检查反复被指出的位置，约 59% 在第一次审查时就已经存在。随后采用三轮后请作者重新考虑方案、前几轮后仅复查新 diff、按问题类型修复同类实例、不重复已有发现等办法。这里的三轮是升级到重新判断的触发点，不是忽略未解决问题的许可。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="原文审查收敛指标，可横向滚动"><table><caption>内部 PR 的前后对比，非独立对照实验</caption><thead><tr><th scope="col">指标</th><th scope="col">改造前</th><th scope="col">改造后</th></tr></thead><tbody><tr><th scope="row">一轮审查和修复后通过</th><td>65%</td><td>78%</td></tr><tr><th scope="row">需要至少五轮</th><td>8.9%</td><td>1.5%</td></tr><tr><th scope="row">通过所需平均审查次数</th><td>2.08</td><td>1.32</td></tr></tbody></table></div>
+<p>这些数字描述处理流程的变化，不能单独证明漏检更少。若把审查器调得什么都不报，也可能很快收敛。因此轮次必须和真实缺陷召回、误报及上线结果一起观察。原文把真实问题优先、减少轮次其次写得很清楚，不能只复制一项“最多三轮”的配置。</p>
+<p>我会把审查不收敛分成三类。第一，审查标准不稳定，上一轮接受的设计下一轮又被否定。第二，问题定位过窄，每次只改一个实例，同类问题不断被重新发现。第三，修复本身持续产生新缺陷。这三类需要不同处理：稳定规则、扩大根因修复范围，或者暂停当前实现方案，而不是统一再叫一个更强的模型。</p>
+<p>仅复查增量可以控制工作量，但增量必须连着影响范围看。修改了一个共享函数，虽然 diff 很短，调用者的行为可能都变了。我的做法会是保留已确认的发现身份与解决记录，把新的修改映射回受影响路径；“只看新 diff”不应退化为不看上下文。</p>
+<p>对原有代码的缺陷，也应有独立去处。一个与当前 PR 无关的旧问题值得修复，却未必应该不断扩大这个 PR 的范围。原文另有夜间扫描已有代码的流程。我的延伸判断是，团队需要为旧问题安排明确的负责人和优先级，否则从当前审查中移走它，只是把噪声换成遗忘。</p>
+</section>
+
+<section><h2 id="evals">九、用事故训练审查流程，也要测试它会不会误伤好代码</h2>
+<p>作者把造成事故的历史 PR、回退与后续修复整理为专家确认的案例，每天评测审查器，并按人如何处理评论观察噪声：修复、认为错误、说明有意如此，或判断不重要。他们还用已知干净的 PR，检查审查是否会诱导有害修改。</p>
+<p>这比只统计“找出了多少问题”更接近真实质量。一个审查器可以通过不断扩大怀疑范围提高表面召回，同时让作者修改本来正确的代码。尤其当作者也是 Agent，它可能认真执行每条不够扎实的建议，把误报变成真实回归。</p>
+<p>不过，人的处理动作也不是完美标签。有人可能因为赶时间关闭真实问题，也可能为减少争论接受无必要的修改。把所有“已修复”都当作真阳性、所有“已关闭”都当作误报，会把组织行为误当成事实。我会对高影响样本和有争议样本做人工复核，保留不确定标签，而不是强行二分。</p>
+<p>事故集还有时间泄漏风险。若评测时给审查器看到了事后修复、明确的故障描述或后来添加的测试，它可能只是识别答案，而没有展示在事发前找到问题的能力。我会冻结事故前可获得的代码与材料，把事后证据用于判分；再保留一部分未用于调试审查提示词的样本，观察泛化。</p>
+<p>评测集也要覆盖没出事故的修改。否则团队只知道审查器能回忆哪些历史故障，不知道它会给普通变更制造多少工作。对不同风险层级分别报告召回、有效发现比例、误伤建议、轮次和人类处理时间，比一个平均分更利于决定在哪些路径扩大自动化。</p>
+<p>审查器本身也是持续变更的软件。模型、提示词、工具或规则更新，都可能改变它的偏好。一次新版本在几个案例上表现漂亮，不足以直接替换全量流程。先在保留人工门槛的条件下观察，再逐步扩大范围，可以让团队有机会辨认新问题，而不必靠生产事故提醒自己。</p>
+</section>
+
+<section><h2 id="integration">十、分别通过的修改，还需要一起接受检查</h2>
+<p><a href="https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue">GitHub 的 merge queue 文档</a>说明，队列在最新目标分支以及前面排队的变更基础上运行所需检查。采用 GitHub Actions 时，还需要让工作流响应 <code>merge_group</code> 事件。只在 PR 事件上运行检查，不能保证合并组会得到所需结果。</p>
+<p>这个机制解决的是组合问题。两个 PR 各自相对昨天的 main 都通过，今天合在一起仍可能出错：一个改了默认值，另一个依赖旧默认值；一个调整事件顺序，另一个根据旧顺序更新界面。没有任何单独一个作者故意破坏契约，组合结果却已经改变。</p>
+<p>队列能检查什么，仍然由检查集决定。没有覆盖兼容关系的测试，不会因为放进合并队列就自动出现。我的验收会把“检查执行了”与“关键交互被覆盖”分开，并记录测试对应的合并组版本，避免拿单个 PR 的绿色状态替组合结果作证。</p>
+<p>合并以后，分阶段发布继续降低未知风险。原文描述内部先用、功能开关、先 latest 后 stable 的通道，以及作者和值班人员观察。但员工使用的场景未必代表所有客户：网络环境、权限配置、数据规模和升级路径都可能不同。内部试用是一层证据，不是外部兼容性证明。</p>
+<p>我会让每个阶段都有明确的继续条件与暂停信号。例如只读新功能可以先观察错误率和用户路径，升级器则必须额外检查旧版本迁移和失败恢复。扩大量之前，团队应知道自己在等待什么证据，而不是因为“已经过了一天没有人喊”就自然进入下一阶段。</p>
+</section>
+
+<section><h2 id="recovery">十一、恢复能力越强，越要说清不能恢复什么</h2>
+<p>原文强调小变更、功能开关、快速回退与作者负责，并明确当时还没有根据回退或事故指标自动收紧审批的熔断机制。后者是团队希望补上的能力，不能写成已经上线的闭环。</p>
+<p>恢复快当然有价值，但“可以回退代码”和“可以撤销后果”之间仍有距离。功能开关能阻止后续行为，未必能收回已经发送的消息；代码回退能恢复旧逻辑，未必能修复已经写坏的数据。文章所讲的工程经验不能扩展成任何业务变化都可以在几分钟内无损撤销。</p>
+<p>因此，我会要求回退计划说明四件事：停止什么，恢复到哪个已知状态，怎样处理已经产生的结果，以及谁确认恢复完成。对于数据变更，可能还需要兼容读写、校验、补偿和人工处理。把“git revert”写进 PR 模板，只覆盖了其中很小的一部分。</p>
+<p>责任也不能停在一句“谁合并谁负责”。作者最熟悉改动，适合参与修复；值班与团队仍需要提供支持，避免作者不在线时没有人知道怎么处理。复盘则应追问哪一层本应发现问题、为什么没有发现，以及规则或证据如何改变，而不是把模型犯错变成人员互相归责。</p>
+<p>如果要建立自动收紧审批，我会先选择能稳定定义的信号，再设计恢复条件。一次回退上升可能来自更积极的回滚，也可能来自严重退化，不能不分情况就无限加门槛。自动化适合暂停扩展、提醒负责人和切换到保守流程；涉及产品方向和风险接受的判断，仍需要明确的责任人。</p>
+</section>
+
+<section><h2 id="adoption">十二、少读无关 diff，仍然要维护团队理解</h2>
+<p>主源最后承认，减少逐行人工审查以后，团队还没有正式的知识传递流程。他们会让 Claude 针对即将修改的模块生成解释，有时做成可视化，并通过开放协作渠道分享工作。这些做法提供了方向，但“人人都能随时问模型”并不等于组织已经保有可靠的共同理解。</p>
+<p>我会为关键模块保留几类可核对材料：边界与责任、不能破坏的契约、重要决策及其原因、典型故障与恢复入口。模型生成的讲解应指向当前代码和真实来源，方便工程师验证。架构为何这样设计，有时存在于历史取舍里，不会仅凭最新代码就自动显现。</p>
+<p>另一个值得提前保留的人类动作，是决定工作是否应该继续。Agent 写出一个 PR 的成本低，不代表合并和长期维护它也便宜。一个看起来正确的实现，仍可能解决了不重要的问题，或建立了不必要的新机制。越早讨论范围和替代方案，越少需要在完成后用阻断评论纠正方向。</p>
+<p>落地时，我会从一类边界清楚、可回退的变更开始，保留既有人工门槛，让机器审查先给出建议。经过一段有代表性的任务观察，再判断它究竟减少了阅读、减少了返工，还是只增加了评论。只有在证据足够时，才讨论放宽哪一条具体路径，不会从一开始追求一个全仓库的“无人审查比例”。</p>
+<p>医疗科研软件还需要额外核对数据进入审查链路的边界。当前 Code Review 文档明确，该托管服务不适用于启用 Zero Data Retention 或 HIPAA 配置的组织，也不在其 BAA 覆盖内。这是该服务在核对日的限制，不能外推成所有 Claude 产品的统一结论；更不能因为任务叫“审查代码”，就默认包含真实病历的测试数据、日志或截图都可以上传。</p>
+<p>如果只选一项改进，我会先让每次审查明确区分：已证实的问题、仍需验证的假说、已经接受的取舍，以及没有覆盖的风险。这样机器可以多承担寻找工作，人可以把时间用在真正需要判断的地方。审查的终点也就有了依据：证据足够、门槛满足、剩余风险有人负责，且系统知道出问题以后如何停下来。</p>
+</section>
+
+<section class="source-note" id="source-notes"><h2>来源与证据边界</h2>
+<p>主读：Addy Osmani、Morgan Westlee Lunt、Qing Wang，Anthropic，<a href="https://claude.dev/blog/solving-code-review-at-anthropic/">How the Claude Code team does code review</a>，2026 年 10 月 15 日。变更量、回退占比与审查轮次均为该团队报告，不是本文独立复现；不同仓库、分母与时间窗口未合并解释。</p>
+<p>补充机制：<a href="https://claude.com/resources/articles/code-review">Bringing Code Review to Claude Code</a>（2026 年 3 月 9 日的预览发布说明）、<a href="https://code.claude.com/docs/en/code-review">Code Review</a>、<a href="https://code.claude.com/docs/en/best-practices">Best practices for Claude Code</a>、<a href="https://support.claude.com/en/articles/11932705-automated-security-reviews-in-claude-code">Automated security reviews in Claude Code</a>、GitHub <a href="https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches">About protected branches</a>与<a href="https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue">Managing a merge queue</a>。动态文档核对于 2026 年 11 月 6 日；托管产品能力与团队内部流程分别说明。</p>
+<p>费用算例、风险维度、评测防泄漏建议、恢复检查及医疗科研场景为作者分析。本文未声称任何医疗系统已采用这些流程，也不构成临床有效性、安全性或合规证明。</p>
+</section>
+
+</article></main><footer class="page-footer"><a href="./">系列目录</a><a href="#top">回到顶部 ↑</a></footer></div></body></html>
